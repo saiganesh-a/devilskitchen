@@ -91,3 +91,161 @@ public class VisualCobol_Available_bal_Wrapper {
 		return ptrstring1;
 	} 
 }		      
+
+
+
+
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@Api(value = "Aggregation_API", description = " ", tags = { "Aggregation API" })
+@RequestMapping("/")
+@Cacheable
+@CacheEvict
+public class VisualCobol_Available_bal_Wrapper {
+    private static boolean filterFlag = false;
+
+    @Autowired
+    AggregationServiceImpl aggregationServiceImpl;
+
+    @Autowired
+    DBProcess dbprocess;
+
+    @Autowired
+    DaoUtilities daoUtil;
+
+    @Autowired
+    HttpServletRequest HttpServletRequest;
+
+    Logger logger = LoggerFactory.getLogger(VisualCobol_Available_bal_Wrapper.class);
+
+    String sourceAuth = CacheConfig.frameworkConfigProperties.getProperty(FrameworkConstants.LOOKUP_FILES_PATH);
+    String IP_Configuration_Path = CacheConfig.frameworkConfigProperties.getProperty(FrameworkConstants.LOOKUP_FILES_PATH);
+
+    Properties ipprop = PropertyLoader.readPropertyFile(new String(IP_Configuration_Path + "/IpConfigMaster.properties"));
+    public String ptrstring1;
+
+    BIAVBL obj1 = new BIAVBL();
+    WaInputAccNumber input1 = new WaInputAccNumber();
+    WaCallCodeFlag input2 = new WaCallCodeFlag();
+    WaOutputBalance outputs = new WaOutputBalance();
+
+    @SuppressWarnings({ "unchecked", "rawtypes", "static-access" })
+    @ApiOperation(value = "Call COB code", notes = "Retrieve check Digit:This API is used to fetch accountNum with checkdigit.", response = CbsSixEnq.class)
+    @PostMapping(value = { "/AvailableBalance" }, produces = { "application/json" })
+    @CrossOrigin()
+    @JsonIgnore
+    public Map<String, String> getCustomerDetails(@RequestBody(required = true) RequestBean reqbean, HttpServletRequest request, @RequestHeader HttpHeaders headers) {
+        String acc = reqbean.getAccountNum();
+        String type = reqbean.getFlag();
+        System.out.println("Start in Java!!!!");
+        input1.setWaInputAccNumber(acc);
+        input2.setWaCallCodeFlag(type);
+        System.out.println("Java: before calling cobol..######");
+        try {
+            obj1.BIAVBL(input1, input2, outputs);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        String ptrstring1 = outputs.getWaOutputBalance();
+        System.out.println("Java: after calling cobol..#######");
+        System.out.println("Java: Print string pointer: " + ptrstring1);
+
+        // Check if the output string is 100 characters long
+        if (ptrstring1.length() != 100) {
+            throw new IllegalArgumentException("Output string length is not 100 characters.");
+        }
+
+        // Split the 100-character string into 20-character chunks and assign to different strings
+        String chunk1 = ptrstring1.substring(0, 20);
+        String chunk2 = ptrstring1.substring(20, 40);
+        String chunk3 = ptrstring1.substring(40, 60);
+        String chunk4 = ptrstring1.substring(60, 80);
+        String chunk5 = ptrstring1.substring(80, 100);
+
+        Map<String, String> responseMap = new HashMap<>();
+        responseMap.put("chunk1", chunk1);
+        responseMap.put("chunk2", chunk2);
+        responseMap.put("chunk3", chunk3);
+        responseMap.put("chunk4", chunk4);
+        responseMap.put("chunk5", chunk5);
+
+        return responseMap;
+    }
+}
+
+
+
+
+
+
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@Api(value = "Aggregation_API", description = " ", tags = { "Aggregation API" })
+@RequestMapping("/")
+@Cacheable
+@CacheEvict
+public class VisualCobol_Available_bal_Wrapper {
+    private static boolean filterFlag = false;
+
+    @Autowired
+    AggregationServiceImpl aggregationServiceImpl;
+
+    @Autowired
+    DBProcess dbprocess;
+
+    @Autowired
+    DaoUtilities daoUtil;
+
+    @Autowired
+    HttpServletRequest HttpServletRequest;
+
+    Logger logger = LoggerFactory.getLogger(VisualCobol_Available_bal_Wrapper.class);
+
+    String sourceAuth = CacheConfig.frameworkConfigProperties.getProperty(FrameworkConstants.LOOKUP_FILES_PATH);
+    String IP_Configuration_Path = CacheConfig.frameworkConfigProperties.getProperty(FrameworkConstants.LOOKUP_FILES_PATH);
+
+    Properties ipprop = PropertyLoader.readPropertyFile(new String(IP_Configuration_Path + "/IpConfigMaster.properties"));
+    public String ptrstring1;
+
+    BIAVBL obj1 = new BIAVBL();
+    WaInputAccNumber input1 = new WaInputAccNumber();
+    WaCallCodeFlag input2 = new WaCallCodeFlag();
+    WaOutputBalance outputs = new WaOutputBalance();
+
+    @SuppressWarnings({ "unchecked", "rawtypes", "static-access" })
+    @ApiOperation(value = "Call COB code", notes = "Retrieve check Digit:This API is used to fetch accountNum with checkdigit.", response = CbsSixEnq.class)
+    @PostMapping(value = { "/AvailableBalance" }, produces = { "application/json" })
+    @CrossOrigin()
+    @JsonIgnore
+    public List<String> getCustomerDetails(@RequestBody(required = true) RequestBean reqbean, HttpServletRequest request, @RequestHeader HttpHeaders headers) {
+        String acc = reqbean.getAccountNum();
+        String type = reqbean.getFlag();
+        System.out.println("Start in Java!!!!");
+        input1.setWaInputAccNumber(acc);
+        input2.setWaCallCodeFlag(type);
+        System.out.println("Java: before calling cobol..######");
+        try {
+            obj1.BIAVBL(input1, input2, outputs);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        String ptrstring1 = outputs.getWaOutputBalance();
+        System.out.println("Java: after calling cobol..#######");
+        System.out.println("Java: Print string pointer: " + ptrstring1);
+
+        // Check if the output string is 100 characters long
+        if (ptrstring1.length() != 100) {
+            throw new IllegalArgumentException("Output string length is not 100 characters.");
+        }
+
+        // Split the 100-character string into 20-character chunks
+        List<String> result = new ArrayList<>();
+        for (int i = 0; i < 100; i += 20) {
+            result.add(ptrstring1.substring(i, i + 20));
+        }
+
+        return result;
+    }
+}
