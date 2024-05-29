@@ -1,0 +1,3161 @@
+<!--
+'***********************************************************
+' Component Name     : FNSClientFlowDistributer
+' Purpose            : This is the flow distributer for the
+'                    : client side.
+'                    :
+' Date Created       : 25/03/2002
+' Version             : 1.0.0
+' Author             : Anton Kruger
+' Amendment History  :
+'*************************************************************************************
+'   Date        Author      		Description
+'   : --------------------------------------------------------------------------------
+'30 Jan 2003	Pranav Shah			Added the function StartLoggingFlow()
+'									which will set the flag for the 
+'									LoggingOnFlow.xml to start
+'04 Mar 2003    Vishak Jaichand  	Modified function showBusy() and hideBusy()
+'	  								to prevent the alert messaged from being shown	
+'18 Apr 2003	Saurabh Pandit 		Changed ShowBusy() and HideBusy() Functions for
+'									TransferBatch
+'09 Jun 2003	Saurabh Pandit		Added Method EoDMode() and RefreshEoDMenu()
+'25 March 2013  Deepak Das              Added Bog Message Ticker which triggers every 2 hours
+'                                       Added RefreshBOGTicker() To Refresh Bog Status
+'                                       Added startTimerForBog() To Initialize Bog Timer
+'                                       Added BOGTimeOut() To Trigger BOG Flow To Get Messages From FE Table
+'					Added resetBOGStatus() To Reset BOG Statusbar on Logout
+'					Modified fnOpen() To handle Concurrent Locking Issue
+'					Modified UnsetIsLocked() To handle Concurrent Locking Issue
+'03 Aug 2015   Harish Gembali		Added Method getDetailsOfFailedMasterQ() To Get The Error Details Of Failed Master Queue
+'05 Feb 2017   Deepak Das			Added Method SetVirtualInfo()/SetVirtualInfo() to support Branch Consolidation
+									Modified Initialize() to fetch Virtual IP at the time of Login/New Session
+									Two new fields introduced in UserInfo : VirtualFlag/VirtualIP
+'*************************************************************************************
+-->
+<!-- start of adding ir 17090131 for A588 -->
+<!-- start of ir 17090131 -->
+<script type="text/javascript" src="../js/aes_crypto.js"></script>
+<!-- end of ir 17090131 -->
+<!-- end of adding ir 17090131 for A588 --> 
+<!-- Start of ir 22040024 -->
+<script type="text/javascript" src="../js/SHA256.js"></script>
+<!-- End of ir 22040024 -->
+<body MS_POSITIONING="GridLayout"><meta name=vs_targetSchema content="http://schemas.microsoft.com/intellisense/ie5">
+<PUBLIC:COMPONENT  
+    ID = "FNSClientFlowDistributer" 
+    lightWeight = "true" 
+    NAME = "FNSClientFlowDistributer" 
+    URN = "FNSClientFlowDistributer" >
+
+<PUBLIC:METHOD NAME="setSession" />
+<PUBLIC:METHOD NAME="receiveDocument" />
+<PUBLIC:METHOD NAME="sendDocument" />
+<PUBLIC:METHOD NAME="showBusy" />
+<PUBLIC:METHOD NAME="hideBusy" />
+<PUBLIC:METHOD NAME="GetUserInfo" />
+<PUBLIC:METHOD NAME="ResetStatusBar" />
+<PUBLIC:METHOD NAME="RefreshStatusBar" />
+<PUBLIC:METHOD NAME="SetUserInfo" />
+<PUBLIC:METHOD NAME="SetUserInfoValue" />
+<PUBLIC:METHOD NAME="SetUserStatus" />
+<PUBLIC:METHOD NAME="ResetUserInfo" />
+<PUBLIC:METHOD NAME="getLastXMLComponentDocuments"/>
+<PUBLIC:METHOD NAME="BeforeUnload" />
+<PUBLIC:METHOD NAME="Unload" />
+<PUBLIC:METHOD NAME="sendSignOff" />
+<!--Start of reverting IR 71591 & 72297-->
+<!--Start of changes for CCBL IR 71591-->
+<!--<PUBLIC:METHOD NAME="sendSignOffCCBL" />-->
+<!-- End of changes for CCBL IR 71591-->
+<!--End of reverting IR 71591 & 72297-->
+<PUBLIC:METHOD NAME="toggleMode" />
+<PUBLIC:ATTACH EVENT="ondocumentready" ONEVENT="Initialize()" />
+
+<!-- Added For Locking -->
+<PUBLIC:METHOD NAME="SetbTimerPopUpOn" />
+<PUBLIC:METHOD NAME="startTimer" />
+<PUBLIC:METHOD NAME="fnOpen" />
+<PUBLIC:METHOD NAME="SetTimerInfo" />
+<!--START OF  R386 FOR ADD 17020013-->
+<!-- Start Of maintrunk IR 17020013 -->
+<PUBLIC:METHOD NAME="SetVirtualInfo" />
+<PUBLIC:METHOD NAME="GetVirtualInfo" />
+<!-- End Of maintrunk IR 17020013 -->
+<!--END OF R386 FOR ADD 17020013-->
+<!-- Added For New Windows Functionality -->
+<PUBLIC:METHOD NAME="StartLoggingFlow" />
+<PUBLIC:METHOD NAME="StartLoggingOnOnce" />
+
+<!--Start of R373 for reverting IR 73428-->
+<!--Start of  IR 73428 for BogMessage-->
+<!--<PUBLIC:METHOD NAME="RefreshBOGTicker" />
+<PUBLIC:METHOD NAME="Trim" />
+<PUBLIC:METHOD NAME="resetBOGStatus" />
+<PUBLIC:METHOD NAME="startTimerForBog" />
+<PUBLIC:METHOD NAME="BOGTimeOut" />-->
+<!--End of  IR 73428 for BogMessage-->
+<!--End of R373 for reverting IR 73428-->
+<!--Added for EoD -->
+<PUBLIC:METHOD NAME="EoDMode" />
+<!-- Added for ONLINE/OFFLINE switching -->
+<PUBLIC:METHOD NAME="OfflineToOnlineMode" />
+<PUBLIC:METHOD NAME="OnlineToOfflineMode" />
+<PUBLIC:METHOD NAME="UnsetIsLocked" />
+<!-- Start OF IR 75566 -->
+<PUBLIC:METHOD NAME="getErrorDetails" />
+<PUBLIC:METHOD NAME="searchErrorDetails" />
+<!-- End OF IR 75566 -->
+<!--Start of A576 for adding IR 15090014-->
+<!--Start of IR15090014-->
+<PUBLIC:METHOD NAME="getDetailsOfFailedMasterQ" />
+<!--End of IR15090014-->
+<!--End of A576 for adding IR 15090014-->
+<!-- START of Adding IR 15110017 for A579-->
+<!--start IR 15110017-->
+<PUBLIC:METHOD NAME="CallSendDocumentNotification" />
+<!--End IR 15110017 -->
+<!-- END of Adding IR 15110017 for A579-->
+<SCRIPT LANGUAGE="JavaScript">
+var NewSessionState = ""
+//Start of R373 for reverting IR 73428
+//Start of  IR 73428 for BogMessage
+/*
+var lockFlag = "0"
+var lockTimer = "0"
+var min = ""
+var hours = ""
+var totalTime = ""
+var currentTime = ""
+var timeOutBog = ""
+*/
+//End of  IR 73428 for BogMessage
+//End of R373 for reverting IR 73428
+var strURL=""
+//start of ir 73983
+var moGroup=""
+//end of ir 73983
+var moInstitutionNo = "0"
+//Start of reverting IR 71591 & 72297
+//START OF IR 71591 CCBL CHANGES
+//var moCCBL = "False"
+//END OF IR 71591 CCBL CHANGES
+//End of reverting IR 71591 & 72297
+var moBranchNo = "0"
+// Start of adding of IR 17120147 for A593
+//Start of IR 17120147
+var moIP = "0"
+//End of IR 17120147
+// End of adding of IR 17120147 for A593
+var moTellerNo = "0"
+var moWorkstationNo = "0"
+var moCapability = "0"
+var moHostDate = ""
+var moLogonStatus = "LOGGEDOFF"
+var moMode = "ONLINE"
+var moLastComponentDocuments = null
+var moUserType = "1"
+var moURL = ""
+var moShadowFiles = false
+//Start of reverting IR 71591 & 72297
+//START OF IR 71591 CCBL CHANGES
+var moTimeout = "300"
+//var moTimeout = "30000"
+//END OF IR 71591 CCBL CHANGES
+//End of reverting IR 71591 & 72297
+//Start of R373 for reverting IR 73428
+//Start OF IR 73428
+//var moBogTimeout = "10800"
+//End OF IR 73428
+//End of R373 for reverting IR 73428
+//START of R386 for add IR 17020013
+//Start Of maintrunk IR 17020013
+var moVirtualFlag = "0"
+var moVirtualIP = "0"
+var moVirtualFlagFirstFetch = "NA"
+//End Of mintrunk IR 17020013
+//End of R386 for add IR 17020013
+var bLogCheckFlow = true
+var moCurrTime = ""
+var moCurrDate = ""
+var bTimerPopUpOn=false
+var timerID
+var moNoOfBatchFailed=""
+var moBPRFlag = "false"
+//Start of IR 71607
+var moflag = "N"
+//End of IR 71607
+var moCPC = "2"
+var moLPC = "0"
+var moIOIPRINT = "N"
+var moBankCode = "0"
+var isLocked = false
+//Start of reverting IR 71591 & 72297
+//START OF IR 71591 CCBL CHANGES
+//var CCBL="false"
+//END OF IR 71591 CCBL CHANGES
+//End of reverting IR 71591 & 72297
+//Start of IR 71896
+var moIS_SCAB = "N"
+//End of IR 71896
+//Start of IR 73050
+var AmtThd = "0"
+//End of IR 73050
+//Start of R373 for reverting IR 73428
+//Start of IR 73428
+/*
+var BOGMessage = ""
+var BOGMessageTemp = ""
+var timerIDBog
+*/
+//End of IR 73428
+//End of R373 for reverting IR 73428
+var moXMLHTTP = null
+
+//Start of R373 for reverting IR 73428
+//Start of IR 73428
+/*
+function startTimerForBog()
+{
+if(moLogonStatus == "LOGGEDON")
+{
+var tmerValBog = 1 * 1000
+timerIDBog = window.setTimeout('document.body.BOGTimeOut();',tmerValBog)
+}
+}
+function BOGTimeOut()
+{
+	if(window.document.body.id !="TBatchDet" && isLocked == false)
+	{
+	
+		if (frameElement!=null)
+		{
+			if (frameElement.src == "html/069030.htm")	
+			{
+				var oStatusText = frameElement.document.parentWindow.parent.frames("StatusBar").document.all("statusText")				
+			}
+			else
+			{
+				var oStatusText = frameElement.document.frames("StatusBar").document.all("statusText")				
+			}
+		}			
+		else
+		{	
+			var oStatusText = window.document.all("Statusbar").contentWindow.document.all("statusText")				
+		}
+			if (oStatusText.innerText == "Processing..." || isLocked == true)
+			{
+				startTimerForBog();
+			}
+			else
+			{
+			currentTime = new Date();
+			hours = currentTime.getHours() * 60 * 60;
+			mins = currentTime.getMinutes() * 60;
+			totalTime = hours + mins;
+			if((totalTime > timeOutBog) && isLocked == false)
+			{
+			//Start of R373 for reverting IR 75262
+			//Start OF IR 75262
+			//if(oStatusText.innerText.replace(/(?:(?:^|\n)\s+|\s+(?:$|\n))/g,'').replace(/\s+/g,' ') == '')
+			//{
+			//End OF IR 75262
+			//End of R373 for reverting IR 75262
+			timeOutBog = totalTime + parseInt(moBogTimeout,10);
+			var moFlow=window.document.body.all("MainScreen")
+			moFlow.returnValue = "True"
+			moFlow.startFlow(window.document.body,null,"BOGStatus","Start",null,true)
+			//Start of R373 for reverting IR 75262
+			//Start OF IR 75262
+			//}
+			//else
+			//startTimerForBog();
+			//End OF IR 75262
+			//End of R373 for reverting IR 75262
+			}
+			}
+	}	
+}
+*/
+//End of IR 73428
+//End of R373 for reverting IR 73428
+function UnsetIsLocked()
+{
+	//Start of IR 73927
+	try
+	{               
+	    changeLockCount(0)
+	}
+	catch(e)
+	{}
+	//End of IR 73927 
+//Start of R373 for reverting IR 73428
+//Start of IR 73428
+			/*
+			currentTime = new Date();
+			hours = currentTime.getHours() * 60 * 60;
+			mins = currentTime.getMinutes() * 60;
+			totalTime = hours + mins;
+			try
+			{
+			lockTimer =  totalTime + dialogArguments.document.body.GetUserInfo("Timeout")
+			}
+			catch(e)
+			{
+			lockTimer = parseInt(totalTime,10) +  parseInt(moTimeout,10)
+			}
+			*/
+//End of IR 73428
+//End of R373 for reverting IR 73428
+isLocked = false;
+//Start of reverting IR 71591 & 72297
+//START OF IR 71591 CCBL CHANGES
+/*if(CCBL)
+{
+window.document.frames("Iframe1").document.getElementById("SignOff").disabled=false;	
+}
+else
+{*/
+//END OF IR 71591 CCBL CHANGES
+//End of reverting IR 71591 & 72297
+window.document.frames(0).document.getElementById("SignOff").disabled=false;
+window.document.frames(0).document.getElementById("NewWindow").disabled=false;
+//Start of reverting IR 71591 & 72297
+//START OF IR 71591 CCBL CHANGES
+//}
+//END OF IR 71591 CCBL CHANGES
+//End of reverting IR 71591 & 72297
+}
+
+  function randomString(length, chars) 
+{
+var mask = ['a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','1','2','3','4','5','6','7','8','9','0']
+var result = ''; 
+for (var i = length; i > 0; --i)
+{
+result += mask[Math.round(Math.random() * (mask.length - 1))]; 
+}
+return result; 
+} 
+
+function Initialize()
+{
+NewSessionState = ""
+NewSessionState = randomString(16, '#aA!');
+//alert("Initialize Client Flow Distributor")
+//Start of R373 for reverting IR 73428
+//Start of IR 73428
+	/*
+	currentTime = new Date();
+	hours = currentTime.getHours() * 60 * 60;
+	mins = currentTime.getMinutes() * 60;
+	totalTime = hours + mins;
+	timeOutBog = totalTime + parseInt(moBogTimeout,10);
+	*/
+//End of IR 73428
+//End of R373 for reverting IR 73428
+	strURL = document.URLUnencoded;
+	strURL = strURL.replace(/htc\/ClientFlowDistributor.htc/, "");
+	    
+	//alert("SET URL ON INITIALISE " + strURL)
+	moURL = strURL
+	//Start of R373 for reverting IR 73428
+		//Start of R386 for add IR 17020013
+//Start of maintrunk IR 17020013
+try
+{
+	myXmlDocVirtual = loadXMLFile("/BranchVirtualization.xml");
+	moVirtualFlag = myXmlDocVirtual.getElementsByTagName("VirtualNode/IsVirtual")[0].nodeTypedValue;
+	moVirtualFlagFirstFetch = "Y";
+}
+catch(e)
+{
+	moVirtualFlag = "0";
+	moVirtualFlagFirstFetch = "NA";
+}
+if (moVirtualFlagFirstFetch == "Y" && moVirtualFlag == "1")
+{
+	try
+	{
+		var obj1 = new ActiveXObject("VMware.HorizonClientInfoPlugin");
+		moVirtualIP = obj1.ViewClientIPAddr;
+	}
+	catch(e)
+	{alert("ClientFlowDistributor:Initialize : " + e.message)}
+}
+//End of maintrunk IR 17020013
+//End of R386 for add  IR 17020013
+	//Start of IR 73428
+	//resetBOGStatus();
+	//End of IR 73428
+	//End of R373 for reverting IR 73428
+	ResetStatusBar();
+//Start of reverting IR 71591 & 72297
+//START OF IR 71591 CCBL CHANGES
+/*	try
+	{
+	CCBL = window.document.all("LoadInit").CustomerCentricScreen
+	}
+	catch(e){}*/
+//END OF IR 71591 CCBL CHANGES	
+//End of reverting IR 71591 & 72297
+}
+    
+function BeforeUnload()
+{
+    if (moLogonStatus == "LOGGEDON")
+    {
+        window.event.returnValue = "Are you sure you want to sign off and exit?"
+    }        
+}
+
+function Unload()
+{
+     //Start of IR 72562
+    //sendSignOffStart("SignoffMinimum")
+    sendSignOffStart("SignOffFull")
+    //End of IR 72562
+}
+//Start of R373 for reverting IR 73428
+//Start of IR 73428
+/*
+function resetBOGStatus()
+{
+//Start OF IR 74623
+try
+{
+//End Of IR 74623
+frameElement.document.frames("main").document.all("BOGMessage").innerHTML = "<font color=#660000 ><marquee scrollamount = 6>_...:::Welcome To SBI Core Banking Solutions:::..._</marquee></font>"
+//Start Of IR 74623
+}
+catch(e)
+{
+}
+//End Of IR 74623
+}
+*/
+//End of IR 73428
+//End of R373 for reverting IR 73428
+
+function sendSignOff() 
+{
+     //Start of IR 72562
+    //if (confirm("Are you sure you want to sign off?"))
+    //End of IR 72562
+    //Start adding A579 of iR 16060049
+    //start of ir 16060049
+    	try{
+    		sessionStorage.clear();
+    		window.document.getElementById("tileAreaStatus").value = 0;
+    		window.document.getElementById("tileDownArrow").style.display="none";
+    	}
+    	catch(e){}
+//end of ir 16060049
+    //End adding A579 of iR 16060049
+        sendSignOffStart("SignOffFull") 
+}
+//Start of reverting IR 71591 & 72297
+//START OF CCBL FORCED CLOSURE IR 71591
+/*function sendSignOffCCBL() 
+{
+    sendSignOffStart("SignOffFull") 
+}*/
+//END OF CCBL FORCED CLOSURE IR 71591
+//End of reverting IR 71591 & 72297
+//Start of reverting IR 71591 & 72297
+//START OF IR 71591 CCBL CHANGES
+/*function StoreFavourite()
+        {  
+        
+
+			try 
+             {
+                 var frameElement = window.frames.parent.document.frames(7).document.body;
+                 //var oFlowComponent = window.frameElement;
+                 var oFlowComponent = window.document.all("End")
+                 var sData="";
+                 var sScreenData="";
+				 var sTitle="";
+				 var sText="";
+				 var sFlowID="";
+				 var sNodeID="";
+					for(i=0;i<=frameElement.childNodes.length-1;i++)
+					{
+					var sLink="";
+					if(frameElement.childNodes(i).nodeName == "BUTTON")
+					{
+					sLink=frameElement.childNodes(i);
+					sTitle=sLink.title;
+					sText=sLink.innerHTML;
+					if(sLink.FlowID == null)
+					{
+						sFlowID="";
+					}
+					else
+					{
+						sFlowID=sLink.FlowID;
+					}
+					if(sLink.NodeID == null)
+					{
+						sNodeID="";
+					}
+					else
+					{
+						sNodeID=sLink.NodeID;
+					}*//*Modified by shanker for handling slash in menu add with astric */
+					/*sData=sData+sTitle + "," +	sText + "," + sFlowID +"," + sNodeID +"*"	
+					}
+					}
+					sScreenData="<MenuData>"+sData+"</MenuData>";
+					//oFlowComponent.startFlow(null, null,"TellerFavouritesFlow","Start", sScreenData, true)
+						
+              }
+             
+              catch(e)
+               {
+               }
+               return sScreenData
+        }*/
+//END OF IR 71591 CCBL CHANGES
+//End of reverting IR 71591 & 72297
+//Start of IR 73267
+function StoreFavouriteBancs()
+        {  
+        
+
+			try 
+             {
+             	//start of adding ir 15090004 for A574
+                 //var frameElement = window.frames.parent.document.frames(0).document.frames(4).document.body;
+                 var frameElement = window.frames.parent.document.frames(0).document.frames("ToolbarScreen1").document.body;
+                 //end of adding ir 15090004 for A574
+                 //var oFlowComponent = window.frameElement;
+                 var oFlowComponent = window.document.all("End")
+                 var sData="";
+                 var sScreenData="";
+				 var sTitle="";
+				 var sText="";
+				 var sFlowID="";
+				 var sNodeID="";
+				 //start of adding ir 15090004 for A574
+				 var sId=""
+				 //end of adding ir 15090004 for A574
+					for(i=0;i<=frameElement.childNodes.length-1;i++)
+					{
+					var sLink="";
+					if(frameElement.childNodes(i).nodeName == "BUTTON")
+					{
+					sLink=frameElement.childNodes(i);
+					sTitle=sLink.title;
+					sText=sLink.innerHTML;
+					//start of adding ir 15090004 for A574
+					sId=sLink.id
+					//end of adding ir 15090004 for A574
+					if(sLink.flowID == null)
+					{
+						sFlowID="";
+					}
+					else
+					{
+						sFlowID=sLink.flowID;
+					}
+					if(sLink.nodeID == null)
+					{
+						sNodeID="";
+					}
+					else
+					{
+						sNodeID=sLink.nodeID;
+					}
+					//start of adding ir 15090004 for A574
+					//sData=sData+sTitle + "|" +	sText + "|" + sFlowID +"|" + sNodeID +"*"
+					sData=sData+sTitle + "|" +	sText + "|" + sFlowID +"|" + sNodeID + "|"+ sId + "*"
+					//end of adding ir 15090004 for A574
+					}
+					}
+					sScreenData="<MenuData>"+sData+"</MenuData>";
+
+					for(i=0;i<=frameElement.childNodes.length-1;i++)
+					{
+					if(frameElement.childNodes(i).nodeName == "BUTTON")
+					{
+					if(frameElement.childNodes(i).title != "")
+						{
+					frameElement.removeChild(frameElement.childNodes(i))
+					if(frameElement.childNodes(i-1).nodeName =="BR")
+						{
+						frameElement.removeChild(frameElement.childNodes(i-1))
+						}
+					}
+					}
+					}
+						
+              }
+             
+              catch(e)
+               {
+				
+               }
+               return sScreenData
+        }
+//End of IR 73267
+
+// added by kunal on 24-apr-2006 for logging off teller after offline authorization.
+function sendSignOffForOffline(sStartNode) 
+{
+
+			 var sMessage = ""
+            sMessage += "<screenData>"
+            sMessage += "  <DefaultString1></DefaultString1><DefaultString2></DefaultString2><Signed33></Signed33><DefaultString4></DefaultString4><Signed35></Signed35><DefaultString6></DefaultString6>"
+            sMessage += "  <TranNo>009003</TranNo>"
+            sMessage += "</screenData>"
+            //debugger;
+            var oFlowComponent = window.document.all("End")
+            oFlowComponent.startFlow(null, null, "SignoffFlow", sStartNode, sMessage, false)
+}
+function sendSignOffStart(sStartNode) 
+{
+    var sMessage = ""
+    //Start of IR 73267
+    var sMenuDt
+    sMenuDt=StoreFavouriteBancs();
+   window.frames.parent.document.frames(0).document.getElementById("MenuTree21").style.display="none";
+	window.frames.parent.document.frames(0).document.getElementById("MenuTree").style.display="block";
+    
+    //End of IR 73267
+//Start of reverting IR 71591 & 72297
+//START OF IR 71591 CCBL CHANGES
+ /*   try
+    {
+    var sMenuDt = StoreFavourite();
+    }
+    catch(e)
+    {
+    sMenuDt="";
+    }*/
+//END OF IR 71591 CCBL CHANGES
+//End of reverting IR 71591 & 72297
+    if (moLogonStatus == "LOGGEDON") {
+        if ("SignOffFull" == sStartNode) {
+            sMessage += "<screenData>"
+            sMessage += "  <DefaultString1></DefaultString1><DefaultString2></DefaultString2><Signed33></Signed33><DefaultString4></DefaultString4><Signed35></Signed35><DefaultString6></DefaultString6>"
+            sMessage += "  <TranNo>009003</TranNo>"
+//Start of IR 73267-do not revert this code)
+//START OF IR 71591 CCBL CHANGES
+            sMessage += "  <MenuDataParent>"+ sMenuDt
+//            sMessage += "</screenData>"
+            sMessage += "</MenuDataParent></screenData>"
+//END OF IR 71591 CCBL CHANGES
+//End of IR 73267-do not revert this code
+        }
+        else
+        {
+            sMessage += "<screenData>"
+            sMessage += "    <DefaultString1 />" 
+            sMessage += "    <DefaultString3 />" 
+            sMessage += "    <Signed31/>"
+            sMessage += "    <DefaultString4/> "
+            sMessage += "    <Signed32/>" 
+            sMessage += "    <DefaultString5 />" 
+            sMessage += "    <Signed33/>" 
+            sMessage += "    <DefaultString6/>" 
+            sMessage += "    <Signed34/>"
+            sMessage += "    <DefaultString2 />" 
+            sMessage += "    <TranNo>009620</TranNo>" 
+//Start of reverting IR 71591 & 72297
+//START OF IR 71591 CCBL CHANGES
+//            sMessage += "  <MenuDataParent>"+ sMenuDt
+            sMessage += "</screenData>"
+//            sMessage += "</MenuDataParent></screenData>"
+//END OF IR 71591 CCBL CHANGES
+//End of reverting IR 71591 & 72297
+        }
+        var oFlowComponent = window.document.all("End")
+//Start of reverting IR 71591 & 72297
+//START OF CCBL CHAGES
+/*    try
+    {    
+	var CCBL= oFlowComponent.parentElement.all("LoadInit").CustomerCentricScreen
+    }
+    catch(e){}
+	if(CCBL)
+	{
+	oFlowComponent.startFlow(null, null, "TCSFSSignoffFlowCCBL", sStartNode, sMessage, false)
+	}
+	else
+	{*/
+//END OF IR 71591 CCBL CHANGES
+//End of reverting IR 71591 & 72297
+        oFlowComponent.startFlow(null, null, "SignoffFlow", sStartNode, sMessage, false)
+//Start of reverting IR 71591 & 72297
+//START OF IR 71591 CCBL CHANGES
+//	}
+//END OF IR 71591 CCBL CHANGES
+//End of reverting IR 71591 & 72297
+    }
+    else {
+        //alert("Teller is not signed on.")
+    }        
+    window.location.reload(true)
+        
+}
+//Start OF IR 75566
+function searchErrorDetails(errorCodeCFD)
+{
+try
+{
+var pad = "0000"
+var fileName = "Error"
+var intErrorCode = parseInt(errorCodeCFD,10);
+errorCodeCFD = pad.substring(0,pad.length - errorCodeCFD.length) + errorCodeCFD
+if (intErrorCode > 8999)
+	fileName = "Error_010.xml"
+else if (intErrorCode > 7999)
+	fileName = "Error_009.xml"
+else if (intErrorCode > 6999)
+	fileName = "Error_008.xml"
+else if (intErrorCode > 5999)
+	fileName = "Error_007.xml"
+else if (intErrorCode > 4999)
+	fileName = "Error_006.xml"
+else if (intErrorCode > 3999)
+	fileName = "Error_005.xml"
+else if (intErrorCode > 2999)
+	fileName = "Error_004.xml"
+else if (intErrorCode > 1999)
+	fileName = "Error_003.xml"
+else if (intErrorCode > 999)
+	fileName = "Error_002.xml"
+else
+	fileName = "Error_001.xml"
+
+myXmlDocError = loadXMLFile("/xml/ErrorMessages/" + fileName);
+
+var Cause1 = myXmlDocError.getElementsByTagName("ErrorRoot/Error" + errorCodeCFD)[0].getAttribute('Cause1');
+var Cause2 = myXmlDocError.getElementsByTagName("ErrorRoot/Error" + errorCodeCFD)[0].getAttribute('Cause2');
+var Cause3 = myXmlDocError.getElementsByTagName("ErrorRoot/Error" + errorCodeCFD)[0].getAttribute('Cause3');
+
+var Action1 = myXmlDocError.getElementsByTagName("ErrorRoot/Error" + errorCodeCFD)[0].getAttribute('Action1');
+var Action2 = myXmlDocError.getElementsByTagName("ErrorRoot/Error" + errorCodeCFD)[0].getAttribute('Action2');
+var Action3 = myXmlDocError.getElementsByTagName("ErrorRoot/Error" + errorCodeCFD)[0].getAttribute('Action3');
+
+window.document.frames("MainScreen").document.all("Cause1").value = Cause1
+window.document.frames("MainScreen").document.all("Cause2").value = Cause2
+window.document.frames("MainScreen").document.all("Cause3").value = Cause3
+
+window.document.frames("MainScreen").document.all("Action1").value = Action1
+window.document.frames("MainScreen").document.all("Action2").value = Action2
+window.document.frames("MainScreen").document.all("Action3").value = Action3
+
+window.document.frames("MainScreen").setLabel();
+window.document.frames("MainScreen").document.getElementById("mainContainer").style.display = "block";
+
+}
+catch(e)
+{
+alert("Error Details Not Found")
+}	
+}
+function getErrorDetails(errorCodeCFD,errorDescCFD)
+{
+try
+{
+var pad = "0000"
+var fileName = "Error"
+var intErrorCode = parseInt(errorCodeCFD,10);
+errorCodeCFD = pad.substring(0,pad.length - errorCodeCFD.length) + errorCodeCFD
+
+if (intErrorCode > 8999)
+	fileName = "Error_010.xml"
+else if (intErrorCode > 7999)
+	fileName = "Error_009.xml"
+else if (intErrorCode > 6999)
+	fileName = "Error_008.xml"
+else if (intErrorCode > 5999)
+	fileName = "Error_007.xml"
+else if (intErrorCode > 4999)
+	fileName = "Error_006.xml"
+else if (intErrorCode > 3999)
+	fileName = "Error_005.xml"
+else if (intErrorCode > 2999)
+	fileName = "Error_004.xml"
+else if (intErrorCode > 1999)
+	fileName = "Error_003.xml"
+else if (intErrorCode > 999)
+	fileName = "Error_002.xml"
+else
+	fileName = "Error_001.xml"
+
+myXmlDocError = loadXMLFile("/xml/ErrorMessages/" + fileName);
+
+
+var Cause1 = myXmlDocError.getElementsByTagName("ErrorRoot/Error" + errorCodeCFD)[0].getAttribute('Cause1');
+var Cause2 = myXmlDocError.getElementsByTagName("ErrorRoot/Error" + errorCodeCFD)[0].getAttribute('Cause2');
+var Cause3 = myXmlDocError.getElementsByTagName("ErrorRoot/Error" + errorCodeCFD)[0].getAttribute('Cause3');
+
+var Action1 = myXmlDocError.getElementsByTagName("ErrorRoot/Error" + errorCodeCFD)[0].getAttribute('Action1');
+var Action2 = myXmlDocError.getElementsByTagName("ErrorRoot/Error" + errorCodeCFD)[0].getAttribute('Action2');
+var Action3 = myXmlDocError.getElementsByTagName("ErrorRoot/Error" + errorCodeCFD)[0].getAttribute('Action3');
+
+
+var moFlowError=window.document.body.all("MainScreen")
+var sMessageBody = "<screenData><Cause1>" + Cause1 + "</Cause1><Cause2>" + Cause2 + "</Cause2><Cause3>" + Cause3 + "</Cause3><Action1>" + Action1 + "</Action1><Action2>" + Action2 + "</Action2><Action3>" + Action3 + "</Action3><errorCode>" + intErrorCode + "</errorCode><errorDesc>" + errorDescCFD + "</errorDesc></screenData>"
+moFlowError.returnValue = "True"
+element.Cause1 = Cause1
+element.Cause2 = Cause2
+element.Cause3 = Cause3
+element.Action1 = Action1
+element.Action2 = Action2
+element.Action3 = Action3
+element.errorCode = intErrorCode
+element.errorDesc = errorDescCFD
+
+try
+{
+window.showModalDialog("html/ErrorMessage.htm" , element , "dialogTop:100 px; dialogLeft: 300 px; dialogWidth: 835px; dialogHeight:410 px; center: No; help: No; resizable: No; status: No;");
+}
+catch(e)
+{
+moFlowError.startFlow(window.document.body,null,"FetchErrorDescFlow","Start",sMessageBody,true);
+}
+}
+catch(e)
+{
+alert("Error Details Not Found")
+}
+
+}
+//End OF IR 75566
+//Start of A576 for adding IR 15090014
+//Start of IR15090014
+function getDetailsOfFailedMasterQ(masterQID)
+{
+	try
+	{
+		var moFlowError=window.document.body.all("MainScreen")
+		var sMessageBody = "<screenData><masterQueueId>" + masterQID + "</masterQueueId></screenData>"
+		moFlowError.returnValue = "True"
+		moFlowError.startFlow(window.document.body,null,"OneClickProcess","StartOfFailedMQDetails",sMessageBody,true);
+	}
+	catch(e)
+	{
+	alert("Error Details Not Found")
+	}
+
+}
+//End of IR15090014
+//End of A576 for adding IR 15090014
+function sendDocument( objXMLDocument, bAsync)
+{
+
+//Start of IR 73927
+ try
+     {  
+       var lockVal=dialogArguments.document.frames("MainScreen").parent.document.all('countVal').value
+           if(lockVal==1)
+	   {
+	    alert("Please Authenticate and Proceed")
+	      hideBusy()
+	    return false;
+	   }
+     }
+ catch(e){}
+ //End of IR 73927
+if(isLocked == false)
+{
+        
+        if (objXMLDocument == null)
+        {
+            return //throw(new Error(1234, "Invalid flow document object"))
+        }
+        
+        if (bAsync == null)
+            bAsync = true
+
+        try
+        {   
+            setLastClearingType(objXMLDocument.selectSingleNode('componentDocuments/componentDocument/body/screenData/DefInteger1').text)
+        }
+        catch(e){}
+        try
+        {
+            setLastUsedDate(objXMLDocument.selectSingleNode('componentDocuments/componentDocument/body/screenData/date2').text)
+		}
+		catch(e){}
+       try
+		{
+			setLastCustomer(objXMLDocument.selectSingleNode('componentDocuments/componentDocument/body/screenData/accntNumber1').text) 
+		}
+		 catch(e){}
+		try
+		{ 
+            setLastCityCode(objXMLDocument.selectSingleNode('componentDocuments/componentDocument/body/screenData/CityCode').text)
+        }
+        catch(e){}
+            
+        AppendUserInfo(objXMLDocument)
+            debugAlert("sending " + objXMLDocument.xml)
+        
+        var strDest = document.URLUnencoded;
+        //srivalli added
+         var sessionVar = "";
+        var sessionPos = "";
+        var sessionID = "";
+	//Start of IR 72676
+	var sessMoh = "";
+	//End of IR 72676
+//START OF IR  72242 CHANGES
+	var SessionArray;
+//End OF IR 72242 CHANGES
+        try
+        {
+			
+			sessionID = NewSessionState
+			try
+			{
+			window.parent.frames(1).document.all("InputStringForSession").value = sessionID
+			}
+			catch(e)
+			{
+			}
+//End OF IR 72242 CHANGES
+		}
+        catch(e)
+       	{
+        }
+        //var sessionID = "";
+        //try
+        //{
+		//	sessionID = window.document.cookie;
+		//}
+        //catch(e)
+        //{			
+        //}
+        
+ //Start of IR 22040024 (Session Management :CSR 2019)  
+ //Start of IR 23010172     
+        //setMessageBodyValue(objXMLDocument, "sessionInfo", "SessionID", sessionID.substring(0, 8) + moTellerNo + sessionID.substring(8))
+	setMessageBodyValue(objXMLDocument, "sessionInfo", "SessionID", sessionID.substring(0, 8) + moTellerNo + sessionID.substring(sessionID.length-8))
+       //End of IR 23010172   
+	var hashData = "";                           
+	try
+	{
+	hashData = objXMLDocument.selectSingleNode('componentDocuments/componentDocument/body/screenData').text;
+	}catch(e){
+	try{
+	hashData = objXMLDocument.selectSingleNode('componentDocuments/componentDocument/body/screenDataOri').text;
+	}catch(e1)
+        {try{
+	hashData = objXMLDocument.selectSingleNode('componentDocuments/componentDocument/body/screenSettings').text;
+	}catch(e2)
+        {
+	hashData="No ScreenData";
+	}}}    
+	hashData=hashData.replace(/\n/g, "").replace(/\r/g, "").replace(/\t/g, "").replace(/\s/g, "");   
+	 //Start of IR 23010172  
+        //setMessageBodyValue(objXMLDocument, "sessionInfo", "SessionID1", CryptoJS.SHA256(hashData).toString(CryptoJS.enc.hex) + sessionID.substring(0, 8) + moTellerNo + sessionID.substring(8))
+	setMessageBodyValue(objXMLDocument, "sessionInfo", "SessionID1", CryptoJS.SHA256(hashData).toString(CryptoJS.enc.hex) + sessionID.substring(0, 8) + moTellerNo + sessionID.substring(sessionID.length-8))
+	 //Start of IR 23010172 
+        //setMessageBodyValue(objXMLDocument, "sessionInfo", "SessionID", sessionID)
+ //End of IR 22040024 (Session Management :CSR 2019)  		
+        strDest = strDest.replace(/htc\/ClientFlowDistributor.htc/, "Server.aspx");
+        if (moXMLHTTP != null) {
+            if (moXMLHTTP.readyState != 4 )            {
+                // alert ("The system is waiting for a response. Please wait till a response has been received.")
+                return
+            }
+        }
+	// start of adding ir 17090131 for A588
+        // start of ir 17090131
+        Number.prototype.padLeft = function(base,chr){
+           	var len = (String(base || 10).length - String(this).length) + 1;
+           	return len > 0 ?new Array(len).join(chr || '0')+this : this ;
+           }
+       	// end of ir 17090131
+        // end of adding ir 17090131 for A588
+        moXMLHTTP = new ActiveXObject("Microsoft.XMLHTTP");
+        // start of adding ir 17090131 for A588
+        // start of ir 17090131
+         var text = objXMLDocument.xml.toString()
+         var d = new Date();
+         var dStr = [d.getFullYear(),(d.getMonth()+1).padLeft(),d.getDate().padLeft()].join("/")+" "+[d.getHours().padLeft()
+         ,d.getMinutes().padLeft(),d.getSeconds().padLeft()].join(":");
+           
+         text = text+dStr         
+         var oriLength = text.length
+         var remainder = oriLength%16;
+         var diff = 16 - remainder
+
+         text = text+new Array(diff+1).join(' ');
+         
+         
+            var key = CryptoJS.enc.Utf8.parse('8080808080808080');
+            var iv = CryptoJS.enc.Utf8.parse('8080808080808080');
+            var encryptedDoc = CryptoJS.AES.encrypt(CryptoJS.enc.Utf8.parse(text), key,
+ {
+     keySize: 128,
+     iv: iv,
+     mode: CryptoJS.mode.CBC,
+     padding: CryptoJS.pad.Pkcs7
+ });
+ res = "<root>"+encryptedDoc+"</root>"
+        // end of ir 17090131
+	// end of adding ir 17090131 for A588
+	      // Start of Adding IR 18060199 for A607	
+	      // Start of IR 18060199
+       var PrintType = ""
+       var printerName = "" 
+       var tranno = ""
+        	try
+        	{
+        		tranno = objXMLDocument.selectSingleNode('componentDocuments/componentDocument/body/screenDataOriginal/TranNo').text 
+	   		}
+	   		catch(e){}
+	switch(tranno)
+   			 {
+		        case "001500":
+		        case "001505":
+			        try
+			        {
+			        	printerName = objXMLDocument.selectSingleNode('componentDocuments/componentDocument/body/queueData/printerName').text
+			        	PrintType = "1"
+			            break;
+			        }
+			        catch(e)
+			        {
+			        	 	try
+			        		{
+					        	printerName = objXMLDocument.selectSingleNode('componentDocuments/componentDocument/body/screenData1/printerQueue/printerName').text
+					        	PrintType = "1"
+					            break;
+					        }
+					        catch(e){break;}
+
+			        } 
+
+
+		        case "001600":
+		        case "001620":
+			        try
+			        {
+			        	printerName = objXMLDocument.selectSingleNode('componentDocuments/componentDocument/body/queueData/printerName').text
+			        	PrintType = "2"
+			            break;
+			        }
+			        catch(e)
+			        {
+			        	 	try
+					        {
+					        	printerName = objXMLDocument.selectSingleNode('componentDocuments/componentDocument/body/screenData1/printerQueue/printerName').text
+					        	PrintType = "2"
+					            break;
+					        }
+			        		catch(e){break;}
+			        } 
+
+
+		        case "000700":
+		        case "000704":
+		        case "010712":
+			        try
+			        {
+			        	printerName = objXMLDocument.selectSingleNode('componentDocuments/componentDocument/body/queueData/printerName').text
+			        	PrintType = "3"
+			            break;
+			        }
+			        catch(e)
+			        {
+			        	    try
+					        {
+					        	printerName = objXMLDocument.selectSingleNode('componentDocuments/componentDocument/body/screenData1/printerQueue/printerName').text
+					        	PrintType = "3"
+					            break;
+					        }
+			        		catch(e){break;} 
+			        } 
+
+
+
+		        case "000504":
+		        case "000506":
+			        try
+			        {
+			        	printerName = objXMLDocument.selectSingleNode('componentDocuments/componentDocument/body/queueData/printerName').text
+			        	PrintType = "4"
+			            break;
+			        }
+			        catch(e)
+			        {
+			        	try
+				        {
+				        	printerName = objXMLDocument.selectSingleNode('componentDocuments/componentDocument/body/screenData1/printerQueue/printerName').text
+				        	PrintType = "4"
+				            break;
+				        }
+				        catch(e){break;} 
+				    } 
+				    
+		        case "021018":
+		        case "TransferBatch":
+		        case "MultipleRemittances":
+		        case "021018MULTI":
+			        try
+			        {
+			        	printerName = objXMLDocument.selectSingleNode('componentDocuments/componentDocument/body/queueData/printerName').text
+			        	PrintType = "5"
+			            break;
+			        }
+			        catch(e)
+			        {
+			        	 try
+				        {
+				        	printerName = objXMLDocument.selectSingleNode('componentDocuments/componentDocument/body/screenData1/printerQueue/printerName').text
+				        	PrintType = "5"
+				            break;
+				        }
+				        catch(e){break;} 
+			        } 
+		        default : 
+            }
+
+	// End of IR 18060199
+	// End of Adding IR 18060199 for A607
+        if (bAsync)
+        { 
+            moXMLHTTP.onreadystatechange = receiveDocument;
+            moXMLHTTP.open("POST", strDest, bAsync);
+	    // start of adding ir 17090131 for A588
+            // start of ir 17090131
+            // moXMLHTTP.send(objXMLDocument);
+	    	      // Start of Adding IR 18060199 for A607
+            // Start of IR 18060199
+            try
+			{
+				if(printerName != "" && PrintType != "")
+				{
+	            moXMLHTTP.setRequestHeader("X-PRINTERNAME", printerName);
+	            moXMLHTTP.setRequestHeader("X-PRINTERTYPE", PrintType);
+	        	}
+		    }
+			catch(e)
+			{
+				alert("Header Error : " + e.message);
+			}
+			// End of IR 18060199
+			// End of Adding IR 18060199 for A607
+            moXMLHTTP.send(res);
+            // end of ir 17090131
+	    // end of adding ir 17090131 for A588
+        }
+        else
+        {
+            moXMLHTTP.open("POST", strDest, bAsync);
+	    // start of adding ir 17090131 for A588
+            // start of ir 17090131
+            // moXMLHTTP.send(objXMLDocument);
+	    	      // Start of Adding IR 18060199 for A607
+        	// Start of IR 18060199
+            try
+			{
+				if(printerName != "" && PrintType != "")
+				{
+	            moXMLHTTP.setRequestHeader("X-PRINTERNAME", printerName);
+	            moXMLHTTP.setRequestHeader("X-PRINTERTYPE", PrintType);
+	        	}
+		    }
+			catch(e)
+			{
+				alert("Header Error : " + e.message);
+			}
+			// End of IR 18060199
+		    // End of Adding IR 18060199 for A607
+             moXMLHTTP.send(res);
+             // end of ir 17090131
+	     // end of adding ir 17090131 for A588
+            receiveDocument();
+        }
+    }
+    else
+    {
+    hideBusy()
+    //start of ir 73956
+//    alert("Please Enter Password to Unlock and Proceed");
+ alert("Please Authenticate and Proceed");
+    //end of ir 73956
+    return false;
+	}
+}
+//START of Adding IR 15110017 for A579
+//START IR 15110017
+
+function CallSendDocumentNotification(payload, bAsync){
+
+	var objXMLDocument;
+
+	  var  xmlComDoc = "<componentDocuments>"
+	    xmlComDoc += "<componentDocument version='2.0'>"
+	    xmlComDoc += "  <header>"
+	    xmlComDoc += "      <flow ID='Fetch70805' nodeID='MenuStart' >"
+	    xmlComDoc += "          <rootPath></rootPath>"   // Back end will resolve the root path
+	    xmlComDoc += "          <fileName>xml/workflows/Fetch70805.xml</fileName>" 
+	    xmlComDoc += "      </flow>"
+	    xmlComDoc += "      <component ID='MainScreen'>"
+	    xmlComDoc += "            <method result='DefaultTransmit' /><properties></properties>"
+	    xmlComDoc += "      </component>"
+	    xmlComDoc += "  </header>"
+	    xmlComDoc += "  <body>"
+	    xmlComDoc += "<screenData persist='True'><screenMode>main</screenMode><accntNumber1>"+payload+"</accntNumber1><TranNo>070805</TranNo></screenData>"
+	    xmlComDoc += "<Gateways persist='True'></Gateways></body>"
+	    xmlComDoc += "</componentDocument>"
+	    xmlComDoc += "</componentDocuments>"
+	    
+	    objXMLDocument = new ActiveXObject("Microsoft.XMLDOM");
+	    objXMLDocument.async = false;
+	    if (!objXMLDocument.loadXML(xmlComDoc))
+	        throw (new Error(1234, objXMLDocument.parseError.reason))	
+
+	 try
+     {  
+       var lockVal=dialogArguments.document.frames("MainScreen").parent.document.all('countVal').value
+           if(lockVal==1)
+	   {
+	    alert("Please Authenticate and Proceed")
+	      hideBusy()
+	    return false;
+	   }
+     }
+ 	 catch(e){}
+ 
+	if(isLocked == false)
+	{        
+        if (objXMLDocument == null)
+        {
+            return 
+	}
+        
+        if (bAsync == null)
+            bAsync = true
+
+        try
+        {   
+            setLastClearingType(objXMLDocument.selectSingleNode('componentDocuments/componentDocument/body/screenData/DefInteger1').text)
+        }
+        catch(e){}
+        try
+        {
+            setLastUsedDate(objXMLDocument.selectSingleNode('componentDocuments/componentDocument/body/screenData/date2').text)
+		}
+		catch(e){}
+       try
+		{
+			setLastCustomer(objXMLDocument.selectSingleNode('componentDocuments/componentDocument/body/screenData/accntNumber1').text) 
+		}
+		 catch(e){}
+		try
+		{ 
+            setLastCityCode(objXMLDocument.selectSingleNode('componentDocuments/componentDocument/body/screenData/CityCode').text)
+        }
+        catch(e){}
+            
+        AppendUserInfo(objXMLDocument)
+            debugAlert("sending " + objXMLDocument.xml)
+        
+        var strDest = document.URLUnencoded;    
+        var sessionVar = "";
+        var sessionPos = "";
+        var sessionID = "";	
+		var sessMoh = "";	
+		var SessionArray;
+
+        try
+        {			
+			sessionID = NewSessionState
+			try
+			{
+			window.parent.frames(1).document.all("InputStringForSession").value = sessionID
+			}
+			catch(e)
+			{
+			}
+
+		}
+        catch(e){ }              
+        
+        setMessageBodyValue(objXMLDocument, "sessionInfo", "SessionID", sessionID)      
+        
+        return objXMLDocument.xml;
+    }
+    else
+    {
+    hideBusy()    
+ 		alert("Please Authenticate and Proceed");   
+    	return false;
+	}
+
+}
+
+//END IR 15110017
+//END of Adding IR 15110017 for A579
+
+function receiveDocument()
+{
+    try
+    {
+        var oXMLFlowDoc
+        // start of ir 17090131
+         var oXMLFlowDoc1
+        oXMLFlowDoc = new ActiveXObject("Microsoft.XMLDOM");
+        // end of ir 17090131
+
+	//Start of reverting IR 71591 & 72297
+//START OF IR 71591 CCBL CHANGES
+//	var sFrame = ""
+//END OF IR 71591 CCBL CHANGES
+//End of reverting IR 71591 & 72297
+        //var moXMLHTTP = getBusyXMLHTTPObject()
+        
+        if (moXMLHTTP.readyState == 4 )
+        {
+	        // start of adding ir 17090131 for A588
+        	// start of ir 17090131
+            // oXMLFlowDoc = moXMLHTTP.responseXML
+            oXMLFlowDoc1 = moXMLHTTP.responseXML
+             // decryp
+         
+            try
+            {
+                var encrypdata = oXMLFlowDoc1.selectSingleNode("root").text
+            }
+            catch (e)
+            {
+                alert("Invalid Request. Kindly contact Administrator.")
+                hideBusy()
+                return false;
+            }
+
+           
+          
+            var key = CryptoJS.enc.Utf8.parse('8080808080808080');
+            var iv = CryptoJS.enc.Utf8.parse('8080808080808080');
+
+             oXMLFlowDoc1 = CryptoJS.AES.decrypt(encrypdata, key,
+{
+    keySize: 128,
+    iv: iv,
+    mode: CryptoJS.mode.CBC,
+   padding: CryptoJS.pad.Pkcs7
+}).toString(CryptoJS.enc.Utf8);
+             
+
+            //identify the script tag
+             var position1 = ((oXMLFlowDoc1.search("<script")) || (oXMLFlowDoc1.search("<Script")))
+            try
+            {
+                
+
+                
+                if (position1 != -1) {
+                    alert("Invalid Request. Kindly contact Administrator.")
+                    hideBusy()
+                    return false;
+
+                }
+            }
+            catch (e)
+            {
+                hideBusy() 
+                alert(e.message)
+            }
+
+            //identify style tag
+            var position1 = ((oXMLFlowDoc1.search("<style")) || (oXMLFlowDoc1.search("<Style")))
+            try {
+
+
+
+                if (position1 != -1) {
+                    alert("Invalid Request. Kindly contact Administrator.")
+                    hideBusy()
+                    return false;
+
+                }
+            }
+            catch (e) {
+                hideBusy()
+                alert(e.message)
+            }
+                      
+            oXMLFlowDoc.loadXML(oXMLFlowDoc1)
+		//------------Start of IR 22060129 (work from anywhere)
+			 try{
+			if(oXMLFlowDoc.selectSingleNode('componentDocuments/componentDocument/body/sessionInfo/SessionID1').text.length != 16)
+			{
+			var hashData = "";
+            		try {hashData = oXMLFlowDoc.selectSingleNode('componentDocuments/componentDocument/body/screenData').text;if(hashData=="0"){throw "No ScreenData";} }
+            		catch (e) {try {hashData = oXMLFlowDoc.selectSingleNode('componentDocuments/componentDocument/body/screenDataOri').text;
+			}
+                	catch (e1) {try {hashData = oXMLFlowDoc.selectSingleNode('componentDocuments/componentDocument/body/screenSettings').text;}
+                    	catch (e2) {hashData = "No ScreenData";}
+                	}
+            		}
+			var reshashKey =oXMLFlowDoc.selectSingleNode('componentDocuments/componentDocument/body/sessionInfo/SessionID1').text.slice(0, 64);
+			if(reshashKey != "0000000000000000000000000000000000000000000000000000000000000000")
+			{
+			hashData=hashData.replace(/\n/g, "").replace(/\r/g, "").replace(/\t/g, "").replace(/\s/g, "");
+			var hashKey = CryptoJS.SHA256(hashData).toString(CryptoJS.enc.hex);
+			if(hashKey.toLowerCase()!=reshashKey.toLowerCase())
+			{	 
+			window.showModalDialog("html/statusError.htm", "Error"); return false;}}}
+			}catch(e3){}
+			//------------End of IR 22060129 (work from anywhere)
+            // end of ir 17090131
+	     // end of adding ir 17090131 for A588
+	    //start of ir 73927
+                 var lockUp ="";
+		 // start of adding ir 17090131 for A588
+                 // start of ir 17090131
+                   var timeGap = ""
+                 // end of ir 17090131
+		 // end of adding ir 17090131 for A588
+	       try
+	       {
+	      lockUp = oXMLFlowDoc.selectSingleNode("componentDocuments/componentDocument/lockUp").text
+	      }
+	      catch(eee){}
+	      // start of adding ir 17090131 for A588
+	      // start of ir 17090131
+	      try{
+	      	timeGap = oXMLFlowDoc.selectSingleNode("componentDocuments/componentDocument/timeGap").text
+	      }
+	     catch(e){}
+	      if (timeGap == "false")
+	      {
+	      	alert("Your request has been timed out.Kindly Process Again")
+	      	hideBusy()
+	      	   return false;
+	      	
+	      }
+	      // end of ir 17090131
+	      // end of adding ir 17090131 for A588
+	      if(lockUp=="true")
+	      {	      
+                changeLockCount(1)
+	      	var sTeller = GetUserInfo("TellerNo")
+	 	var moFlow=window.document.body.all("MainScreen")
+			var sMessageBody = "<screenData>" + "<tellerNo>" + sTeller + "</tellerNo>" + "</screenData>"	
+			moFlow.startFlow(window.document.body,null,"LockingFlow","LockStart",sMessageBody,true)
+		return false;
+	      }
+	      else if(lockUp=="false")
+	      {
+	         hideBusy()
+	      return false;
+	      }
+	      	    //end of ir 73927
+            debugAlert("HOST RESPONSE " + oXMLFlowDoc.xml)
+            hideBusy()
+            if (oXMLFlowDoc.xml == "")
+                // There was a serious server error.
+                if (moXMLHTTP.responseText == "")
+                    alert("No data was received from the Web Server: Server may not be started")
+                else {
+                    var sResponseText = moXMLHTTP.responseText
+                    window.showModalDialog("html/statusError.htm", sResponseText)
+                }
+            else
+            {
+                // Save the message
+                var oComponentDocumentNodes = oXMLFlowDoc.selectNodes("componentDocuments/componentDocument")
+                var i
+                
+                if (oComponentDocumentNodes.length != 0)
+                {
+                    moLastComponentDocuments = oXMLFlowDoc
+                    for (i = 0;i < oComponentDocumentNodes.length ;i++)
+                    {
+                        var oComponentDocumentNode = oComponentDocumentNodes.item(i)
+                        var strComName = getComponentName(oComponentDocumentNode);
+//Start of reverting IR 71591 & 72297
+//START OF IR 71591 CCBL CHANGES
+				/*if(strComName == "MainScreen")
+				{
+					try
+					{
+						sFrame = oComponentDocumentNode.selectSingleNode("//componentDocument/body/Frame").text	
+					
+						//alert(sFrame)
+					}
+					catch(e)
+					{
+						//alert(e.message)
+					}
+					
+					switch (sFrame.toLowerCase()) 
+					{
+						case "menutree":
+							strComName = "MainScreen"
+							break
+							
+						case "customermenu":
+							strComName = "CustomerScreen"
+							break
+						
+						case "accountmenu":
+							strComName = "AccountScreen"
+							break
+						
+						case "transactionmenu":
+							strComName = "TransactionScreen"
+							break
+						
+						default:
+							strComName = "MainScreen"
+					}
+					//Start of IR 72297
+					if(moCCBL == "True")
+					{
+					try
+						{
+						if (strComName.toLowerCase() == "menutree")
+							strComName = "MainScreen"
+						}
+					catch(e)
+						{
+						}
+					}
+					//End of ir 72297
+				}
+				//START OF IR 71591 
+				else
+				{
+				//Start of changes for IR 71591  
+				if(moCCBL == "True")
+				//End of changes for IR 71591
+				{
+				try
+				    {
+						if (strComName.toLowerCase() == "menutree")
+							strComName = "MainScreen"
+				    }
+				    catch(e)
+				    {
+						//moCCBL = "False"
+				    }
+				  }
+				}*/
+				    
+				    //END OF IR 71591
+//END OF IR 71591 CCBL CHANGES
+//End of reverting IR 71591 & 72297
+
+                        // This is where the Component is called
+                        var oCom = window.document.body.all(strComName);
+                        
+                        if (oCom == null || strComName == null)
+                            alert('Return message contains target component "' + strComName + '" which does not exist.')
+                        else
+                        {
+                            var oComponentDocument = new ActiveXObject("Microsoft.XMLDOM");
+                            if (oComponentDocument.loadXML("<componentDocuments>" + oComponentDocumentNode.xml + "</componentDocuments>"))
+                               oCom.processDocumentInternal(oComponentDocument);
+                            else
+                               alert("Invalid message returned from host: " + oComponentDocument.parseError.reason)  
+                        }
+                    }
+             //Start of R373 for reverting IR 71057
+		    //Start of IR 71057 by Mohandas
+		/*
+		 try
+		{
+
+		if(oComponentDocument.selectSingleNode("componentDocuments/componentDocument/body/sessionInfo/SessionError").text=='DuplicateSession')
+		{
+		
+		//sendSignOffStart("SignoffMinimum")
+		sendSignOffForOffline("SignOffFull") 
+		//setMessageBodyValue(msgDoc, "userInfo", "Mode", moMode)
+		//alert("hi");
+		//top.close();
+		//window.frameElement.containerBody.sendSignOff();
+		//alert("Closing The Window For Security Reasons")
+		//alert("You Have Already Signed Off.")
+		//top.close();
+		top.focus();
+		top.opener = top;
+		top.close();
+		//alert("You Have already signed off");
+		}
+
+		}
+		catch(e) 
+		{
+		
+		}
+		*/
+		//End of IR 71057 by Mohandas
+		//End of R373 for reverting IR 71057
+                }
+            }
+         }
+         
+     }
+     catch(e) 
+     {
+        hideBusy()
+        alert(e.message)
+     }
+}
+
+function getLastXMLComponentDocuments(sComponentID)
+{
+    try
+    {
+        return moLastComponentDocuments.selectNodes("componentDocuments/componentDocument[header/component/@ID='" + sComponentID + "']")
+    }
+    catch (e)  {return null}
+
+}
+
+function showBusy(bClear)
+{
+    try
+    {
+        
+        //var oStatusText = frameElement.document.frames("StatusBar").document.all("statusText")
+	//var oStatusImage = frameElement.document.frames("StatusBar").document.all("statusImage")
+
+	/* Added by Saurabh to Make Transfer Batch Status Bar Work : Start*/
+        
+	if (frameElement!=null)
+		
+	{
+		if (frameElement.src == "html/069030.htm")	
+		{
+			var oStatusText = frameElement.document.parentWindow.parent.frames("StatusBar").document.all("statusText")
+			var oStatusImage = frameElement.document.parentWindow.parent.frames("StatusBar").document.all("statusImage")
+		}
+		else
+		{
+			var oStatusText = frameElement.document.frames("StatusBar").document.all("statusText")
+			var oStatusImage = frameElement.document.frames("StatusBar").document.all("statusImage")
+		}
+	}			
+	else
+	{	
+		var oStatusText = window.document.all("Statusbar").contentWindow.document.all("statusText")	
+		var oStatusImage = window.document.all("Statusbar").contentWindow.document.all("statusImage")
+	}
+	/* Added by Saurabh to Make Transfer Batch Status Bar Work : Start*/
+
+        
+        if (bClear == true) {
+            oStatusText.innerHTML =  "Processing..."
+        }
+        oStatusImage.src = "../images/busy.gif"
+        window.status = "Processing..."
+    }
+    catch(e) {} //{alert("showBusy:" + e)}
+    //Alert has been blocked by Vishak for preventing showbusy being thrown up
+}
+
+
+function hideBusy()
+{
+    try
+    {
+        //var oStatusText
+        //oStatusText = frameElement.document.frames("StatusBar").document.all("statusText")
+        
+
+
+	/* Added by Saurabh to Make Transfer Batch Status Bar Work : Start*/
+        
+	if (frameElement!=null)
+		
+	{
+		if (frameElement.src == "html/069030.htm")	
+		{
+			var oStatusText = frameElement.document.parentWindow.parent.frames("StatusBar").document.all("statusText")
+			var oStatusImage = frameElement.document.parentWindow.parent.frames("StatusBar").document.all("statusImage")
+		}
+		else
+		{
+			var oStatusText = frameElement.document.frames("StatusBar").document.all("statusText")
+			var oStatusImage = frameElement.document.frames("StatusBar").document.all("statusImage")
+		}
+	}			
+	else
+	{	
+		var oStatusText = window.document.all("Statusbar").contentWindow.document.all("statusText")	
+		var oStatusImage = window.document.all("Statusbar").contentWindow.document.all("statusImage")
+	}
+	/* Added by Saurabh to Make Transfer Batch Status Bar Work : Start*/
+        if (oStatusText.innerText == "Processing...")
+        {
+            // only clear if no custom messages are displayed
+            //var oStatusImage = frameElement.document.frames("StatusBar").document.all("statusImage")
+            oStatusImage.src = "../images/greyblock.jpg"
+            window.status = ""
+            oStatusText.innerHTML = ""
+        }
+        //oBody.style.cursor = "auto" 
+    }
+    catch(e) //{alert("hideBusy: " + e)}
+	{}
+    //Alert has been blocked by Vishak for preventing hidebusy being thrown up	
+}
+
+// Teller logon info
+function SetUserInfo(pMessage)
+{       
+   //start of ir 73983
+     try
+    {
+        moGroup = pMessage.selectSingleNode('..//screenData/DefInteger4').text
+    }
+    catch(e){}
+//end of ir 73983
+
+
+	try
+    {
+        moInstitutionNo = pMessage.selectSingleNode('..//screenData/InstitutionNo').text
+    }
+    catch(e){alert("Error loading InstitutionNo " + e.message)}
+
+    try
+    {
+        moBranchNo = pMessage.selectSingleNode('..//screenData/BranchNo').text
+    }
+    catch(e){alert("Error loading BranchNo " + e.message)}
+    // Start of adding of IR 17120147 for A593
+    //Start of IR 17120147
+     try
+    {
+        moIP = pMessage.selectSingleNode('..//userInfo/IP').text
+    }
+    catch(e){alert("Error loading IP " + e.message)}
+    //End of IR 17120147
+    // End of adding of IR 17120147 for A593
+    try
+    {
+        moTellerNo = pMessage.selectSingleNode('..//screenData/TellerNo').text
+    }
+    catch(e){alert("Error loading TellerNo " + e.message)}
+
+        try
+    {
+		if (pMessage.selectSingleNode("TranNo").text == "009605")
+		{
+			moCapability = pMessage.selectSingleNode('..//screenData/DefInteger11').text
+        }
+        else
+        {
+			moCapability = pMessage.selectSingleNode('..//screenData/capability1').text
+        }
+    }
+    catch(e){alert("Error loading Capability " + e.message)}
+
+
+    try
+    {
+        moHostDate = pMessage.selectSingleNode('..//screenData/date1').text
+    }
+    catch(e){alert("Error loading Date " + e.message)}
+    
+    try
+    {
+        moBankCode = pMessage.selectSingleNode('..//userInfo/BankCode').text
+    }
+    catch(e){alert("Error loading BankCode " + e.message)}
+
+    try
+    {
+        moWorkstationNo = pMessage.selectSingleNode('..//screenData/WorkstationNo').text
+    }
+    catch(e){alert("Error loading WorkstationNo " + e.message)}
+
+        try
+    {
+		if (pMessage.selectSingleNode("TranNo").text == "009605")
+		{
+			moUserType = pMessage.selectSingleNode('..//screenData/DefInteger16').text
+        }
+        else
+        {
+			moUserType = pMessage.selectSingleNode('..//screenData/DefInteger6').text
+        }
+    }
+    catch(e){alert("Error loading UserType " + e.message)}
+
+
+    try
+    {
+		moURL = strURL;
+    }
+    catch(e){alert("Error loading URL Path " + e.message)}
+    
+    try
+    {	//Saurabh: To treat EoD mode same as ONLINE
+		moMode = pMessage.selectSingleNode('..//userInfo/Mode').text
+		if (moMode == "EOD")
+			moMode = "ONLINE"
+    }
+    catch(e){alert("Error loading Mode " + e.message)}
+   
+    try
+    {
+		moShadowFiles = pMessage.selectSingleNode('..//screenData/ShadowFiles').text
+    }
+    catch(e){alert("Could not Load Shadow Files")}
+    
+    try
+    {
+		moCPC = pMessage.selectSingleNode('..//screenData/PCBRFLAG').text
+		if (moCPC == "")
+		{
+			//moCPC = "1"
+			moCPC = "2"
+		}
+		
+    }
+    catch(e){moCPC = "2"}
+    
+    try
+    {
+		moLPC = pMessage.selectSingleNode('..//screenData/LPCFLAG').text
+		if (moLPC == "")
+		{
+			moLPC = "0"
+		}
+		
+    }
+    catch(e)
+    {
+    //moLPC = "0"
+    moLPC = "1"
+    }
+    
+    try
+    {
+		moIOIPRINT = pMessage.selectSingleNode('..//screenData/IOIPRINT').text
+		if (moIOIPRINT == "")
+		{
+			moIOIPRINT = "N"
+		}
+		
+    }
+    catch(e)
+    {
+		moIOIPRINT = "N"
+    }
+    
+    try
+    {	//added by srivalli for bprflag
+		var bprFlag 
+		bprFlag = pMessage.selectSingleNode('..//screenData/BPRFlag').text
+		if(bprFlag == "Y")
+		{	moBPRFlag = "true"	}
+		
+    }
+    catch(e){alert("Error Loading BPR Flag" + e.message)}
+//Start of reverting IR 71591 & 72297
+//START OF IR 71591 CCBL CHANGES
+/*    try
+    {
+		moCCBL = window.document.all("LoadInit").CustomerCentricScreen
+    }
+    catch(e)
+    {
+		moCCBL = "False"
+    }*/
+//End of reverting IR 71591 & 72297
+
+    //Start of IR 71896
+    try
+    {
+        moIS_SCAB = pMessage.selectSingleNode('..//screenData/IS_SCAB').text
+    }
+    catch(e)
+    {
+    moIS_SCAB="N";
+    //alert("Error loading IS_SCAB " + e.message)
+    }
+    //End of IR 71896
+//Start of R373 for reverting IR 73428
+//Start of IR 73428
+/*
+try
+	{
+	BOGMessageTemp = pMessage.selectSingleNode('..//screenData/DefaultString9').text + " " + pMessage.selectSingleNode('..//screenData/DefaultString10').text + " " + pMessage.selectSingleNode('..//screenData/DefaultString11').text + " " + pMessage.selectSingleNode('..//screenData/DefaultString12').text
+		BOGMessage = pMessage.selectSingleNode('..//screenData/DefaultString9').text + "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" + pMessage.selectSingleNode('..//screenData/DefaultString10').text + "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" + pMessage.selectSingleNode('..//screenData/DefaultString11').text + "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" + pMessage.selectSingleNode('..//screenData/DefaultString12').text
+		if(Trim(BOGMessageTemp) == "")
+			BOGMessage = "Welcome to CBS. Contact HelpDesk for any support required."
+	}
+	catch(e) {
+			BOGMessage = "Welcome to CBS. Contact HelpDesk for any support required."
+	}
+*/
+//End of IR 73428
+//End of R373 for reverting IR 73428
+//Start of R373 for reverting IR 75262
+//Start OF IR 75262
+/*
+try
+{
+var BogColor
+var oxmlDocument = new ActiveXObject("Microsoft.XMLDOM");
+myXmlDoc = loadXMLDoc("/FTPBogMessage.xml");
+var message1;
+var message2;
+var message3;
+var message4;
+try
+{ message1 = myXmlDoc.getElementsByTagName("MessageNode/Message1")[0].nodeTypedValue; }
+catch(e)
+{ message1 = "" }
+try
+{ message2 = myXmlDoc.getElementsByTagName("MessageNode/Message2")[0].nodeTypedValue; }
+catch(e)
+{ message2 = "" }
+try
+{ message3 = myXmlDoc.getElementsByTagName("MessageNode/Message3")[0].nodeTypedValue; }
+catch(e)
+{ message3 = "" }
+try
+{ message4 = myXmlDoc.getElementsByTagName("MessageNode/Message4")[0].nodeTypedValue; }
+catch(e)
+{ message4 = "" }
+
+BogColor = "#006400";
+BOGMessage = BOGMessage + "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"
+
+if(message1.replace(/(?:(?:^|\n)\s+|\s+(?:$|\n))/g,'').replace(/\s+/g,' ') != "")
+BOGMessage = BOGMessage + "<Font color=" + BogColor + " >" + message1 + "</Font>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"
+
+if(message2.replace(/(?:(?:^|\n)\s+|\s+(?:$|\n))/g,'').replace(/\s+/g,' ') != "")
+BOGMessage = BOGMessage + "<Font color=" + BogColor + " >" + message2 + "</Font>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"
+
+if(message3.replace(/(?:(?:^|\n)\s+|\s+(?:$|\n))/g,'').replace(/\s+/g,' ') != "")
+BOGMessage = BOGMessage + "<Font color=" + BogColor + " >" + message3 + "</Font>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"
+
+if(message4.replace(/(?:(?:^|\n)\s+|\s+(?:$|\n))/g,'').replace(/\s+/g,' ') != "")
+BOGMessage = BOGMessage + "<Font color=" + BogColor + " >" + message4 + "</Font>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"
+
+}
+catch(e)
+{
+}
+*/
+//End OF IR 75262
+//End of R373 for reverting IR 75262
+
+    //Start of IR 73050
+    try
+    {
+        AmtThd = pMessage.selectSingleNode('..//screenData/THRESHOLD').text
+    }
+    catch(e)
+    {
+    AmtThd = "0"
+    //alert("Error loading THRESHOLD " + e.message)
+    }
+    //End of IR 73050
+
+
+//END OF IR 71591 CCBL CHANGES
+    //Start of IR 71607
+    	try
+    {
+        moflag = pMessage.selectSingleNode('..//Login/flag').text
+    }
+    catch(e){moflag = "N"}
+    //end of IR 71607
+    //Start of R373 for reverting IR 73428
+    //Start of IR 73428
+	//RefreshBOGTicker();	
+    //End of IR 73428	
+    //End of R373 for reverting IR 73428
+	RefreshStatusBar();
+        
+}
+//Start of R373 for reverting IR 75262
+//Start OF IR 75262
+/*
+function loadXMLDoc(filename)
+{
+if(window.XMLHttpRequest)
+{
+xhttp = new XMLHttpRequest();
+}
+else
+{
+xhttp = new ActiveXObject("Microsoft.XMLHTTP");
+}
+xhttp.open("GET",filename,false);
+xhttp.send();
+return xhttp.responseXML;
+}
+*/
+//End OF IR 75262
+//End of R373 for reverting IR 75262
+//Start Of IR 75566
+function loadXMLFile(filename)
+{
+if(window.XMLHttpRequest)
+{
+xhttp = new XMLHttpRequest();
+}
+else
+{
+xhttp = new ActiveXObject("Microsoft.XMLHTTP");
+}
+xhttp.open("GET",filename,false);
+xhttp.send();
+return xhttp.responseXML;
+}
+//End Of IR 75566
+function AppendUserInfo(msgDoc)
+	//***********************************************************
+	// Component Name     : AppendUserInfo
+	// Purpose            : Appends the current user info to the outgoing message
+	//                    : 
+	// Date Created       : 29/01/2003
+	// Version            : 1.1.0
+	// Author             : 
+	// Amendment History  :
+	//***********************************************************
+	//   Date        Author      Description
+	//   : -----------------------------------------------------
+	//
+	//***********************************************************
+{
+    try
+    {
+		//debugger
+		if (moBranchNo == "" || moBranchNo == "0")
+		{
+			try
+			{
+				moInstitutionNo = dialogArguments.document.body.GetUserInfo("InstitutionNo")
+				moBranchNo = dialogArguments.document.body.GetUserInfo("BranchNo")
+				// Start of adding of IR 17120147 for A593
+				//Start of IR 17120147
+				try
+				{
+				moIP = dialogArguments.document.body.GetUserInfo("IP")
+				}
+				catch(e){}
+				//End of IR 17120147
+				// End of adding of IR 17120147 for A593
+				moTellerNo = dialogArguments.document.body.GetUserInfo("TellerNo")
+				moWorkstationNo = dialogArguments.document.body.GetUserInfo("WorkstationNo")
+				moCapability = dialogArguments.document.body.GetUserInfo("Capability")
+				moHostDate = dialogArguments.document.body.GetUserInfo("HostDate")
+				moLogonStatus = dialogArguments.document.body.GetUserInfo("LOGONSTATUS")
+				moMode = dialogArguments.document.body.GetUserInfo("Mode")
+				moUserType = dialogArguments.document.body.GetUserInfo("UserType")
+				moURL = dialogArguments.document.body.GetUserInfo("URL")
+				moShadowFiles = dialogArguments.document.body.GetUserInfo("ShadowFiles")
+				moCPC = dialogArguments.document.body.GetUserInfo("CPC")
+				moLPC = dialogArguments.document.body.GetUserInfo("LPC")
+				moIOIPRINT = dialogArguments.document.body.GetUserInfo("IOIPRINT")
+				moTimeout = dialogArguments.document.body.GetUserInfo("Timeout")
+				//Start of R373 for reverting IR 73428
+				//Start OF IR 73428
+				//moBogTimeout = dialogArguments.document.body.GetUserInfo("BogTimeout")
+				//End OF IR 73428
+				//End of R373 for reverting IR 73428
+					//Start OF R386 for add  IR 17020013
+				//Start OF maintrunk IR 17020013
+				try
+				{
+				moVirtualFlag = dialogArguments.document.body.GetUserInfo("VirtualFlag")
+				moVirtualIP = dialogArguments.document.body.GetUserInfo("VirtualIP")
+				}
+				catch(e){}
+				//End OF maintrunk IR 17020013
+				//End OF R386 for add  IR 17020013
+				moBPRFlag = dialogArguments.document.body.GetUserInfo("BPRFlag")//bpr
+//Start of reverting IR 71591 & 72297
+//START OF IR 71591 CCBL CHANGES
+				//moCCBL = dialogArguments.document.body.GetUserInfo("CCBL")
+//END OF IR 71591 CCBL CHANGES
+//End of reverting IR 71591 & 72297
+			//Start of IR 71896
+			moIS_SCAB = dialogArguments.document.body.GetUserInfo("IS_SCAB")
+			//End of IR 71896
+			//Start of IR 73050
+			AmtThd = dialogArguments.document.body.GetUserInfo("THRESHOLD")
+			//End of IR 73050
+			}
+			catch(e){}
+		}
+		
+		//else
+		//{
+        setMessageBodyValue(msgDoc, "userInfo", "InstitutionNo", moInstitutionNo)
+        setMessageBodyValue(msgDoc, "userInfo", "BranchNo", moBranchNo)
+        setMessageBodyValue(msgDoc, "userInfo", "TellerNo", moTellerNo)
+        setMessageBodyValue(msgDoc, "userInfo", "WorkstationNo", moWorkstationNo)
+        setMessageBodyValue(msgDoc, "userInfo", "Capability", moCapability)
+        setMessageBodyValue(msgDoc, "userInfo", "HostDate", moHostDate)
+        setMessageBodyValue(msgDoc, "userInfo", "LOGONSTATUS", moLogonStatus)
+        setMessageBodyValue(msgDoc, "userInfo", "Mode", moMode)
+		setMessageBodyValue(msgDoc, "userInfo", "UserType", moUserType)
+		setMessageBodyValue(msgDoc, "userInfo", "URL", moURL)
+		setMessageBodyValue(msgDoc, "userInfo", "ShadowFiles", moShadowFiles)
+		setMessageBodyValue(msgDoc, "userInfo", "CPC", moCPC)
+		setMessageBodyValue(msgDoc, "userInfo", "LPC", moLPC)
+		setMessageBodyValue(msgDoc, "userInfo", "IOIPRINT", moIOIPRINT)
+        setMessageBodyValue(msgDoc, "userInfo", "Timeout", moTimeout)
+    //Start of R373 for reverting IR 73428
+	//Start OF IR 73428
+	//setMessageBodyValue(msgDoc, "userInfo", "BogTimeout", moBogTimeout)
+	//End OF IR 73428
+	//End of R373 for reverting IR 73428
+	//Start OF R386 for add  IR 17020013
+//Start Of maintrunk IR 17020013
+	setMessageBodyValue(msgDoc, "userInfo", "VirtualFlag", moVirtualFlag)
+	setMessageBodyValue(msgDoc, "userInfo", "VirtualIP", moVirtualIP)
+	//End Of maintrunk IR 17020013
+		//End OF R386 for add  IR 17020013
+        setMessageBodyValue(msgDoc, "userInfo", "BPREnabled", moBPRFlag)//bpr
+//Start of reverting IR 71591 & 72297
+//START OF IR 71591 CCBL CHANGES
+//        setMessageBodyValue(msgDoc, "userInfo", "CCBL", moCCBL)
+//END OF IR 71591 CCBL CHANGES
+//End of reverting IR 71591 & 72297
+//Start of IR 71896
+setMessageBodyValue(msgDoc, "userInfo", "IS_SCAB", moIS_SCAB)
+//End of IR 71896
+//Start of IR 73050
+setMessageBodyValue(msgDoc, "userInfo", "THRESHOLD", AmtThd)
+//End of IR 73050
+//Start of IR 71607
+setMessageBodyValue(msgDoc, "userInfo", "BioFlag", moflag)
+//End of IR 71607
+
+//start of ir 73983
+setMessageBodyValue(msgDoc, "userInfo", "Group", moGroup)
+//end of ir 73983
+// Start of adding of IR 17120147 for A593
+//Start of IR 17120147
+setMessageBodyValue(msgDoc, "userInfo", "IP", moIP)
+//End of IR 17120147
+// End of adding of IR 17120147 for A593
+        //}
+
+		
+    }
+    catch(e){alert("Error appending user info to message: " + e.message )}
+}
+
+function setAttributeValue(XmlElement, sAttributeName, sValue)
+{
+    xmlAttribute = XmlElement.attributes.getNamedItem(sAttributeName)
+    if (xmlAttribute == null)
+    {
+        xmlAttribute = XmlElement.ownerDocument.createAttribute(sAttributeName)
+        xmlAttribute.value = sValue
+        XmlElement.attributes.setNamedItem(xmlAttribute)
+    }
+    else
+    {
+        xmlAttribute.value = sValue
+    }
+    
+}
+
+function setMessageBodyValue(oNewComponentDocument, sDataGroup, sDataItemName, sValue, bPersist)
+{
+    var oPropertyGroupElement
+    var oPropertyElement
+    
+    oPropertyGroupElement = oNewComponentDocument.selectSingleNode("componentDocuments/componentDocument/body/" + sDataGroup)
+    
+    if (oPropertyGroupElement == null)
+    {
+        oPropertyGroupElement = oNewComponentDocument.createElement(sDataGroup)
+        oNewComponentDocument.selectSingleNode("componentDocuments/componentDocument/body").appendChild(oPropertyGroupElement)
+        if (bPersist == null)
+            bPersist = true
+    }
+    
+    if (bPersist != null)
+    {
+        var sPersist
+        if (bPersist)
+            sPersist = "True"
+        else
+            sPersist = "False"
+        setAttributeValue(oPropertyGroupElement, "persist", sPersist)
+    }
+    
+    oPropertyElement = oPropertyGroupElement.selectSingleNode(sDataItemName)
+    
+    if (oPropertyElement == null)
+    {
+        oPropertyElement = oNewComponentDocument.createElement(sDataItemName)
+        oPropertyGroupElement.appendChild(oPropertyElement)
+    }
+            
+    oPropertyElement.text = sValue
+}
+
+function SetUserStatus(Status)
+	//***********************************************************
+	// Component Name     : SetUserStatus
+	// Purpose            : Sets the current logged on status of the user
+	//                    : 
+	// Date Created       : 29/01/2003
+	// Version            : 1.1.0
+	// Author             : 
+	// Amendment History  :
+	//***********************************************************
+	//   Date        Author      Description
+	//   : -----------------------------------------------------
+	//
+	//***********************************************************
+{
+    switch (Status)
+    {
+        case "LOGGEDON" :
+            moLogonStatus = "LOGGEDON"
+            RefreshToolbar();
+            //RefreshMenu();
+            break;
+
+        case "LOGGEDOFF" :
+            moLogonStatus = "LOGGEDOFF"
+            RefreshToolbar()
+            //CloseApp()
+            break; 
+
+        default : 
+    }
+    RefreshStatusBar();
+}
+    
+    
+
+function RefreshToolbar()
+	//***********************************************************
+	// Component Name     : RefreshToolbar
+	// Purpose            : Refreshes the current enabled status of the tools on the toolbar
+	//                    : 
+	// Date Created       : 30/01/2003
+	// Version            : 1.1.0
+	// Author             : 
+	// Amendment History  :
+	//***********************************************************
+	//   Date        Author      Description
+	//   : -----------------------------------------------------
+	//
+	//***********************************************************
+{
+
+    var oToolbarComponent
+    try {
+        //oToolbarComponent = document.frames("Toolbar")
+        
+        //oToolbarComponent = element.document.frames("ToolBar")
+        var oCom = window.document.body.all("ToolBar")        
+        oCom.setToolbarEnabled()
+        
+    }
+//Start of reverting IR 71591 & 72297
+//START OF IR 71591 CCBL CHANGES
+    catch (e) {alert("There was an error Refreshing the toolbar.")}
+//	catch (e) {}
+//END OF IR 71591 CCBL CHANGES
+//End of reverting IR 71591 & 72297
+}
+    
+function toggleMode() {
+	//***********************************************************
+	// Component Name     : toggleMode
+	// Purpose            : Toggles the Online/Offline mode.
+	//                    :
+	// Date Created       : 29/01/2003
+	// Version            : 1.1.0
+	// Author             : 
+	// Amendment History  :
+	//***********************************************************
+	//   Date        Author      Description
+	//   : -----------------------------------------------------
+	//
+	//***********************************************************
+	
+    if (moMode == "ONLINE")
+        moMode = "OFFLINE"
+    else
+        moMode = "ONLINE"
+
+    //alert("System is now " + moMode)
+    showBusy(true)
+    RefreshStatusBar();
+	RefreshMenu();
+	RefreshToolbar();
+	hideBusy()
+			    
+}
+
+function EoDMode() {
+	//***********************************************************
+	// Component Name     : EoDMode
+	// Purpose            : Swithes to EoD mode.
+	//                    :
+	// Date Created       : 31/05/2003
+	// Version            : 1.1.0
+	// Author             : 
+	// Amendment History  :
+	//***********************************************************
+	//   Date        Author      Description
+	//   : -----------------------------------------------------
+	//
+	//***********************************************************
+	
+    moMode = "EOD"
+   
+    showBusy(true)
+    
+    RefreshStatusBar();
+    RefreshEoDMenu();
+    RefreshToolbar();
+    hideBusy()
+}
+
+//Added by Rahul for changing the mode from ONLINE to OFFLINE
+function OnlineToOfflineMode()
+{
+	//***********************************************************
+	// Component Name     : toggleMode
+	// Purpose            : Switches to Offline Mode.
+	//                    :
+	// Date Created       : 05/08/2004
+	// Version            : 
+	// Author             : 
+	// Amendment History  :
+	//***********************************************************
+	//   Date        Author      Description
+	//   : -----------------------------------------------------
+	//	 05/08/2004  Rahul		Added for switching from Online 
+	//							mode to Offline mode.
+	//***********************************************************
+	
+    moMode = "OFFLINE"
+   
+    /*showBusy(true)
+    RefreshStatusBar();
+	RefreshMenu();
+	RefreshToolbar();
+	hideBusy()	 */
+	// modified by kunal to send signoff for offline 
+	sendSignOffForOffline("SignOffFull") 
+	setMessageBodyValue(msgDoc, "userInfo", "Mode", moMode)
+}
+
+//Added by Rahul to automatically log-off the tellers when the mode changes from OFFLINE to ONLINE
+function OfflineToOnlineMode() {
+	//***********************************************************
+	// Component Name     : OfflineToOnlineMode
+	// Purpose            : Swithes to ONLINE mode and logs-off.
+	//                    :
+	// Date Created       : 03/08/2004
+	// Version            : 
+	// Author             : 
+	// Amendment History  :
+	//***********************************************************
+	//   Date        Author      Description
+	//   : -----------------------------------------------------
+	//	 03/08/2004  Rahul		Added for automatically logging-off 
+	//							tellers when mode changes from Offline
+	//							to Online mode
+	//***********************************************************
+	
+    moMode = "ONLINE"
+   
+    showBusy(true)
+    
+    RefreshStatusBar();
+    //RefreshEoDMenu();
+    RefreshToolbar();
+    hideBusy()
+    sendSignOffStart("SignOffFull") 
+			    
+}
+
+//Saurabh : Loads the Menu for EoD mode
+function RefreshEoDMenu() {
+	//***********************************************************
+	// Component Name     : RefreshEoDMenu
+	// Purpose            : Refreshes the menu for EoD.
+	//                    :
+	// Date Created       : 31/05/2003
+	// Version            : 1.1.0
+	// Author             : 
+	// Amendment History  :
+	//***********************************************************
+	//   Date        Author      Description
+	//   : -----------------------------------------------------
+	//
+	//***********************************************************
+	
+	if (moLogonStatus == "LOGGEDON") 
+	{
+		showBusy(true)
+		try
+        {
+			var sMessage = ""
+            sMessage += "<screenData>"
+            sMessage += "</screenData>"
+        
+			var oFlowComponent = window.document.all("End")
+			// Start of add of IR 17100013 for R386
+			// Start of IR 17100013
+			//Start of Adding IR 16110013 For A585
+			//START OF IR 16110013
+			//Start of Adding IR 18020131 For A588			
+			// Start of IR 18020131
+			//oFlowComponent.startFlow(null, null, "EoDFlow", "StartMenuChange", sMessage, false)
+			 oFlowComponent.startFlow(null, null, "EoDFlowRevamp", "StartMenuChange", sMessage, false)
+			// End of IR 18020131
+			//End of Adding IR 18020131 For A588
+			//END OF IR 16110013
+			//End of Adding IR 16110013 For A585
+			// End of IR 17100013
+			// End of add of IR 17100013 for R386
+		}
+		catch(e){alert("There was an error launching the EoD workflow.")}
+	}	
+	hideBusy()
+			    
+}
+
+
+function RefreshMenu() {
+	//***********************************************************
+	// Component Name     : RefreshMenu
+	// Purpose            : Refreshes the menu.
+	//                    :
+	// Date Created       : 03/02/2003
+	// Version            : 1.1.0
+	// Author             : 
+	// Amendment History  :
+	//***********************************************************
+	//   Date        Author      Description
+	//   : -----------------------------------------------------
+	//
+	//***********************************************************
+	
+	if (moLogonStatus == "LOGGEDON") 
+	{
+		showBusy(true)
+		//RUN THE SWITCHING ONLINE/OFFLINE WORKFLOW TO LOAD THE APPROPRIATE MENU
+		try
+        {
+			var sMessage = ""
+            sMessage += "<screenData>"
+            sMessage += "</screenData>"
+        
+			var oFlowComponent = window.document.all("End")
+			oFlowComponent.startFlow(null, null, "SwitchingOnlineOffline", "start", sMessage, false)
+		}
+		catch(e){alert("There was an error launching the online\offline workflow.")}
+	}	
+	hideBusy()
+			    
+}
+
+
+function ResetUserInfo()
+	//***********************************************************
+	// Component Name     : ResetUserInfo
+	// Purpose            : Resets Default values for User Info.
+	//                    :
+	// Date Created       : 29/01/2003
+	// Version            : 1.1.0
+	// Author             : 
+	// Amendment History  :
+	//***********************************************************
+	//   Date        Author      Description
+	//   : -----------------------------------------------------
+	//
+	//***********************************************************
+{
+    moInstitutionNo = "0"
+    moBranchNo = "0"
+    // Start of adding of IR 17120147 for A593
+    //Start of IR 17120147
+    moIP = "0"
+    //End of IR 17120147
+    // End of adding of IR 17120147 for A593
+    moTellerNo = "0"
+    moWorkstationNo = "0"
+    moCapability = "0"
+    moHostDate = "0"
+    moLogonStatus = "LOGGEDOFF"
+    //moMode = "ONLINE"
+    moLastComponentDocuments = null
+    moUserType = "1"
+	moURL = strURL
+	moShadowFiles = false;
+	moCPC = "2"
+	moLPC = "0"
+	moIOIPRINT = "N"
+	moBankCode = "0"
+//Start of IR 71896
+	moIS_SCAB="N"
+//End of IR 71896
+//Start of IR 73050
+	AmtThd = "0"
+//End of IR 73050
+//Start of reverting IR 72297
+//Start of Ir 72297 CCBL
+//	moCCBL="False"
+//End of Ir 72297 CCBL	
+//End of reverting IR 72297
+	RefreshStatusBar();
+	
+}
+
+function SetUserInfoValue(sInfoName, sValue)
+{
+    switch (sInfoName.toUpperCase())
+    {
+        case "INSTITUTIONNO" :
+            moInstitutionNo = sValue
+            break
+            
+        case "BRANCHNO":
+            moBranchNo = sValue
+            break
+	// Start of adding of IR 17120147 for A593
+	//Start of IR 17120147
+        case "IP":
+        	moIP = sValue
+        	break
+	//End of IR 17120147
+	// End of adding of IR 17120147 for A593
+        case "TELLERNO":
+            moTellerNo = sValue
+            break
+            
+        case "CAPABILITY":
+            moCapability = sValue
+            break
+            
+        case "HOSTDATE":
+            moHostDate = sValue
+            break
+            
+        case "WORKSTATIONNO":
+            moWorkstationNo = sValue
+            break
+            
+        case "USERTYPE":
+            moUserType = sValue
+            break
+            
+        case "URL":
+            moURL = sValue
+            break
+        
+        case "MODE":
+            moMode = sValue
+            break
+            
+        case "SHADOWFILES":
+            moShadowFiles = sValue
+            break
+                            
+        case "CPC":
+            moCPC = sValue
+            break    
+                                       
+        case "LPC":
+            moLPC = sValue
+            break    
+        case "IOIPRINT":
+            moIOIPRINT = sValue
+            break    
+            
+        case "CURRTIME":
+            moCurrTime = sValue
+            break 
+            
+        case "CURRDATE":
+            moCurrDate = sValue
+            break 
+                   
+        case "BATCHFAILED":
+            moNOofBatchFailed  = sValue
+			break
+			
+		case "BANKCODE":
+		    moBankCode  =  sValue
+		    break
+//Start of reverting IR 71591 & 72297
+//START OF IR 71591 CCBL CHANGES
+/*		case "CCBL":
+		    moCCBL  =  sValue
+		    break		  */
+//END OF IR 71591 CCBL CHANGES
+//End of reverting IR 71591 & 72297
+//Start of IR 71896
+case "ISSCAB" :
+            moIS_SCAB = sValue
+            break
+//End of IR 71896
+
+//Start of IR 73050
+case "THRESHOLD" :
+            AmtThd = sValue
+            break
+//End of IR 73050
+	//Start OF R386 for add  IR 17020013
+//Start of maintrunk IR 17020013
+case "VIRTUALFLAG" :
+            moVirtualFlag = sValue
+            break
+case "VIRTUALIP" :
+            moVirtualIP = sValue
+            break
+//End of maintrunk IR 17020013
+//End of R386 for add  IR 17020013
+    }    
+    //Start of R373 for reverting IR 74148
+    //start of ir 74148        
+//RefreshStatusBar()
+//end of ir 74148
+//End of R373 for reverting IR 74148
+}
+
+function GetUserInfo(varInfoName)
+	//***********************************************************
+	// Component Name     : GetUserInfo
+	// Purpose            : This function returns Logon information ie. if you pass
+	//                    : TellerNo it will retreive the loged on teller number
+	// Date Created       : 29/01/2003
+	// Version            : 1.1.0
+	// Author             : 
+	// Amendment History  :
+	//***********************************************************
+	//   Date        Author      Description
+	//   : -----------------------------------------------------
+	//
+	//***********************************************************
+{
+    
+
+    //Retreive the specified information    
+    switch (varInfoName.toUpperCase())
+    {
+        case "INSTITUTIONNO" :
+            return moInstitutionNo;
+            break;
+            
+        case "BRANCHNO" :
+            return moBranchNo;
+            break;
+	// Start of adding of IR 17120147 for A593
+	//Start of IR 17120147
+	    case "IP" :
+	    	return moIP;
+	    	break;
+	//End of IR 17120147
+	// End of adding of IR 17120147 for A593
+        case "TELLERNO" :
+            return moTellerNo;
+            break;
+
+        case "CAPABILITY" :
+            return moCapability;
+            break;
+
+        case "HOSTDATE" :
+            return moHostDate;
+            break;
+
+        case "WORKSTATIONNO" :
+            return moWorkstationNo;
+            break;
+    
+        case "USERTYPE" :
+            return moUserType;
+            break;
+	    
+        case "URL" :
+            return moURL;
+            break;
+            
+        case "MODE" :
+            return moMode;
+            break;
+            
+        case "LOGONSTATUS" :
+            return moLogonStatus;
+            break;
+            
+        case "SHADOWFILES" :
+            return moShadowFiles;
+            break;
+            
+        case "CPC" :
+            return moCPC;
+            break;    
+                                 
+        case "LPC" :
+            return moLPC;
+            break; 
+        case "IOIPRINT" :
+            return moIOIPRINT;
+            break;           
+          //Start of IR 75990  
+        //case "BPRFlag" :
+        case "BPRFLAG" :
+        //End of ir 75990
+            return moBPRFlag;	//bpr
+            break;
+             
+        case "CURRTIME" :
+            return moCurrTime;
+            break;
+            
+        case "CURRDATE" :
+            return moCurrDate;
+            break;  
+            
+        case "BANKCODE" :
+            return moBankCode;
+            break;  
+//Start of reverting IR 71591 & 72297
+//START OF IR 71591 CCBL CHANGES
+/*        case "CCBL" :
+            return moCCBL;
+            break;      */
+//END OF IR 71591 CCBL CHANGES                       	
+//End of reverting IR 71591 & 72297
+//Start of IR 71896
+case "ISSCAB" :
+            return moIS_SCAB;
+            break;
+//End  of IR 71896
+//start of ir 73145
+case "BIOFLAG" :
+            return moflag;
+            break;
+
+//start of ir 73983
+	    case "GROUP" :
+            return moGroup;
+            break;
+//end of ir 73983
+	    //end of ir 73145
+//Start of IR 73050
+case "THRESHOLD" :
+            return AmtThd;
+            break;
+//End  of IR 73050
+//Start of R386 for add  IR 17020013
+//Start of  maintrunk IR 17020013
+case "VIRTUALFLAG" :
+            return moVirtualFlag;
+            break;
+case "VIRTUALIP" :
+            return moVirtualIP;
+            break;
+//End of maintrunk IR 17020013
+//End of R386 for add  IR 17020013
+        default:
+            return "";
+        
+    }
+
+}
+
+
+	function ResetStatusBar()
+	//***********************************************************
+	// Component Name     : ResetStatusBar
+	// Purpose            : RESET THE STATUS BAR ON THE FRONTEND.
+	//                    :
+	// Date Created       : 24/01/2003
+	// Version            : 1.1.0
+	// Author             : Jason Marks
+	// Amendment History  :
+	//***********************************************************
+	//   Date        Author      Description
+	//   : -----------------------------------------------------
+	//
+	//***********************************************************
+	{
+
+		try
+		{
+			//alert("About to Reset Status Bar.")
+			
+
+			frameElement.document.frames("StatusBar").document.all("statusText").innerHTML =  "."
+			//frameElement.document.frames("StatusBar").document.all("Mode").innerHTML =  moMode
+			//frameElement.document.frames("StatusBar").document.all("TellerNo").innerHTML =  "Teller: "
+			//frameElement.document.frames("StatusBar").document.all("BranchNo").innerHTML =  "Branch: "
+			//frameElement.document.frames("StatusBar").document.all("SystemDate").innerHTML =  "Date: "
+			
+		}
+		catch(e)
+		{
+			//alert("There was an error clearing the Status Bar.")
+		}
+
+	}
+	
+
+
+	function RefreshStatusBar()
+	//***********************************************************
+	// Component Name     : refreshStatusBar
+	// Purpose            : REFRESHES THE STATUS BAR ON THE FRONTEND.
+	//                    :
+	// Date Created       : 23/01/2003
+	// Version            : 1.1.0
+	// Author             : Jason Marks
+	// Amendment History  :
+	//***********************************************************
+	//   Date        Author      Description
+	//   : -----------------------------------------------------
+	//
+	//***********************************************************
+	{
+
+		try
+		{
+			
+			//alert("About to refresh status bar.")
+//Start of reverting IR 71591 & 72297
+//START OF IR 71591 CCBL CHANGES
+/*			CCBL = window.document.all("LoadInit").CustomerCentricScreen
+		if (CCBL)
+		{
+			if (moLogonStatus == "LOGGEDON") 
+			{
+				window.document.frames("TaskQueues").document.all("Mode").innerHTML =  moMode
+				window.document.frames("TaskQueues").document.all("TellerNo").innerHTML =  "Teller: " + moTellerNo
+				window.document.frames("TaskQueues").document.all("BranchNo").innerHTML =  "Branch: " + moBranchNo
+				window.document.frames("TaskQueues").document.all("ServerDate").innerHTML =  "Date:   " + moHostDate
+				window.document.frames("TaskQueues").document.all("ServerTime").innerHTML =  "Time:   " + moCurrTime
+				window.document.frames("TaskQueues").document.all("NoOfBatchFailed").innerHTML="Transfer Batch(es) failed: " + moNOofBatchFailed
+			}
+			else
+			{						
+				window.document.frames("TaskQueues").document.all("Mode").innerHTML =  moMode
+				window.document.frames("TaskQueues").document.all("TellerNo").innerHTML =  "Teller: " 
+				window.document.frames("TaskQueues").document.all("BranchNo").innerHTML =  "Branch: " 
+				window.document.frames("TaskQueues").document.all("ServerDate").innerHTML =  "Date:   " + moHostDate
+				window.document.frames("TaskQueues").document.all("ServerTime").innerHTML =  "Time:   " + moCurrTime
+				window.document.frames("TaskQueues").document.all("NoOfBatchFailed").innerHTML="Transfer Batch(es) failed: " + moNoOfBatchFailed
+			}		
+			
+		}
+			
+		else
+		{*/
+//END OF IR 71591 CCBL CHANGES
+//End of reverting IR 71591 & 72297
+			if (moLogonStatus == "LOGGEDON") 
+			{
+				//frameElement.document.frames("StatusBar").document.all("statusText").innerHTML =  ""
+				frameElement.document.frames(0).frames("TaskQueues").document.all("Mode").innerHTML =  moMode
+				frameElement.document.frames(0).frames("TaskQueues").document.all("TellerNo").innerHTML =  "Teller: " + moTellerNo
+				frameElement.document.frames(0).frames("TaskQueues").document.all("BranchNo").innerHTML =  "Branch: " + moBranchNo
+				//frameElement.document.frames(0).frames("TaskQueues").document.all("ServerDate").innerHTML =  "Date:   " + moCurrDate
+				frameElement.document.frames(0).frames("TaskQueues").document.all("ServerDate").innerHTML =  "Date:   " + moHostDate
+				frameElement.document.frames(0).frames("TaskQueues").document.all("ServerTime").innerHTML =  "Time:   " + moCurrTime
+				
+				frameElement.document.frames(0).frames("TaskQueues").document.all("NoOfBatchFailed").innerHTML="Transfer Batch(es) failed: " + moNOofBatchFailed
+			}
+			else
+			{
+				frameElement.document.frames(0).frames("TaskQueues").document.all("Mode").innerHTML =  moMode
+				frameElement.document.frames(0).frames("TaskQueues").document.all("TellerNo").innerHTML =  "Teller: " 
+				frameElement.document.frames(0).frames("TaskQueues").document.all("BranchNo").innerHTML =  "Branch: " 
+				//frameElement.document.frames(0).frames("TaskQueues").document.all("ServerDate").innerHTML =  "Date:   " + moCurrDate
+				frameElement.document.frames(0).frames("TaskQueues").document.all("ServerDate").innerHTML =  "Date:   " + moHostDate
+				frameElement.document.frames(0).frames("TaskQueues").document.all("ServerTime").innerHTML =  "Time:   " + moCurrTime
+				frameElement.document.frames(0).frames("TaskQueues").document.all("NoOfBatchFailed").innerHTML="Transfer Batch(es) failed: " + moNoOfBatchFailed
+			}
+//Start of reverting IR 71591 & 72297
+//START OF IR 71591 CCBL CHANGES
+//		}
+//END OF CCBK CHANGES
+//End of reverting IR 71591 & 72297
+				
+		}
+		catch(e)
+		{
+			//alert("There was an error updating the Status Bar.")
+		}
+
+	}
+
+
+function getComponentName(oXMLFlowDocument)
+{
+
+    try
+    {
+        return oXMLFlowDocument.selectSingleNode("header/component").getAttribute("ID")
+    }
+    catch(e)
+    {
+        alert("The received flow document does not contain target component ID.")
+    }
+
+}
+
+// Added For Locking - Vishak
+
+function startTimer()
+{
+//Start of R373 for reverting IR 73428
+//Start OF IR 73428
+/*
+try
+{
+clearTimeout(timerID)
+}
+catch(e)
+{
+}
+*/
+//End OF IR 73428
+//End of R373 for reverting IR 73428
+	if(!bTimerPopUpOn)
+	{
+		window.clearTimeout(timerID)
+		if(moLogonStatus == "LOGGEDON")
+			{
+				var tmerVal = moTimeout * 1000
+				timerID = window.setTimeout('document.body.fnOpen();',tmerVal)
+			}
+	}
+}
+
+function fnOpen()
+{        
+      //Start of IR 73927         
+	 try
+	 {               
+	    changeLockCount(1)
+	 }
+	 catch(e)
+	 {}
+      //End of IR 73927  
+	//debugger
+	if 	(window.document.body.id !="TBatchDet") //11.08 Saurabh
+	{
+	
+	//Changes for IR 19254 by Rahul start
+		if (frameElement!=null)
+		
+		{
+			if (frameElement.src == "html/069030.htm")	
+			{
+				var oStatusText = frameElement.document.parentWindow.parent.frames("StatusBar").document.all("statusText")				
+			}
+			else
+			{
+				var oStatusText = frameElement.document.frames("StatusBar").document.all("statusText")				
+			}
+		}			
+		else
+		{	
+			var oStatusText = window.document.all("Statusbar").contentWindow.document.all("statusText")				
+		}
+//Start of reverting IR 71591 & 72297
+//START OF IR 71591 CCBL CHANGES
+		/*if(CCBL)
+		{
+        if (oStatusText.innerText == "Processing...")
+        {
+			startTimer();
+		window.document.frames("Iframe1").document.getElementById("SignOff").disabled=true;	
+		}
+		else
+		{
+			window.document.frames(0).document.getElementById("SignOff").disabled=true;	
+			window.document.frames(0).document.getElementById("NewWindow").disabled=true;	*/
+			if (oStatusText.innerText == "Processing...")
+			{
+				startTimer();
+			}
+			else
+			  {
+			//Start of reverting IR 72297
+			//Start of CCBL IR 72297
+			/*	try
+			{
+				
+					window.document.frames("Iframe1").document.getElementById("SignOff").disabled=true;
+				}
+				catch(e)
+				{*/
+			//End of CCBL IR 72297				
+			//End of reverting IR 72297
+					window.document.frames(0).document.getElementById("SignOff").disabled=true;	
+					window.document.frames(0).document.getElementById("NewWindow").disabled=true;
+			//Start of reverting IR 72297
+				//}
+			//End of reverting IR 72297
+			  // }
+			//Start of reverting IR 72297
+			//Start of CCBL IR 72297
+			//}
+			//End of CCBL IR 72297
+			//End of reverting IR 72297
+			var sTeller = GetUserInfo("TellerNo")
+			var moFlow=window.document.body.all("MainScreen")
+			var sMessageBody = "<screenData>" + "<tellerNo>" + sTeller + "</tellerNo>" + "</screenData>"	
+			moFlow.startFlow(window.document.body,null,"LockingFlow","LockStart",sMessageBody,true)
+			
+			//start of ir 73956
+		//start of ir 73511
+			isLocked = true
+			//end of ir 73511	
+			//end of ir 73956
+			bTimerPopUpOn=true
+		//END OF IR 71591 CCBL CHANGES
+		//End of reverting IR 71591 & 72297
+		}
+		//Changes for IR 19254 by Rahul end
+	}	
+}
+
+function SetbTimerPopUpOn(abTimerPopUpOn)
+{
+	bTimerPopUpOn=abTimerPopUpOn
+}
+//Start of R386 for add  IR 17020013
+//Start Of maintrunk IR 17020013
+function SetVirtualInfo(sMessage)
+{
+	try
+    {
+    	moVirtualFlag = sMessage.selectSingleNode('..//userInfo/VirtualFlag').text
+    }
+    catch(e)
+    {}
+}
+function GetVirtualInfo(varInfoName)
+{
+    switch (varInfoName.toUpperCase())
+    {
+        case "VIRTUALFLAG" :
+        if (moVirtualFlagFirstFetch == "Y")
+            return moVirtualFlag;
+        else
+        	return moVirtualFlagFirstFetch;
+            break;
+        default:
+            return "";
+    }
+}
+//End Of maintrunk IR 17020013
+//End of R386 for add  IR 17020013
+
+function SetTimerInfo(sMessage)
+{
+	try
+    {
+        moTimeout = sMessage.selectSingleNode('..//userInfo/Timeout').text
+//Start of R373 for reverting IR 73428
+//Start OF IR 73428
+/*
+	try
+	{
+	moBogTimeout = sMessage.selectSingleNode('..//userInfo/BogTimeout').text
+	
+	currentTime = new Date();
+	hours = currentTime.getHours() * 60 * 60;
+	mins = currentTime.getMinutes() * 60;
+	totalTime = hours + mins;
+	timeOutBog = totalTime + parseInt(moBogTimeout,10);	
+	}
+	catch(e)
+	{
+	moBogTimeout = "10800"
+	}
+*/
+	//End OF IR 73428
+//End of R373 for reverting IR 73428
+    }
+    catch(e){alert("Error loading Timeout " + e.message)}
+}
+
+// Added for New Window Functionality - Pranav
+function StartLoggingFlow()
+{
+	var moFlow=window.document.body.all("MainScreen")
+	var NewWindow
+	moFlow.startFlow(null, null, "SignOnFlow", "OpeningNewWindow",null, true)
+	NewWindow = document.URLUnencoded
+	NewWindow = NewWindow .replace(/htc\/ClientFlowDistributor.htc/, "")
+	//start of ir 73983
+	//window.open(NewWindow)
+window.open(NewWindow,Math.floor((Math.random()*100000000000000000000)+1),"resizable=yes,status=yes,toolbar=yes,menubar=yes,location=yes")
+	//end of ir 73983
+}
+
+function StartLoggingOnOnce()
+{
+	if(bLogCheckFlow)
+	{
+		bLogCheckFlow=false
+		return true
+	}
+	return false
+}
+//Start of R373 for reverting IR 73428
+//Start of IR 73428
+/*
+function RefreshBOGTicker()
+{
+	try
+	{
+
+		frameElement.document.frames("main").document.all("BOGMessage").innerHTML =  "<Font color=#660000 ><marquee scrollamount = 6 onmouseover = this.setAttribute('scrollamount',2,0) onmouseout = this.setAttribute('scrollamount',6,0) >" + BOGMessage + "</marquee></font>"
+	}
+	catch(e)
+	{
+	}
+
+}
+function Trim(varData)
+{
+    // /&#160;/g = no-break spaces
+    // /^\s+/ = leading spaces
+    // /\s+$/ = trailing spaces
+    return varData.replace(/&#160;/g, " ").replace(/^\s+/, "").replace(/\s+$/, "")
+}
+*/
+//End of IR 73428
+//End of R373 for reverting IR 73428
+function setSession(sessionVal)
+	//***********************************************************
+	// Component Name     : setSession
+	// Purpose            : Appends the existing session ID
+	//                    : in case of NEW SESSION
+	// Date Created       : 02/02/2015
+	// Version            : 1.0.0
+	// Author             : Deepak
+	// Amendment History  :
+	//***********************************************************
+	//   Date        Author      Description
+	//   : -----------------------------------------------------
+	//
+	//***********************************************************
+{
+NewSessionState = sessionVal;
+}
+</SCRIPT>
+</PUBLIC:COMPONENT>
