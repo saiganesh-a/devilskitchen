@@ -1,1 +1,25 @@
 https://repo1.maven.org/maven2/org/json/json/20210307/json-20210307.jar
+
+
+import org.json.JSONObject;
+import java.util.Scanner;
+
+public class StringToJson {
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+
+        // Take input from the user
+        System.out.println("Enter a string to convert to JSON format:");
+        String input = scanner.nextLine();
+
+        // Convert the input string to JSON format
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("input", input);
+
+        // Print the JSON formatted string
+        System.out.println("JSON formatted string:");
+        System.out.println(jsonObject.toString());
+
+        scanner.close();
+    }
+}
