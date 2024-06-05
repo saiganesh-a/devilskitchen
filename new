@@ -1,0 +1,206 @@
+package com.tcs.bancs.microservices.services;
+
+import javax.servlet.http.HttpServletRequest;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.http.HttpHeaders;
+import org.springframework.web.bind.annotation.*;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.microfocus.cobol.CobolException;
+import com.tcs.bancs.microservices.*;
+import com.tcs.bancs.microservices.aggregator.AggregationServiceImpl;
+import com.tcs.bancs.microservices.bean.request.RequestBean;
+import com.tcs.bancs.microservices.config.CacheConfig;
+import com.tcs.bancs.microservices.configuration.PropertyLoader;
+import com.tcs.bancs.microservices.responceout.*;
+import com.tcs.bancs.microservices.util.DBProcess;
+import com.tcs.bancs.microservices.util.DaoUtilities;
+import com.tcs.bancs.microservices.util.FrameworkConstants;
+import com.tcs.bancs.microservices.service.response.model.CbsSixEnq;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+
+import java.util.Properties;
+
+@RestController
+@Api(value = "Aggregation_API", description = " ", tags = { "Aggregation API" })
+@RequestMapping("/")
+@Cacheable
+@CacheEvict
+@Component
+public class VisualCobol_Available_bal_Wrapper {
+
+    @Autowired
+    AggregationServiceImpl aggregationServiceImpl;
+
+    @Autowired
+    DBProcess dbprocess;
+
+    @Autowired
+    DaoUtilities daoUtil;
+
+    @Autowired
+    HttpServletRequest httpServletRequest;
+
+    Logger logger = LoggerFactory.getLogger(VisualCobol_Available_bal_Wrapper.class);
+
+    String sourceAuth = CacheConfig.frameworkConfigProperties.getProperty(FrameworkConstants.LOOKUP_FILES_PATH);
+    String IP_Configuration_Path = CacheConfig.frameworkConfigProperties.getProperty(FrameworkConstants.LOOKUP_FILES_PATH);
+
+    @Value("${day.datasource.jdbc-url}")
+    private String dayJdbcUrl;
+
+    @Value("${day.datasource.username}")
+    private String dayUsername;
+
+    @Value("${day.datasource.password}")
+    private String dayPassword;
+
+    @Value("${night.datasource.jdbc-url}")
+    private String nightJdbcUrl;
+
+    @Value("${night.datasource.username}")
+    private String nightUsername;
+
+    @Value("${night.datasource.password}")
+    private String nightPassword;
+
+    @Value("${ref.datasource.jdbc-url}")
+    private String refJdbcUrl;
+
+    @Value("${ref.datasource.username}")
+    private String refUsername;
+
+    @Value("${ref.datasource.password}")
+    private String refPassword;
+
+    Properties ipprop = PropertyLoader.readPropertyFile(IP_Configuration_Path + "/IpConfigMaster.properties");
+
+    public String ptrstring1;
+
+    IOMISC objIOMISC = new IOMISC();
+    WaCallCode inputWaCallCode = new WaCallCode();
+    WaLinkConnectionString inputWaLinkConnectionString = new WaLinkConnectionString();
+    WaErrorCode inputWaErrorCode = new WaErrorCode();
+
+    JVMBIAVBL objJVMBIAVBL = new JVMBIAVBL();
+    WaInputAccountNumber inputWaInputAccountNumber = new WaInputAccountNumber();
+    WaInputCallCodeFlag inputWaInputCallCodeFlag = new WaInputCallCodeFlag();
+    WaOutputErrorFlag outputWaOutputErrorFlag = new WaOutputErrorFlag();
+
+    RETURN objRETURN = new RETURN();
+    LwOutputAccountNumber outputLwOutputAccountNumber = new LwOutputAccountNumber();
+    LwOutputBalance outputLwOutputBalance = new LwOutputBalance();
+    LwOutputErrorNumber outputLwOutputErrorNumber = new LwOutputErrorNumber();
+    LwOutputErrorDescription outputLwOutputErrorDescription = new LwOutputErrorDescription();
+    LwOutputFlag outputLwOutputFlag = new LwOutputFlag();
+
+    @SuppressWarnings({ "unchecked", "rawtypes", "static-access" })
+    @ApiOperation(value = "Call COB code", notes = "Retrieve check Digit: This API is used to fetch accountNum with checkdigit.", response = CbsSixEnq.class)
+    @PostMapping(value = { "/AvailableBalance1" }, produces = { "application/json" })
+    @CrossOrigin()  
+    @JsonIgnore
+    public String getCustomerDetails(@RequestBody RequestBean reqbean, HttpServletRequest request, @RequestHeader HttpHeaders headers) {
+
+        System.out.println("Start in Java!!!!");
+        String accountNo = reqbean.getAccountNum();
+        String flag = reqbean.getFlag();
+        String dbType = "day";
+        String jdbcUrl = getJdbcUrl(dbType);
+        String username = getUsername(dbType);
+        String password = getPassword(dbType);
+
+        String connectionString = jdbcUrl.split("@")[0] + username + "/" + password + "@" + jdbcUrl.split("@")[1];
+
+        System.out.println("JDBC URL: " + jdbcUrl);
+        System.out.println("Username: " + username);
+        System.out.println("Password: " + password);
+        System.out.println("ConnectionString:" + connectionString);
+
+        inputWaCallCode.setWaCallCode("01");
+        inputWaLinkConnectionString.setWaLinkConnectionString(connectionString);
+        inputWaErrorCode.setWaErrorCode("XXXX");
+
+        System.out.println("Java: before calling COBOL..######");
+        try {
+            objIOMISC.IOMISC(inputWaCallCode, inputWaLinkConnectionString, inputWaErrorCode);
+            System.out.println("After IOMISC");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        System.out.println("Start in Java!!!!");
+        inputWaInputAccountNumber.setWaInputAccountNumber(accountNo);
+        inputWaInputCallCodeFlag.setWaInputCallCodeFlag(flag);
+
+        try {
+            objJVMBIAVBL.JVMBIAVBL(inputWaInputAccountNumber, inputWaInputCallCodeFlag, outputWaOutputErrorFlag);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        String errorFlag = outputWaOutputErrorFlag.getWaOutputErrorFlag();
+
+        if ("Y".equals(errorFlag)) {
+            System.out.println("THERE IS AN ERROR IN THE SERVICE");
+        } else {
+            String returnFlag = "R";
+            outputLwOutputFlag.setLwOutputFlag(returnFlag);
+            try {
+                objRETURN.RETURN(outputLwOutputAccountNumber, outputLwOutputBalance, outputLwOutputErrorNumber, outputLwOutputErrorDescription, outputLwOutputFlag);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+            String outAcc = outputLwOutputAccountNumber.getLwOutputAccountNumber();
+            String outBal = outputLwOutputBalance.getLwOutputBalance();
+            System.out.println("the acc is " + outAcc + " the bal is " + outBal);
+        }
+        return ptrstring1;
+    }
+
+    public String getJdbcUrl(String type) {
+        switch (type) {
+            case "day":
+                return dayJdbcUrl;
+            case "night":
+                return nightJdbcUrl;
+            case "ref":
+                return refJdbcUrl;
+            default:
+                throw new IllegalArgumentException("Unsupported datasource type: " + type);
+        }
+    }
+
+    public String getUsername(String type) {
+        switch (type) {
+            case "day":
+                return dayUsername;
+            case "night":
+                return nightUsername;
+            case "ref":
+                return refUsername;
+            default:
+                throw new IllegalArgumentException("Unsupported datasource type: " + type);
+        }
+    }
+
+    public String getPassword(String type) {
+        switch (type) {
+            case "day":
+                return dayPassword;
+            case "night":
+                return nightPassword;
+            case "ref":
+                return refPassword;
+            default:
+                throw new IllegalArgumentException("Unsupported datasource type: " + type);
+        }
+    }
+}
