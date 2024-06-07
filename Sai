@@ -1,0 +1,556 @@
+000100$ SET ilsmartlinkage
+000200$ SET ilnamespace "com.tcs.bancs.microservices.availablebalance"
+000300 IDENTIFICATION DIVISION.
+000400 ENVIRONMENT DIVISION.
+000500 DATA DIVISION.
+000600
+000700 WORKING-STORAGE SECTION.
+000800 
+000900 
+001000     EXEC SQL BEGIN DECLARE SECTION END-EXEC.
+001100 01 WA-INVM-ACCT-TYPE              PIC X(04).
+001200 01 WA-INVM-INT-CAT                PIC X(04).
+001300 01 WA-INVM-CURR-BAL               PIC S9(14)V999.
+001400 01 WA-INVM-UNCL-CHQ-VAL           PIC S9(14)V999.
+001500 01 WA-INVM-HOLD-VAL               PIC S9(14)V999.
+001600 01 WA-INVM-SI-HOLD-AMT            PIC S9(14)V999.
+001700 01 WA-INVM-RESERVED-AMOUNT        PIC S9(14)V999.
+001800 01 WA-INVM-CHR-VAL-08             PIC S9(14)V999.
+002000 01 WA-DEPP-OD-MULTI-LIM-ALLOW     PIC X(01).
+002100 01 WA-DEPP-DR-EOP-DATE            PIC 9(09).
+002200 01 WA-DEPP-DRAWING-POWER-APPL     PIC X(01).
+002300     EXEC SQL END DECLARE SECTION END-EXEC.
+002400     EXEC SQL INCLUDE SQLCA END-EXEC.
+002500 01 WA-TEMP-KEY.
+002600    03 WA-INST-NUMBER             PIC X(03) VALUES "003".
+002700    03 WA-TEMP-ACCOUNT-NUMBER     PIC 9(16) VALUES ZEROES.
+002800 01 WA-ACCOUNT-NUMBER             PIC X(19).
+002900
+003000 01 UTAVBL-CALL-AREA.
+003100    03 UTAVBL-AVAIL-BAL           PIC S9(14)V999.
+003200    03 UTAVBL-CALL-CODE           PIC 9(02).
+003300 01 UTAVBL-TMP-AVAIL-BAL          PIC S9(14)V999.
+003400 
+       
+       01 WA-ERROR-NUMBER               PIC 9(04).
+       01 WA-ERROR-DESCRIPTION          PIC X(40).
+       01 WA-OUTPUT-FLAG                PIC X(01).
+       
+       
+003500 01 INVM-RECORD-AREA.
+003600    COPY INVMMAST    IN LIBRYMIS.
+003700 01 DEPP-ACCT-PARAM.
+003800    COPY DEPPARAM    IN LIBRYMIS.
+003900    COPY DBIORAST    IN LIBRYMIS.
+004000    COPY DBIOMODNAME IN LIBRYMIS.
+004100    COPY DBIOCALL    IN LIBRYMIS.
+004200    COPY DBIOMODCA   IN LIBRYMIS.
+004300    03 FILLER.
+004400    05  FILLER PIC X(01) VALUE SPACES.
+004500 LINKAGE SECTION.
+004600 
+004700 01 WA-INPUT-ACCOUNT-NUMBER        PIC X(11).
+004800 01 WA-INPUT-CALL-CODE-FLAG        PIC X(02).
+004900 01 WA-OUTPUT-ERROR-FLAG           PIC X(01).
+005000 
+005100 PROCEDURE DIVISION USING WA-INPUT-ACCOUNT-NUMBER
+005200                          WA-INPUT-CALL-CODE-FLAG
+005300                          WA-OUTPUT-ERROR-FLAG.
+005400                          
+005500 A000-MAIN-PARA.
+005600 
+005700     PERFORM A001-INIT-PARA   THRU A001-EXIT
+005800     PERFORM A002-GET-BALANCE THRU A002-EXIT
+           PERFORM A005-RESPONCE    THRU A005-EXIT.
+005900 
+006000 A000-EXIT.
+006100 EXIT.
+006200 EXIT PROGRAM.
+006300 
+006400 A001-INIT-PARA.
+006500 
+006600   INITIALIZE  WA-TEMP-ACCOUNT-NUMBER
+006700               UTAVBL-CALL-AREA
+                     WA-ERROR-NUMBER
+                     WA-ERROR-DESCRIPTION.
+         MOVE "N"    TO WA-OUTPUT-ERROR-FLAG.
+006800              
+006900 A001-EXIT.
+007000 EXIT.
+007100 
+007200 A002-GET-BALANCE.
+007300 
+007400      MOVE WA-INPUT-ACCOUNT-NUMBER(1:10) TO WA-TEMP-ACCOUNT-NUMBER
+007500      MOVE WA-INPUT-CALL-CODE-FLAG       TO UTAVBL-CALL-CODE
+007600      INSPECT WA-TEMP-ACCOUNT-NUMBER REPLACING ALL
+007700                          SPACES BY ZEROES
+007800      MOVE WA-TEMP-KEY TO WA-ACCOUNT-NUMBER
+007900      PERFORM A003-INVM-QUERY  THRU A003-EXIT
+008000      CALL "UTAVBL" USING UTAVBL-CALL-AREA
+008100                          INVM-RECORD-AREA
+008200                          DEPP-ACCT-PARAM
+008300      MOVE UTAVBL-AVAIL-BAL TO UTAVBL-TMP-AVAIL-BAL.
+008400      
+008500 A002-EXIT.
+008600 EXIT.
+008700 
+008800 A003-INVM-QUERY.
+008900    
+009000      EXEC SQL
+009100      SELECT ACCT_TYPE,
+009200             INT_CAT
+009300             CURR_BAL,
+009400             UNCL_CHQ_VAL,
+009500      	   HOLD_VAL,                   
+009600      	   SI_HOLD_AMT,    
+009700      	   RESERVED_AMOUNT,
+009800      	   CHR_VAL08
+009900             INTO  :WA-INVM-ACCT-TYPE,
+010000                   :WA-INVM-INT-CAT,
+010100                   :WA-INVM-CURR-BAL,
+010200                   :WA-INVM-UNCL-CHQ-VAL,
+010300                   :WA-INVM-HOLD-VAL,
+010400                   :WA-INVM-SI-HOLD-AMT,
+010500                   :WA-INVM-RESERVED-AMOUNT,
+010600                   :WA-INVM-CHR-VAL-08
+010700             FROM INVM WHERE
+010800      	   KEY_1 = :WA-ACCOUNT-NUMBER
+010900      END-EXEC.
+011000     
+011100     IF SQLCODE = ZEROES
+011200        DISPLAY "JVMAVBL(A003) : DATA BASE CONNECTED"
+011300        MOVE WA-INVM-CURR-BAL        TO INVM-CURR-BAL
+011400        MOVE WA-INVM-UNCL-CHQ-VAL    TO INVM-UNCL-CHQ-VAL
+011500        MOVE WA-INVM-HOLD-VAL        TO INVM-HOLD-VAL
+011600        MOVE WA-INVM-SI-HOLD-AMT     TO INVM-SI-HOLD-AMT
+011700        MOVE WA-INVM-RESERVED-AMOUNT TO INVM-RESERVED-AMOUNT
+011800        MOVE WA-INVM-CHR-VAL-08      TO INVM-CHR-VAL(8)
+011900        MOVE WA-INVM-ACCT-TYPE       TO INVM-ACCT-TYPE
+012000        MOVE WA-INVM-INT-CAT         TO INVM-INT-CAT
+012100        PERFORM A004-DEPP-QUERY THRU A004-EXIT
+012200     ELSE
+012300        DISPLAY "JVMAVBL(A003) : DATA BASE NOT CONNECTED"
+012400        MOVE "Y"        TO WA-OUTPUT-ERROR-FLAG
+              MOVE 155        TO WA-ERROR-NUMBER
+012500     END-IF.
+012600     
+012700 A003-EXIT.
+012800 EXIT.
+012900 
+013000 A004-DEPP-QUERY.
+013100  
+013200    MOVE "003"          TO ACCT-PARM-SOC
+013300    MOVE "INV"          TO ACCT-PARM-SYS
+013400    MOVE INVM-ACCT-TYPE TO ACCT-PARM-TYPE
+013500    MOVE INVM-INT-CAT   TO ACCT-PARM-INT-CAT
+013600    EXEC SQL
+013700         SELECT OD_MULTI_LIM_ALLOW,
+013800                DR_EOP_DATE,
+013900                DRAWING_POWER_APPL
+014000         INTO  :WA-DEPP-OD-MULTI-LIM-ALLOW,
+014100               :WA-DEPP-DR-EOP-DATE,
+014200               :WA-DEPP-DRAWING-POWER-APPL
+014300         FROM DEPP WHERE INST_NO = '003' AND
+014400                     SYS = 'INV' AND
+014500                     TYPE = :ACCT-PARM-TYPE AND
+014600                     INT_CAT = :ACCT-PARM-INT-CAT
+014700    END-EXEC.
+014800    IF SQLCODE = ZEROES
+014900       DISPLAY "JVMBIAVBL(A004) : DATABASE CONNECTED"
+015000       MOVE WA-DEPP-OD-MULTI-LIM-ALLOW TO ACCT-PARM-OD-MULTI-LIM-ALLOW
+015100       MOVE WA-DEPP-DR-EOP-DATE TO ACCT-PARM-DR-EOP-DATE
+015200       MOVE WA-DEPP-DRAWING-POWER-APPL TO ACCT-PARM-DRAWING-POWER-APPL
+015300    ELSE
+015400       DISPLAY "JVMBIAVBL(A004) : DATABASE NOT CONNECTED" 
+015500       MOVE "Y"        TO WA-OUTPUT-ERROR-FLAG
+             MOVE 155        TO WA-ERROR-NUMBER
+015600    END-IF.
+015700 A004-EXIT.
+015800 EXIT.
+       
+       
+       A005-RESPONCE.
+       
+           DISPLAY "THE CALL OF RESPONCE CODE".
+           
+           MOVE "S"        TO WA-OUTPUT-FLAG
+           DISPLAY "THE DETAILS ARE " WA-ACCOUNT-NUMBER
+            UTAVBL-TMP-AVAIL-BAL WA-ERROR-NUMBER  WA-ERROR-DESCRIPTION
+            WA-OUTPUT-FLAG
+           CALL "RETURN"   USING WA-ACCOUNT-NUMBER
+                                 UTAVBL-TMP-AVAIL-BAL
+                                 WA-ERROR-NUMBER
+                                 WA-ERROR-DESCRIPTION
+                                 WA-OUTPUT-FLAG.
+           
+           DISPLAY "THE RESPONCE WAS STORED IN RESPONCE.COB".
+            
+       A005-EXIT.
+       EXIT.
+
+
+----------------------------------------------
+
+000100$ SET ilsmartlinkage
+000200$ SET ilnamespace "com.tcs.bancs.microservices.responceout"
+       IDENTIFICATION DIVISION.
+000400 ENVIRONMENT DIVISION.
+000500 DATA DIVISION.
+000600
+000700 WORKING-STORAGE SECTION.
+       
+       01 WS-OUTPUT-ACCOUNT-NUMBER      PIC X(17).
+       01 WS-OUTPUT-BALANCE             PIC S9(14)V999.
+       01 WS-OUTPUT-ERROR-NUMBER        PIC 9(04).
+       01 WS-OUTPUT-ERROR-DESCRIPTION   PIC X(40).
+       01 WS-OUTPUT-FLAG                PIC X(01).
+       
+       LINKAGE SECTION.
+       
+       01 LW-OUTPUT-ACCOUNT-NUMBER      PIC X(17).
+       01 LW-OUTPUT-BALANCE             PIC x(19).
+       01 LW-OUTPUT-ERROR-NUMBER        PIC 9(04).
+       01 LW-OUTPUT-ERROR-DESCRIPTION   PIC X(40).
+       01 LW-OUTPUT-FLAG                PIC X(01).
+       
+       
+       
+       PROCEDURE DIVISION USING LW-OUTPUT-ACCOUNT-NUMBER
+                                LW-OUTPUT-BALANCE
+                                LW-OUTPUT-ERROR-NUMBER
+                                LW-OUTPUT-ERROR-DESCRIPTION
+                                LW-OUTPUT-FLAG.
+       A000-MAIN-PARA.
+       
+           
+           INITIALIZE WS-OUTPUT-ACCOUNT-NUMBER
+                      WS-OUTPUT-BALANCE
+                      WS-OUTPUT-ERROR-NUMBER
+                      WS-OUTPUT-ERROR-DESCRIPTION
+                      WS-OUTPUT-FLAG.
+           DISPLAY "THE RETURN FLAG IS " LW-OUTPUT-FLAG
+           
+           DISPLAY "THE VALUES IN RETURN .COB ARE "
+           LW-OUTPUT-ACCOUNT-NUMBER  LW-OUTPUT-BALANCE  LW-OUTPUT-ERROR-NUMBER
+           LW-OUTPUT-ERROR-DESCRIPTION  LW-OUTPUT-FLAG
+           IF LW-OUTPUT-FLAG = "S"
+              MOVE LW-OUTPUT-ACCOUNT-NUMBER    TO WS-OUTPUT-ACCOUNT-NUMBER
+              MOVE LW-OUTPUT-BALANCE           TO WS-OUTPUT-BALANCE
+              MOVE LW-OUTPUT-ERROR-NUMBER      TO WS-OUTPUT-ERROR-NUMBER
+              MOVE LW-OUTPUT-ERROR-DESCRIPTION TO WS-OUTPUT-ERROR-DESCRIPTION
+              MOVE LW-OUTPUT-FLAG              TO WS-OUTPUT-FLAG
+           ELSE
+           IF LW-OUTPUT-FLAG = "R"
+              MOVE WS-OUTPUT-ACCOUNT-NUMBER    TO LW-OUTPUT-ACCOUNT-NUMBER
+              MOVE WS-OUTPUT-BALANCE           TO LW-OUTPUT-BALANCE
+              MOVE WS-OUTPUT-ERROR-NUMBER      TO LW-OUTPUT-ERROR-NUMBER
+              MOVE WS-OUTPUT-ERROR-DESCRIPTION TO LW-OUTPUT-ERROR-DESCRIPTION
+              MOVE WS-OUTPUT-FLAG              TO LW-OUTPUT-FLAG
+           END-IF
+           END-IF.
+       
+       A000-EXIT.
+       EXIT.
+       EXIT PROGRAM.
+
+-----------------------------------------------------------------------------
+
+package com.tcs.bancs.microservices.services;
+
+import javax.servlet.http.HttpServletRequest;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.http.HttpHeaders;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.microfocus.cobol.CobolException;
+import com.microfocus.cobol.RuntimeSystem;
+import com.microfocus.cobol.lang.ParameterList;
+import com.microfocus.cobol.lang.Pointer;
+import com.tcs.bancs.microservices.*;
+import com.tcs.bancs.microservices.aggregator.AggregationServiceImpl;
+import com.tcs.bancs.microservices.bean.request.RequestBean;
+import com.tcs.bancs.microservices.config.CacheConfig;
+import com.tcs.bancs.microservices.configuration.PropertyLoader;
+import com.tcs.bancs.microservices.responceout.*;
+import com.tcs.bancs.microservices.util.DBProcess;
+import com.tcs.bancs.microservices.util.DaoUtilities;
+import com.tcs.bancs.microservices.util.FrameworkConstants;
+import com.tcs.bancs.microservices.service.response.model.CbsSixEnq;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
+import java.util.Base64;
+import java.sql.*;
+import java.util.*;
+import com.tcs.bancs.microservices.availablebalance.*;
+import com.tcs.bancs.microservices.responceout.*;
+
+
+
+
+
+
+@RestController
+@Api(value = "Aggregation_API", description = " ", tags = { "Aggregation API" })
+@RequestMapping("/")
+@Cacheable
+@CacheEvict
+@Component
+
+public class VisualCobol_Available_bal_Wrapper {
+	private static boolean filterFlag = false;
+	@Autowired
+	AggregationServiceImpl aggregationServiceImpl;
+
+	@Autowired
+	DBProcess dbprocess;
+
+	@Autowired
+	DaoUtilities daoUtil;
+
+	@Autowired
+	HttpServletRequest HttpServletRequest;
+
+	Logger logger = LoggerFactory.getLogger(VisualCobol_Available_bal_Wrapper.class);
+
+	String sourceAuth = CacheConfig.frameworkConfigProperties.getProperty(FrameworkConstants.LOOKUP_FILES_PATH);
+	String IP_Configuration_Path = CacheConfig.frameworkConfigProperties.getProperty(FrameworkConstants.LOOKUP_FILES_PATH);
+	
+	@Value("${day.datasource.jdbc-url}")
+	private String dayJdbcUrl;
+	
+    @Value("${day.datasource.username}")
+    private String dayUsername;
+
+    @Value("${day.datasource.password}")
+    private String dayPassword;
+
+    @Value("${night.datasource.jdbc-url}")
+    private String nightJdbcUrl;
+
+    @Value("${night.datasource.username}")
+    private String nightUsername;
+
+    @Value("${night.datasource.password}")
+    private String nightPassword;
+
+    @Value("${ref.datasource.jdbc-url}")
+    private String refJdbcUrl;
+
+    @Value("${ref.datasource.username}")
+    private String refUsername;
+
+    @Value("${ref.datasource.password}")
+    private String refPassword;
+
+	Properties ipprop = PropertyLoader.readPropertyFile(new String(IP_Configuration_Path + "/IpConfigMaster.properties"));
+	
+	  public String ptrstring1;
+
+	  IOMISC obj2 = new IOMISC();
+	  WaCallCode input21 = new WaCallCode();
+	  WaLinkConnectionString input22 = new WaLinkConnectionString();
+	  WaErrorCode input23 = new WaErrorCode();
+	  
+	  
+	  JVMBIAVBL obj9 = new JVMBIAVBL();
+	  WaInputAccountNumber input1   = new WaInputAccountNumber();
+	  WaInputCallCodeFlag  input2   = new WaInputCallCodeFlag();
+	  WaOutputErrorFlag    outputs  = new WaOutputErrorFlag();
+	  
+	  
+	  RETURN obj5555 = new RETURN();
+
+	 
+	  LwOutputAccountNumber    output111 = new LwOutputAccountNumber();
+	  LwOutputBalance          output222 = new LwOutputBalance();
+	  LwOutputErrorNumber      output333 = new LwOutputErrorNumber();
+	  LwOutputErrorDescription output444 = new LwOutputErrorDescription();
+	  LwOutputFlag             output555 = new LwOutputFlag();
+
+
+	@SuppressWarnings({ "unchecked", "rawtypes", "static-access" })
+	@ApiOperation(value = "Call COB code", notes = "Retrieve cehck Digit:This API is used to fetch accountNum with checkdigit.", response = CbsSixEnq.class)
+	@PostMapping(value = { "/AvailableBalance1" }, produces = { "application/json" })
+	@CrossOrigin()  
+	@JsonIgnore
+	public String getCustomerDetails(@RequestBody(required = true)RequestBean reqbean,HttpServletRequest request, @RequestHeader HttpHeaders headers) 
+	{
+
+		    System.out.println("Start in Java!!!!");
+		    String accountno = reqbean.getAccountNum();
+			String flag      = reqbean.getFlag();
+            String dbtype    = "day";
+	        String jdbcUrl   = getJdbcUrl(dbtype);
+	        String username  = getUsername(dbtype);
+	        String password  = getPassword(dbtype);
+	        
+	        String connectionString = jdbcUrl.split("@")[0] + username + "/" + password + "@" + jdbcUrl.split("@")[1];
+	        
+	        System.out.println("JDBC URL: " + jdbcUrl);
+	        System.out.println("Username: " + username);
+	        System.out.println("Password: " + password);
+	        System.out.println("ConnectionString:" + connectionString);
+	        input21.setWaCallCode("01");
+	        input22.setWaLinkConnectionString(connectionString);
+	        input23.setWaErrorCode("XXXX");
+            System.out.println("Java: before calling cobol..######");
+            
+	        try {obj2.IOMISC(input21, input22, input23);} 
+	            catch (Exception e) { e.printStackTrace(); }
+			  System.out.println("Start in Java!!!!");
+	  	      input1.setWaInputAccountNumber(accountno);
+		      input2.setWaInputCallCodeFlag(flag);
+	          
+		      try {obj9.JVMBIAVBL(input1, input2, outputs);}
+	          catch (Exception e) { e.printStackTrace(); }
+	          String   errorflag = outputs.getWaOutputErrorFlag();
+	          
+	          if(errorflag == "Y")
+	          {System.out.println("THERE IS AN ERROR IN THE SERVICE");}
+	          else
+	          {	  String returnflag = "R";
+	              
+	        	  output555.setLwOutputFlag(returnflag);
+	        	  try {obj5555.RETURN(output111, output222, output333, output444, output555);}
+			      catch (Exception e) { e.printStackTrace(); }
+	        	  String out_acc = output111.getLwOutputAccountNumber();
+	        	  String out_bal = output222.getLwOutputBalance();
+	        	  System.out.println("the acc is " + out_acc + "the bal is " + out_bal);
+	          }
+	          
+	          return ptrstring1;
+	}
+	   
+	   public String getJdbcUrl(String type) {
+	        switch (type) {
+	            case "day":
+	                return dayJdbcUrl;
+	            case "night":
+	                return nightJdbcUrl;
+	            case "ref":
+	                return refJdbcUrl;
+	            default:
+	                throw new IllegalArgumentException("Unsupported datasource type: " + type);
+	        }
+	    }
+	    public String getUsername(String type) {
+	        switch (type) {
+	            case "day":
+	                return dayUsername;
+	            case "night":
+	                return nightUsername;
+	            case "ref":
+	                return refUsername;
+	            default:
+	                throw new IllegalArgumentException("Unsupported datasource type: " + type);
+	        }
+	    }
+		  public String getPassword(String type) { 
+			  switch (type) { 
+			  case "day": 
+				  System.out.println("INSIDE GETPASS type:" + type + dayPassword );
+				  return dayPassword; 
+			  case "night": 
+				  return nightPassword; 
+			  case "ref":
+				  return refPassword;  
+			  default: 
+				  throw new IllegalArgumentException("Unsupported datasource type: " + type);
+	        }
+	    } 
+}
+
+---------------------------------------------------
+
+INSIDE GETPASS type:dayMICROAPI
+JDBC URL: jdbc:oracle:thin:@10.176.15.54:6087:test_iardev
+Username: microapi
+Password: MICROAPI
+ConnectionString:jdbc:oracle:thin:microapi/MICROAPI@10.176.15.54:6087:test_iardev
+Java: before calling cobol..######
+ CONNECTION STRING IS : Driver=oracle.jdbc.driver.OracleDriver;URL=jdbc:oracle:thin:microapi/MICROAPI@10.176.15.54:6087:test_iardev                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             
+ CBS DB IS NOT CONNECTED SQLCODE IS -0000017002
+ SQL DESCRIPTION IS IO Error: The Network Adapter could not establish the connection      
+Start in Java!!!!
+JVMAVBL(A003) : DATA BASE NOT CONNECTED
+THE CALL OF RESPONCE CODE
+THE DETAILS ARE 003000000380006546087201950435737472+0155                                        S
+THE RETURN FLAG IS S
+THE VALUES IN RETURN .COB ARE 0030000003800065487201950435737472  0155                                        S
+THE RESPONCE WAS STORED IN RESPONCE.COB
+com.microfocus.cobol.program.COBOLRuntimeException: 119     Name is not unique [com.tcs.bancs.microservices.responceout.RETURN]
+	at com.microfocus.cobol.program.Control.programEnter(Unknown Source)
+	at com.tcs.bancs.microservices.responceout.RETURN.RETURN(RETURN.COB:65535)
+	at com.tcs.bancs.microservices.responceout.RETURN.RETURN(RETURN.COB:65535)
+	at com.tcs.bancs.microservices.services.VisualCobol_Available_bal_Wrapper.getCustomerDetails(VisualCobol_Available_bal_Wrapper.java:168)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:566)
+	at org.springframework.web.method.support.InvocableHandlerMethod.doInvoke(InvocableHandlerMethod.java:190)
+	at org.springframework.web.method.support.InvocableHandlerMethod.invokeForRequest(InvocableHandlerMethod.java:138)
+	at org.springframework.web.servlet.mvc.method.annotation.ServletInvocableHandlerMethod.invokeAndHandle(ServletInvocableHandlerMethod.java:105)
+	at org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter.invokeHandlerMethod(RequestMappingHandlerAdapter.java:878)
+	at org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter.handleInternal(RequestMappingHandlerAdapter.java:792)
+	at org.springframework.web.servlet.mvc.method.AbstractHandlerMethodAdapter.handle(AbstractHandlerMethodAdapter.java:87)
+	at org.springframework.web.servlet.DispatcherServlet.doDispatch(DispatcherServlet.java:1040)
+	at org.springframework.web.servlet.DispatcherServlet.doService(DispatcherServlet.java:943)
+	at org.springframework.web.servlet.FrameworkServlet.processRequest(FrameworkServlet.java:1006)
+	at org.springframework.web.servlet.FrameworkServlet.doPost(FrameworkServlet.java:909)
+	at javax.servlet.http.HttpServlet.service(HttpServlet.java:652)
+	at org.springframework.web.servlet.FrameworkServlet.service(FrameworkServlet.java:883)
+	at javax.servlet.http.HttpServlet.service(HttpServlet.java:733)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:231)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:166)
+	at org.apache.tomcat.websocket.server.WsFilter.doFilter(WsFilter.java:53)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:193)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:166)
+	at com.tcs.bancs.microservices.interceptor.ResponseHeaderFilter.doFilterInternal(ResponseHeaderFilter.java:25)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:119)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:193)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:166)
+	at org.springframework.web.filter.RequestContextFilter.doFilterInternal(RequestContextFilter.java:100)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:119)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:193)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:166)
+	at org.springframework.web.filter.FormContentFilter.doFilterInternal(FormContentFilter.java:93)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:119)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:193)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:166)
+	at org.springframework.boot.actuate.metrics.web.servlet.WebMvcMetricsFilter.doFilterInternal(WebMvcMetricsFilter.java:93)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:119)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:193)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:166)
+	at org.springframework.web.filter.CharacterEncodingFilter.doFilterInternal(CharacterEncodingFilter.java:201)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:119)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:193)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:166)
+	at org.apache.catalina.core.StandardWrapperValve.invoke(StandardWrapperValve.java:202)
+	at org.apache.catalina.core.StandardContextValve.invoke(StandardContextValve.java:97)
+	at org.apache.catalina.authenticator.AuthenticatorBase.invoke(AuthenticatorBase.java:542)
+	at org.apache.catalina.core.StandardHostValve.invoke(StandardHostValve.java:143)
+	at org.apache.catalina.valves.ErrorReportValve.invoke(ErrorReportValve.java:92)
+	at org.apache.catalina.core.StandardEngineValve.invoke(StandardEngineValve.java:78)
+	at org.apache.catalina.connector.CoyoteAdapter.service(CoyoteAdapter.java:343)
+	at org.apache.coyote.http11.Http11Processor.service(Http11Processor.java:374)
+	at org.apache.coyote.AbstractProcessorLight.process(AbstractProcessorLight.java:65)
+	at org.apache.coyote.AbstractProtocol$ConnectionHandler.process(AbstractProtocol.java:868)
+	at org.apache.tomcat.util.net.NioEndpoint$SocketProcessor.doRun(NioEndpoint.java:1590)
+	at org.apache.tomcat.util.net.SocketProcessorBase.run(SocketProcessorBase.java:49)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1128)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:628)
+	at org.apache.tomcat.util.threads.TaskThread$WrappingRunnable.run(TaskThread.java:61)
+	at java.base/java.lang.Thread.run(Thread.java:834)
+the acc is 
+
