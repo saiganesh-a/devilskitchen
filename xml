@@ -1,0 +1,189 @@
+package com.tcs.bancs.microservices.util;
+
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.DocumentBuilder;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+
+public class XMLFormatter {
+
+    public String formatToXML(String output) throws Exception {
+        if (output.length() < 37) {
+            throw new Exception("Output string is too short to extract account number and balance");
+        }
+
+        char[] outputChars = output.toCharArray();
+        char[] accountNumberChars = new char[17];
+        char[] accountBalanceChars = new char[20];
+
+        for (int i = 0; i < 17; i++) {
+            accountNumberChars[i] = outputChars[i];
+        }
+
+        for (int i = 0; i < 20; i++) {
+            accountBalanceChars[i] = outputChars[17 + i];
+        }
+
+        String accountNumber = new String(accountNumberChars);
+        String accountBalance = new String(accountBalanceChars);
+
+        DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
+        DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
+
+        // Root elements
+        Document doc = docBuilder.newDocument();
+        Element rootElement = doc.createElement("AccountDetails");
+        doc.appendChild(rootElement);
+
+        // Account number element
+        Element accNumber = doc.createElement("AccountNumber");
+        accNumber.appendChild(doc.createTextNode(accountNumber.trim()));
+        rootElement.appendChild(accNumber);
+
+        // Account balance element
+        Element accBalance = doc.createElement("AccountBalance");
+        accBalance.appendChild(doc.createTextNode(accountBalance.trim()));
+        rootElement.appendChild(accBalance);
+
+        // Convert to String
+        javax.xml.transform.TransformerFactory transformerFactory = javax.xml.transform.TransformerFactory.newInstance();
+        javax.xml.transform.Transformer transformer = transformerFactory.newTransformer();
+        javax.xml.transform.dom.DOMSource source = new javax.xml.transform.dom.DOMSource(doc);
+        java.io.StringWriter writer = new java.io.StringWriter();
+        javax.xml.transform.stream.StreamResult result = new javax.xml.transform.stream.StreamResult(writer);
+        transformer.transform(source, result);
+        
+        return writer.toString();
+    }
+}
+
+
+
+
+,----------------------
+
+
+package com.tcs.bancs.microservices.util;
+
+import org.json.JSONObject;
+import org.json.XML;
+
+public class XMLToJsonConverter {
+
+    public String convertXMLToJson(String xmlString) {
+        JSONObject jsonObject = XML.toJSONObject(xmlString);
+        return jsonObject.toString();
+    }
+}
+
+
+---------------
+
+
+package com.tcs.bancs.microservices.services;
+
+import javax.servlet.http.HttpServletRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.http.HttpHeaders;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.microfocus.cobol.CobolException;
+import com.microfocus.cobol.RuntimeSystem;
+import com.microfocus.cobol.lang.ParameterList;
+import com.microfocus.cobol.lang.Pointer;
+import com.tcs.bancs.microservices.*;
+import com.tcs.bancs.microservices.aggregator.AggregationServiceImpl;
+import com.tcs.bancs.microservices.bean.request.RequestBean;
+import com.tcs.bancs.microservices.config.CacheConfig;
+import com.tcs.bancs.microservices.configuration.PropertyLoader;
+
+import com.tcs.bancs.microservices.util.DBProcess;
+import com.tcs.bancs.microservices.util.DaoUtilities;
+import com.tcs.bancs.microservices.util.FrameworkConstants;
+import com.tcs.bancs.microservices.service.response.model.CbsSixEnq;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+
+import java.util.*;
+
+@RestController
+@Api(value = "Aggregation_API", description = " ", tags = { "Aggregation API" })
+@RequestMapping("/")
+@Cacheable
+@CacheEvict
+public class VisualCobol_Available_bal_Wrapper {
+        private static boolean filterFlag = false;
+        @Autowired
+        AggregationServiceImpl aggregationServiceImpl;
+
+        @Autowired
+        DBProcess dbprocess;
+
+        @Autowired
+        DaoUtilities daoUtil;
+
+        @Autowired
+        HttpServletRequest HttpServletRequest;
+
+        Logger logger = LoggerFactory.getLogger(VisualCobol_Available_bal_Wrapper.class);
+
+        String sourceAuth = CacheConfig.frameworkConfigProperties.getProperty(FrameworkConstants.LOOKUP_FILES_PATH);
+        String IP_Configuration_Path = CacheConfig.frameworkConfigProperties.getProperty(FrameworkConstants.LOOKUP_FILES_PATH);
+
+        Properties ipprop = PropertyLoader.readPropertyFile(new String(IP_Configuration_Path + "/IpConfigMaster.properties"));
+        public String ptrstring1;
+
+        BIAVBL obj1 = new BIAVBL();
+        WaInputAccNumber input1 = new WaInputAccNumber();
+        WaCallCodeFlag input2 = new WaCallCodeFlag();
+        WaOutputBalance outputs = new WaOutputBalance();
+
+        @SuppressWarnings({ "unchecked", "rawtypes", "static-access" })
+        @ApiOperation(value = "Call COB code", notes = "Retrieve check Digit:This API is used to fetch accountNum with checkdigit.", response = CbsSixEnq.class)
+        @PostMapping(value = { "/AvailableBalance" }, produces = { "application/json" })
+        @CrossOrigin()  
+        @JsonIgnore
+        public String getCustomerDetails(@RequestBody(required = true) RequestBean reqbean, HttpServletRequest request, @RequestHeader HttpHeaders headers) 
+        {
+                String acc = reqbean.getAccountNum();
+                String type = reqbean.getFlag();
+                System.out.println("Start in Java!!!!");
+                input1.setWaInputAccNumber(acc);
+                input2.setWaCallCodeFlag(type);
+                System.out.println("Java: before calling cobol..######");
+                try {
+                    obj1.BIAVBL(input1, input2, outputs);
+                } 
+                catch (Exception e) { 
+                    e.printStackTrace(); 
+                }
+
+                String ptrstring1 = outputs.getWaOutputBalance();
+                System.out.println("Java: after calling cobol..#######");
+                System.out.println("Java: Print string pointer: " + ptrstring1);
+
+                // Use XMLFormatter to format the output to XML
+                XMLFormatter xmlFormatter = new XMLFormatter();
+                String xmlString = "";
+                try {
+                    xmlString = xmlFormatter.formatToXML(ptrstring1);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    return "{\"error\": \"Unable to format output to XML\"}";
+                }
+
+                // Convert the XML to JSON
+                XMLToJsonConverter xmlToJsonConverter = new XMLToJsonConverter();
+                String jsonString = xmlToJsonConverter.convertXMLToJson(xmlString);
+
+                return jsonString;
+        }
+}
