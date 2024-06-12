@@ -67,3 +67,94 @@ public class Response {
         }
     }
 }
+
+
+
+
+
+package com.tcs.bancs.microservices.responceout;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.LinkedHashMap;
+import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+@Component
+public class Response {
+
+    @Value("${response.outline.location}")
+    private String resFilePath;
+
+    public Map<String, String> getResponse(String linkoutRes) {
+        System.out.println("The path of response file: " + resFilePath);
+        System.out.println("The string in Response.java: " + linkoutRes);
+
+        Map<String, Integer> paramLengthMap = new LinkedHashMap<>();
+        try {
+            Files.lines(Paths.get(resFilePath)).forEach(line -> {
+                String[] lineSplit = line.split(":");
+                paramLengthMap.put(lineSplit[0], Integer.parseInt(lineSplit[1]));
+            });
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        Map<String, String> result = splitAndStoreResponse(linkoutRes, paramLengthMap);
+        System.out.println("Response after division: " + result);
+
+        String jsonResult = convertMapToJson(result);
+        System.out.println("Response as JSON: " + jsonResult);
+
+        return result;
+    }
+
+    private Map<String, String> splitAndStoreResponse(String str, Map<String, Integer> paramLengthMap) {
+        Map<String, String> splitResponse = new LinkedHashMap<>();
+        int curIndex = 0;
+
+        for (Map.Entry<String, Integer> entry : paramLengthMap.entrySet()) {
+            String key = entry.getKey();
+            int length = entry.getValue();
+
+            if (curIndex + length <= str.length()) {
+                splitResponse.put(key, str.substring(curIndex, curIndex + length));
+                curIndex += length;
+            } else {
+                // In case remaining length is less than expected
+                break;
+            }
+        }
+
+        return splitResponse;
+    }
+
+    private String convertMapToJson(Map<String, String> map) {
+        ObjectMapper objectMapper = new ObjectMapper();
+        try {
+            return objectMapper.writeValueAsString(map);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+            return "{}"; // return empty JSON object in case of error
+        }
+    }
+
+    public static void main(String[] args) {
+        // Initialize Spring context
+        org.springframework.context.ApplicationContext context = 
+                new org.springframework.context.annotation.AnnotationConfigApplicationContext(Response.class);
+
+        // Get the Response bean from context
+        Response response = context.getBean(Response.class);
+
+        // Test string for linkoutRes
+        String linkoutRes = "JohnDoe25   30NewYorkCity   ";
+        response.getResponse(linkoutRes);
+    }
+}
