@@ -1,0 +1,26 @@
+Using JacksonDownload the Jackson JAR files:You need the following JAR files:jackson-core-2.12.3.jarjackson-databind-2.12.3.jarjackson-annotations-2.12.3.jarYou can download these JAR files from the Maven Repository.Add the JAR files to your project:Ensure that the downloaded JAR files are included in your project's classpath.Convert HashMap to JSON using Jackson:Here is the code:
+
+
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.HashMap;
+import java.util.Map;
+
+public class HashMapToJson {
+    public static void main(String[] args) {
+        // Create a HashMap
+        Map<String, String> map = new HashMap<>();
+        map.put("name", "John Doe");
+        map.put("email", "john.doe@example.com");
+        map.put("age", "30");
+
+        // Convert HashMap to JSON
+        ObjectMapper objectMapper = new ObjectMapper();
+        try {
+            String json = objectMapper.writeValueAsString(map);
+            System.out.println(json);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+}
