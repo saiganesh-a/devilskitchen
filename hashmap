@@ -24,3 +24,64 @@ public class HashMapToJson {
         }
     }
 }
+
+
+
+package com.tcs.bancs.microservices.responceout;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+
+@Component
+public class Response {
+	
+	//@Value("${response.outline.location")
+	//private static String RES_FILE_PATH;
+	
+    private static final String RES_FILE_PATH = "C:\\Users\\V1012917\\Desktop\\VisualCobAPI\\MetaData\\response_outline.txt";
+    //Private static final String linkoutRes = "99999999999999999999999991111122222222222222220000AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA666666666666666664444444444444444444";
+    
+    public static Map<String, String> getResponse(String linkoutRes) {
+    	System.out.println("The path of responce file " + RES_FILE_PATH);
+    	System.out.println("The string in responce.java" + linkoutRes);
+        Map<String, Integer> paramLengthMap = new LinkedHashMap<>();
+        try {
+            Files.lines(Paths.get(RES_FILE_PATH)).forEach(line -> {
+                String[] lineSplit = line.split(":");
+                paramLengthMap.put(lineSplit[0], Integer.parseInt(lineSplit[1]));
+            });
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        Map<String, String> result = splitAndStoreResponse(linkoutRes, paramLengthMap);
+        System.out.println("Response after division: " + result);
+        
+        return result;
+    }
+
+    private static Map<String, String> splitAndStoreResponse(String str, Map<String, Integer> paramLengthMap) {
+        Map<String, String> splitResponse = new LinkedHashMap<>();
+        int curIndex = 0;
+
+        for (Map.Entry<String, Integer> entry : paramLengthMap.entrySet()) {
+            String key = entry.getKey();
+            int length = entry.getValue();
+
+            if (curIndex + length <= str.length()) {
+                splitResponse.put(key, str.substring(curIndex, curIndex + length));
+                curIndex += length;
+            } else {
+                // In case remaining length is less than expected
+                break;
+            }
+        }
+
+        return splitResponse;
+    }
+}
