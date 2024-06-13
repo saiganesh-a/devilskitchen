@@ -1,0 +1,50 @@
+package com.tcs.bancs.microservices.javacheckdigit;
+
+
+import com.tcs.bancs.microservices.checkdigit.*;
+
+public class Checkdigit {
+	
+    	JVMCHKD jvmchkd = new JVMCHKD();
+    	WaInputStringCheckDigit   input1  = new WaInputStringCheckDigit();
+    	WaValue                   input2  = new WaValue();
+    	WaOutputStringCheckDigit  output1 = new WaOutputStringCheckDigit();
+	   
+    public String getCheckDigit(String[] args) {
+    	
+		 System.out.println("Start in Java!!!!");
+         String Code = "";
+         String Accno = "";
+         if(args.length > 0){
+        	 Accno = args[0];
+             Code = args[1];
+         }
+        
+        System.out.println("Java: before calling cobol..######");
+		input1.setWaInputStringCheckDigit(Accno);
+		input2.setWaValue(Code);
+        try {jvmchkd.JVMCHKD(input1,input2, output1);}		
+        catch (Exception e) { e.printStackTrace(); }
+        String acc_with_chkd = output1.getWaOutputStringCheckDigit();
+        return acc_with_chkd;
+	}
+
+}
+
+
+-------------------------------------------
+
+package com.tcs.bancs.microservices.javacheckdigit;
+
+public class dummy {
+
+	public static void main(String[] args) {
+		// TODO Auto-generated method stub
+		
+		String arr[] = {"0000007190644974", "C"};
+		Checkdigit obj22 = new Checkdigit();
+		obj22.getCheckDigit(arr);
+
+	}
+
+}
