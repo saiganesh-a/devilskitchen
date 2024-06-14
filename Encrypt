@@ -1,0 +1,36 @@
+package com.tcs.bancs.microservices.bean.request;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonIgnoreType;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+@JsonIgnoreType
+@JsonInclude
+@JsonIgnoreProperties
+public class RequestBean {
+	
+	
+	@JsonProperty("AccountNum")
+	private String AccountNum;
+	
+	@JsonProperty("flag")
+	private String flag;
+
+	public String getAccountNum() {
+		return AccountNum;
+	}
+
+	public void setAccountNum(String accountNum) {
+		AccountNum = accountNum;
+	}
+
+	public String getFlag() {
+		return flag;
+	}
+
+	public void setFlag(String flag) {
+		this.flag = flag;
+	}
+	
+	
+}
