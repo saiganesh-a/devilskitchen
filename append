@@ -63,3 +63,33 @@ PROCEDURE DIVISION.
     DISPLAY 'Processed string: "' ws-padded-string '"'.
     
     STOP RUN.
+
+
+------
+IDENTIFICATION DIVISION.
+PROGRAM-ID. AlphaToNumeric.
+DATA DIVISION.
+WORKING-STORAGE SECTION.
+01 ws-input-string   PIC X(16) VALUE SPACES.
+01 ws-padded-string  PIC X(16).
+01 ws-length         PIC 9(2).
+01 ws-zeros          PIC X(16) VALUE '0000000000000000'.
+
+PROCEDURE DIVISION.
+    * Get user input (for example, hardcoded here)
+    MOVE '7235' TO ws-input-string.
+    
+    * Display original input
+    DISPLAY 'Original string: "' ws-input-string '"'.
+    
+    * Calculate the length of the actual input
+    INSPECT FUNCTION TRIM(ws-input-string) TALLYING ws-length FOR CHARACTERS.
+    
+    * Create the padded string
+    MOVE ws-zeros TO ws-padded-string
+    MOVE ws-input-string TO ws-padded-string(17 - ws-length:ws-length)
+    
+    * Display the results
+    DISPLAY 'Processed string: "' ws-padded-string '"'.
+    
+    STOP RUN.
