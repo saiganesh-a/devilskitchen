@@ -1,0 +1,34 @@
+IDENTIFICATION DIVISION.
+PROGRAM-ID. AlphaToNumeric.
+DATA DIVISION.
+WORKING-STORAGE SECTION.
+01 ws-input-string   PIC X(16) VALUE SPACES.
+01 ws-padded-string  PIC X(16).
+01 ws-numeric-string PIC 9(16).
+01 ws-numeric-value  PIC 9(16).
+
+PROCEDURE DIVISION.
+    * Get user input (for example, hardcoded here)
+    MOVE '7235' TO ws-input-string.
+    
+    * Display original input
+    DISPLAY 'Original string: "' ws-input-string '"'.
+    
+    * Move the input string to the padded string right-justified
+    STRING ws-input-string DELIMITED BY SPACE
+           INTO ws-padded-string.
+
+    * Replace leading spaces with zeros
+    INSPECT ws-padded-string CONVERTING SPACES TO '0'.
+
+    * Move the padded string to the numeric string field
+    MOVE ws-padded-string TO ws-numeric-string.
+    
+    * Convert the numeric string to a numeric value
+    MOVE ws-numeric-string TO ws-numeric-value.
+    
+    * Display the results
+    DISPLAY 'Processed string: "' ws-padded-string '"'.
+    DISPLAY 'Numeric value: ' ws-numeric-value.
+    
+    STOP RUN.
