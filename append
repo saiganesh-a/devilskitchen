@@ -93,3 +93,28 @@ PROCEDURE DIVISION.
     DISPLAY 'Processed string: "' ws-padded-string '"'.
     
     STOP RUN.
+
+.-----------
+IDENTIFICATION DIVISION.
+PROGRAM-ID. AlphaToNumeric.
+DATA DIVISION.
+WORKING-STORAGE SECTION.
+01 ws-input-string   PIC X(16) VALUE SPACES.
+01 ws-padded-string  PIC X(16).
+
+PROCEDURE DIVISION.
+    * Get user input (for example, hardcoded here)
+    MOVE '7235' TO ws-input-string.
+    
+    * Display original input
+    DISPLAY 'Original string: "' ws-input-string '"'.
+    
+    * Create the padded string with leading zeros
+    MOVE FUNCTION NUMVAL(ws-input-string) TO ws-padded-string.
+    MOVE FUNCTION NUMVAL-C(ws-input-string) TO ws-padded-string.
+    MOVE ws-padded-string TO ws-padded-string(16-FUNCTION LENGTH(STRING FUNCTION NUMVAL-C(ws-input-string) DELIMITED BY SPACE): FUNCTION LENGTH(STRING FUNCTION NUMVAL-C(ws-input-string) DELIMITED BY SPACE))
+    
+    * Display the results
+    DISPLAY 'Processed string: "' ws-padded-string '"'.
+    
+    STOP RUN.
