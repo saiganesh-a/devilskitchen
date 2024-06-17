@@ -1,0 +1,115 @@
+2.	Track count of CIF amendments:
+i.	Post promotion of this CR, when with each CIF amend record will be inserted in this new CCNT table with ’00: Active’ status.
+ii.	With each CIF amendment (67000), count will be incremented by 1 in CBS, against that CIF, when below mentioned conditions hold true
+1)	LIVE FLAG value in MAX_CIF_AMENDS.card file is ‘Y’
+2)	There is no record present in CCNT table for that CIF
+3)	Record present for that CIF in CCNT table with status ’00: Active’
+else, value in COUNT will not be incremented.
+
+iii.	Reset count of CIF amendment:
+With each CIF amendment (67000), count will be reset to 1 in CBS, against that CIF, when below mentioned conditions hold true
+1)	LIVE FLAG value in MAX_CIF_AMENDS.card file is ‘Y’
+2)	Record present for that CIF in CCNT table with status ’00: Active’
+3)	LAST_AMEND_DATE does not belongs to current month
+iv.	New validation will be added in CIF amendment (67000) transaction, based on conditions mentioned below:
+1)	LIVE FLAG value in MAX_CIF_AMENDS.card file is ‘Y’
+2)	Record present for that CIF in CCNT table with status ’00: Active’
+3)	LAST_AMEND_DATE belongs to current month
+4)	Value in COUNT from CCNT table is greater than or equal to the value in MAX_AMENDS in MAX_CIF_AMENDS.card file
+then restrict CIF amendment with error, ‘XXX1: CIF AMEND MAX LIMIT BREACHED‘
+else allow CIF amendment by incrementing the count.
+3.	Count and validation will only be applicable for CIF amendment transaction 67000. This will be applicable for Bancslink, Bulk files (CAN, CID, CTC) and channels as well.
+4.	Count of amendment will be incremented during each execution of transaction 67000, even when value in any field is not changed.
+5.	Welcome Kit amendment from 67050: Option 23 and WKA bulk file will not be in scope of this requirement and count of CIF amend will not be incremented for such CIFs. Welcome Kit CIFs will be identified based on value in ACCT_IND field is ‘W’ and account status as ‘19’ in INVM table, as per existing functionality.
+6.	To allow CIF amendment above max. limit, for privileged customer, status of that CIF can be updated to ’09: Inactive’, using S-core request. If status is changed to ’09: Inactive’, then this limitation on count of CIF amendments for that CIF will be bypassed forever.
+7.	If bypass is required for a customer, only for the current month, the count of CIF amendments can be reset to 0 (zero), however if the limit is breached in the same month, next amendment transaction will be restricted.
+8.	This functionality will be applicable for Personal and Non-Personal customers both.
+
+
+
+___________________________________
+
+
+000000 IF STRT-AREA-TRN-NO = 67000
+000000    PERFORM R903-READ-MAX-AMENDS-CARD THRU
+000000                     R903-MAX-AMENDS-CARD-EXIT
+000000  IF WA-CARD-LIVE-FLAG ='Y'
+000000    CALL "UTWELK" USING LINK-ACCT-CALL-AREA
+000000                         STARTAREA
+000000     MOVE  WA-OUT-FLAG   TO WA-FLAG
+000000      IF WA-FLAG  = 'N'
+000000         PERFORM S000-READ-CCNT THRU S100-CCNT-EXIT
+000000         EVALUATE  DBIOMOD-STAT
+000000         WHEN "*****"
+000000            IF WA-CCNT-STATUS = "00"
+000000               IF ((WS-AMEND-YEAR-CC-RR = WA-ACCEPT-DATE-CC-R ) AND
+000000                   (WS-AMEND-YEAR-YY-RR = WA-ACCEPT-DATE-YY-R ) AND
+000000                    WS-AMEND-MONTH-RR = WA-ACCEPT-DATE-MM-R))
+000000                  ADD 1 TO CCNT-COUNT
+000000                  MOVE WA-TODAYS-DATE TO LAST-AMEND-DATE
+000000                  MOVE CURRENT-TIME TO LAST-AMEND-TIME
+000000               ELSE
+000000                   MOVE 1 TO CCNT-COUNT
+000000                   MOVE WA-TODAYS-DATE TO LAST-AMEND-DATE
+000000                   MOVE CURRENT-TIME TO LAST-AMEND-TIME
+000000            END-IF
+000000         WHEN MRNF
+000000            MOVE WA-TODAYS-DATE TO LAST-AMEND-DATE
+000000            MOVE 1               TO UT1996CA-CALL-CODE
+000000            CALL "UT1996" USING
+000000                           UT1996CA-CALL-AREA
+000000            MOVE UT1996CA-TIME   TO LAST-AMEND-TIME
+000000            MOVE 1 TO CCNT-COUNT
+000000
+000000         WHEN OTHER 
+000000            MOVE 188  TO CI0051-OUTPUT-ERR-MSG-NO
+000000       END-IF
+000000   END-IF
+000000 END-IF
+
+
+
+000000 A100-TODAYS-DATE.
+000000     CALL "UT1999" USING
+000000
+000000                         UT1999CA-CALL-AREA.
+000000     MOVE UT1999CA-DD TO WA-ACCEPT-DD-R
+000000     MOVE UT1999CA-MM TO WA-ACCEPT-MM-R
+000000     MOVE UT1999CA-CC TO WA-ACCEPT-CC-R
+000000     MOVE UT1999CA-YY TO WA-ACCEPT-YY-R
+062240     MOVE WA-ACCEPT-DATE-R TO UT0030-DATE-DDMMCCYY.
+072220     MOVE 1           TO UT0030-FUNCTION
+072230     CALL "UT0030" USING UT0030-FUNCTION
+000000                         UT0030-DATE-AREA
+072250                         UT0030-BINARY-DATE
+072260     IF UT0030-BINARY-DATE = ZEROES
+072270         MOVE 126          TO WA-OUTPUT-ERR-MSG-NO
+072280         MOVE 1            TO WA-MSG-ERR-FLAG
+072290         GO TO EXIT
+MMMMMM     ELSE
+S20552     MOVE UT0030-BINARY-DATE TO WA-TODAYS-DATE.
+000000 A100-TODAYS-DATE-EXIT.
+000000 EXIT.
+
+
+000000 A100-TABLE-DATE.
+000000 	   PERFORM S000-READ-CCNT THRU S100-CCNT-EXIT
+000000     MOVE  LAST_AMEND_DATE TO UT0020-BINARY-DATE.
+000000     MOVE 01 TO UT0020-FUNCTION
+000000     CALL "UT0020" USING UT0020-FUNCTION
+000000                         UT0020-DATE-AREA
+000000                         UT0020-BINARY-DATE.
+000000     MOVE UT0020-DATE-DDMMCCYY(1:2)  TO WS-AMEND-DATE-RR.
+000000     MOVE UT0020-DATE-DDMMCCYY(3:2)  TO WS-AMEND-MONTH-RR.
+000000     MOVE UT0020-DATE-DDMMCCYY(5:2)  TO WS-AMEND-YEAR-CC-RR.
+000000     MOVE UT0020-DATE-DDMMCCYY(7:2)  TO WS-AMEND-YEAR-YY-RR.
+000000 A100-TABLE-DATE-EXIT.
+000000 EXIT.
+
+000000 A200-CURRENT-TIME.
+000000             MOVE 1               TO UT1996CA-CALL-CODE
+000000             CALL "UT1996" USING
+000000                           UT1996CA-CALL-AREA
+000000             MOVE UT1996CA-TIME   TO LAST-AMEND-TIME
+000000 A200-TIME-EXIT.
+000000 EXIT.
