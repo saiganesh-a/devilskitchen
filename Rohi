@@ -1,0 +1,525 @@
+
+package com.tcs.bancs.microservices.services;
+
+import javax.servlet.http.HttpServletRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.http.HttpHeaders;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.google.gson.Gson;
+import com.microfocus.cobol.CobolException;
+import com.microfocus.cobol.RuntimeSystem;
+import com.microfocus.cobol.lang.ParameterList;
+import com.microfocus.cobol.lang.Pointer;
+import com.tcs.bancs.microservices.*;
+import com.tcs.bancs.microservices.aggregator.AggregationServiceImpl;
+import com.tcs.bancs.microservices.bean.request.RequestBean;
+import com.tcs.bancs.microservices.config.CacheConfig;
+import com.tcs.bancs.microservices.configuration.PropertyLoader;
+
+import com.tcs.bancs.microservices.util.DBProcess;
+import com.tcs.bancs.microservices.util.DaoUtilities;
+import com.tcs.bancs.microservices.util.FrameworkConstants;
+import com.tcs.bancs.microservices.service.response.model.CbsSixEnq;
+import com.tcs.bancs.microservices.service.response.model.CbsSixEnqResponce;
+
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+
+import org.springframework.util.StringUtils;
+import java.util.Base64;
+import java.sql.*;
+
+import java.util.*;
+
+import com.tcs.bancs.microservices.services.Response.*;
+import com.tcs.bancs.microservices.jvm.checkdigit.*;
+import com.tcs.bancs.microservices.jvm.env.*;
+import com.tcs.bancs.microservices.jvm.env.WaCallCode;
+import com.tcs.bancs.microservices.services.DBConnectionController.*;
+
+@RestController
+@Api(value = "Aggregation_API", description = " ", tags = { "Aggregation API" })
+@RequestMapping("/")
+@Cacheable
+@CacheEvict
+@Component
+public class VisualCobol_Checkdigit_Wrapper {
+	private static boolean filterFlag = false;
+	@Autowired
+	AggregationServiceImpl aggregationServiceImpl;
+
+	@Autowired
+	DBProcess dbprocess;
+
+	@Autowired
+	DaoUtilities daoUtil;
+
+	@Autowired
+	HttpServletRequest HttpServletRequest;
+	
+	private final DBConnectionController dbconnection;
+	private final Response response;
+	
+	@Autowired
+	public VisualCobol_Checkdigit_Wrapper(DBConnectionController dbconnection, Response response) {
+		this.dbconnection = dbconnection;
+		this.response = response;
+	}
+
+	Logger logger = LoggerFactory.getLogger(VisualCobol_Checkdigit_Wrapper.class);
+	
+    @Value("${day.datasource.jdbc-url}")
+    private String dayJdbcUrl;
+
+    @Value("${day.datasource.username}")
+    private String dayUsername;
+
+    @Value("${day.datasource.password}")
+    private String dayPassword;
+
+    @Value("${night.datasource.jdbc-url}")
+    private String nightJdbcUrl;
+
+    @Value("${night.datasource.username}")
+    private String nightUsername;
+
+    @Value("${night.datasource.password}")
+    private String nightPassword;
+
+    @Value("${ref.datasource.jdbc-url}")
+    private String refJdbcUrl;
+
+    @Value("${ref.datasource.username}")
+    private String refUsername;
+
+    @Value("${ref.datasource.password}")
+    private String refPassword;
+
+    @Value("${UTENVCALS-BANCS-TRACE-STATE}")
+    private String bancsTraceState;
+    
+    @Value("${UTENVCALS-MASTER-DQPTYPE}")
+    private String masterDQType;
+    
+    @Value("${UTENVCALS-BANCS-HOST}")
+    private byte bancsHost;
+    
+    @Value("${UTENVCALS-FNS-SYSNUM}")
+    private byte fnsSysnum;
+    
+    @Value("${UTENVCALS-CTRL-SYSNUM}")
+    private byte ctrlSysnum;
+    
+    @Value("${UTENVCALS-DAY-SYSNUM}")
+    private byte daySysnum;
+    
+    @Value("${UTENVCALS-NIGHT-SYSNUM}")
+    private byte nightSysnum;
+    
+    @Value("${UTENVCALS-NON24H-SYSNUM}")
+    private byte non24hsum;
+    
+    @Value("${UTENVCALS-DEF-RMODE}")
+    private String defRMode;
+    
+    @Value("${UTENVCALS-MASTER-DB-1}")
+    private String masterDB1;
+    
+    @Value("${UTENVCALS-MASTER-DB-2}")
+    private String masterDB2;
+    
+    @Value("${UTENVCALS-SERVICES-FLAG}")
+    private String servicesFlag;
+    
+	String sourceAuth = CacheConfig.frameworkConfigProperties.getProperty(FrameworkConstants.LOOKUP_FILES_PATH);
+	String IP_Configuration_Path = CacheConfig.frameworkConfigProperties.getProperty(FrameworkConstants.LOOKUP_FILES_PATH);
+	Properties sId = PropertyLoader.readPropertyFile(new String(sourceAuth + "/SourceIdList.properties"));
+	Properties ipprop = PropertyLoader.readPropertyFile(new String(IP_Configuration_Path + "/IpConfigMaster.properties"));
+	
+	
+	
+	JVMCHKD jvmchkd = new JVMCHKD();
+	WaInputStringCheckDigit input1 = new WaInputStringCheckDigit();
+	WaValue input2 = new WaValue();
+	WaOutputResponce output = new WaOutputResponce();
+	
+    UTENV obj1 = new UTENV();
+	WaCallCode input11 = new WaCallCode();
+	WaOptCode input22 = new WaOptCode();
+	WaCommonVar input33 = new WaCommonVar();
+	LsEnvcaRecArea input44 = new LsEnvcaRecArea();
+	  
+	@SuppressWarnings({ "unchecked", "rawtypes", "static-access" })
+	@ApiOperation(value = "Call COB code", notes = "Retrieve cehck Digit:This API is used to fetch accountNum with checkdigit.", response = CbsSixEnq.class)
+	@PostMapping(value = { "/CheckDigit" }, produces = { "application/json" })
+	@CrossOrigin()
+	@JsonIgnore
+	public String getCheckDigit(@RequestBody(required = true)RequestBean reqbean,HttpServletRequest request, @RequestHeader HttpHeaders headers) 
+	{
+		
+		String callcode = "S";
+		String commonvar = "tempData";
+		String optcode = "01";
+		String envcaRecArea = bancsTraceState + masterDQType + bancsHost + fnsSysnum + ctrlSysnum + daySysnum + nightSysnum + non24hsum + defRMode + masterDB1 +masterDB2 + servicesFlag;		
+        System.out.println("the env data is " + envcaRecArea);
+	    String dbtype = "day";
+
+	    String jdbcUrl = getJdbcUrl(dbtype);
+	    String username = getUsername(dbtype);
+	    String password = getPassword(dbtype);
+	    
+		 System.out.println("Start in Java!!!!");
+
+	        System.out.println("JDBC URL: " + jdbcUrl);
+	        System.out.println("Username: " + username);
+	        System.out.println("BEFORE GETPASSWORD");
+	        System.out.println("Password: " + password);
+	        System.out.println("AFTER GETPASSWORD:");
+	        System.out.println("Check changes");
+	        
+	        input11.setWaCallCode(callcode);
+	        input22.setWaOptCode(optcode);
+	        input33.setWaCommonVar(commonvar);
+	        input44.setLsEnvcaRecArea(envcaRecArea);
+	        
+		String ptrstring1;
+		String finalResponse = "";
+		CbsSixEnqResponce resp = new CbsSixEnqResponce();
+		Gson gson = new Gson();
+		
+		String acc = reqbean.getAccountNum();
+		input1.setWaInputStringCheckDigit(acc);
+
+		String type = reqbean.getFlag();
+        input2.setWaValue(type);
+        
+        char res = dbconnection.establishConnection("01");
+        
+        try {
+        	obj1.UTENV(input11, input22, input33, input44);
+            } 
+        catch (Exception e) { e.printStackTrace(); }
+
+		System.out.println("the start of jvmchkd");
+		
+        try {jvmchkd.JVMCHKD(input1, input2, output);} 
+	    catch (Exception e) { e.printStackTrace(); }
+        
+        System.out.println("after jvmchkd");
+        
+        ptrstring1 = output.getWaOutputResponce();
+	    finalResponse = response.getResponse(ptrstring1);
+	    return finalResponse;
+	    
+	    
+	    
+	}
+	
+	public String getJdbcUrl(String type) {
+        switch (type) {
+            case "day":
+                return dayJdbcUrl;
+            case "night":
+                return nightJdbcUrl;
+            case "ref":
+                return refJdbcUrl;
+            default:
+                throw new IllegalArgumentException("Unsupported datasource type: " + type);
+        }
+    }
+
+    public String getUsername(String type) {
+        switch (type) {
+            case "day":
+                return dayUsername;
+            case "night":
+                return nightUsername;
+            case "ref":
+                return refUsername;
+            default:
+                throw new IllegalArgumentException("Unsupported datasource type: " + type);
+        }
+    }
+
+	
+	  public String getPassword(String type) { 
+		  switch (type) { 
+		  case "day": 
+			  System.out.println("INSIDE GETPASS type:" + type + dayPassword );
+			  return dayPassword; 
+		  case "night": 
+			  return nightPassword; 
+		  case "ref":
+			  return refPassword;  
+		  default: 
+			  throw new IllegalArgumentException("Unsupported datasource type: " + type);
+	 
+        }
+    } 
+}
+
+
+------------------------------------
+
+000100$ SET ilsmartlinkage
+000200$ SET ilnamespace "com.tcs.bancs.microservices.jvm.env"
+000300
+000400 data division.
+000500 working-storage section.
+000600 01 WA-COMMON-AREA.
+000700   03 UTENVCAWA-BANCS-TRACE-STATE  PIC X.
+000800   03 UTENVCAWA-MASTER-DQPTYPE     PIC X.
+000900   03 UTENVCAWA-BANCS-HOST         PIC 9.
+001000   03 UTENVCAWA-FNS-SYSNUM         PIC 9.
+001100   03 UTENVCAWA-CTRL-SYSNUM        PIC 9.
+001200   03 UTENVCAWA-DAY-SYSNUM         PIC 9.
+001300   03 UTENVCAWA-NIGHT-SYSNUM       PIC 9.
+001400   03 UTENVCAWA-NON24H-SYSNUM      PIC 9.
+001500   03 UTENVCAWA-DEF-RMODE          PIC X.
+001600   03 UTENVCAWA-MASTER-DB-1        PIC X(15).
+001700   03 UTENVCAWA-MASTER-DB-2        PIC X(15).
+001800   03 UTENVCAWA-SERVICES-FLAG      PIC X(01).
+001900 01 WS-COMMON-AREA.
+002000   03 UTENVCAWS-BANCS-TRACE-STATE  PIC X.
+002100   03 UTENVCAWS-MASTER-DQPTYPE     PIC X.
+002200   03 UTENVCAWS-BANCS-HOST         PIC 9.
+002300   03 UTENVCAWS-FNS-SYSNUM         PIC 9.
+002400   03 UTENVCAWS-CTRL-SYSNUM        PIC 9.
+002500   03 UTENVCAWS-DAY-SYSNUM         PIC 9.
+002600   03 UTENVCAWS-NIGHT-SYSNUM       PIC 9.
+002700   03 UTENVCAWS-NON24H-SYSNUM      PIC 9.
+002800   03 UTENVCAWS-DEF-RMODE          PIC X.
+002900   03 UTENVCAWS-MASTER-DB-1        PIC X(15).
+003000   03 UTENVCAWS-MASTER-DB-2        PIC X(15).
+003100   03 UTENVCAWS-SERVICES-FLAG      PIC X(01).
+003200 LINKAGE SECTION.
+003300 01 WA-CALL-CODE             PIC X(01).
+003400 01 WA-OPT-CODE              PIC X(02).
+003500 01 WA-COMMON-VAR            PIC X(20).
+003600 01 LS-ENVCA-REC-AREA
+003700    COPY UTENVCA.
+003800 procedure division using WA-CALL-CODE
+003900                          WA-OPT-CODE
+004000                          WA-COMMON-VAR
+004100                          LS-ENVCA-REC-AREA.
+004200 A000-MAIN-PARA.
+004300     PERFORM A020-PARAM-PARA THRU A020-EXIT.
+004400 A009-MAIN-EXIT.
+004500  EXIT PROGRAM.
+004600*
+004700 A020-PARAM-PARA.
+004800  IF WA-CALL-CODE = "S"
+004900    EVALUATE WA-OPT-CODE
+005000     WHEN '01'   
+005100      MOVE WA-COMMON-VAR TO UTENVCAWA-BANCS-TRACE-STATE
+            DISPLAY "THE WA-COMMON-VAR TEXT1 IS " UTENVCAWA-BANCS-TRACE-STATE
+005200     WHEN '02'
+005300      MOVE WA-COMMON-VAR TO UTENVCAWA-MASTER-DQPTYPE
+            DISPLAY "THE WA-COMMON-VAR TEXT2 IS " UTENVCAWA-MASTER-DQPTYPE
+005400     WHEN '03'
+005500      MOVE WA-COMMON-VAR TO UTENVCAWA-BANCS-HOST
+            DISPLAY "THE WA-COMMON-VAR TEXT3 IS " UTENVCAWA-BANCS-HOST
+005600     WHEN '04' 
+005700      MOVE WA-COMMON-VAR TO UTENVCAWA-FNS-SYSNUM
+            DISPLAY "THE WA-COMMON-VAR TEXT4 IS " UTENVCAWA-FNS-SYSNUM
+005800     WHEN '05' 
+005900      MOVE WA-COMMON-VAR TO UTENVCAWA-CTRL-SYSNUM
+            DISPLAY "THE WA-COMMON-VAR TEXT5 IS " UTENVCAWA-CTRL-SYSNUM
+006000     WHEN '06' 
+006100      MOVE WA-COMMON-VAR TO UTENVCAWA-DAY-SYSNUM
+            DISPLAY "THE WA-COMMON-VAR TEXT6 IS " UTENVCAWA-DAY-SYSNUM
+006200     WHEN '07' 
+006300      MOVE WA-COMMON-VAR TO UTENVCAWA-NIGHT-SYSNUM
+            DISPLAY "THE WA-COMMON-VAR TEXT7 IS " UTENVCAWA-NIGHT-SYSNUM
+006400     WHEN '08' 
+006500      MOVE WA-COMMON-VAR TO UTENVCAWA-NON24H-SYSNUM
+            DISPLAY "THE WA-COMMON-VAR TEXT8 IS " UTENVCAWA-NON24H-SYSNUM
+006600     WHEN '09' 
+006700      MOVE WA-COMMON-VAR TO UTENVCAWA-DEF-RMODE
+            DISPLAY "THE WA-COMMON-VAR TEXT9 IS " UTENVCAWA-DEF-RMODE
+006800     WHEN '10' 
+006900      MOVE WA-COMMON-VAR TO UTENVCAWA-MASTER-DB-1
+            DISPLAY "THE WA-COMMON-VAR TEXT10 IS " UTENVCAWA-MASTER-DB-1
+007000     WHEN '11' 
+007100      MOVE WA-COMMON-VAR TO UTENVCAWA-MASTER-DB-2
+            DISPLAY "THE WA-COMMON-VAR TEXT11 IS " UTENVCAWA-MASTER-DB-2
+007200     WHEN '12'
+007300      MOVE WA-COMMON-VAR TO UTENVCAWA-SERVICES-FLAG
+            DISPLAY "THE WA-COMMON-VAR TEXT12 IS " UTENVCAWA-SERVICES-FLAG
+007400     WHEN OTHER
+007500       MOVE SPACES TO UTENVCAWA-BANCS-TRACE-STATE 
+007600                      UTENVCAWA-MASTER-DQPTYPE    
+007700                      UTENVCAWA-BANCS-HOST        
+007800                      UTENVCAWA-FNS-SYSNUM        
+007900                      UTENVCAWA-CTRL-SYSNUM       
+008000                      UTENVCAWA-DAY-SYSNUM        
+008100                      UTENVCAWA-NIGHT-SYSNUM      
+008200                      UTENVCAWA-NON24H-SYSNUM     
+008300                      UTENVCAWA-DEF-RMODE         
+008400                      UTENVCAWA-MASTER-DB-1       
+008500                      UTENVCAWA-MASTER-DB-2
+008600                      UTENVCAWA-SERVICES-FLAG
+008700    END-EVALUATE
+008800  END-IF.
+008900  IF WA-CALL-CODE = "G"
+009000   EVALUATE WA-OPT-CODE
+009100     WHEN '01'   
+009200       MOVE UTENVCAWA-BANCS-TRACE-STATE TO UTENVCAWS-BANCS-TRACE-STATE
+009300     WHEN '02'
+009400       MOVE UTENVCAWA-MASTER-DQPTYPE    TO UTENVCAWS-MASTER-DQPTYPE
+009500     WHEN '03'  
+009600       MOVE UTENVCAWA-BANCS-HOST        TO UTENVCAWS-BANCS-HOST
+009700     WHEN '04'          
+009800       MOVE UTENVCAWA-FNS-SYSNUM        TO UTENVCAWS-FNS-SYSNUM 
+009900     WHEN '05'         
+010000       MOVE UTENVCAWA-CTRL-SYSNUM       TO UTENVCAWS-CTRL-SYSNUM        
+010100     WHEN '06' 
+010200       MOVE UTENVCAWA-DAY-SYSNUM        TO UTENVCAWS-DAY-SYSNUM         
+010300     WHEN '07' 
+010400       MOVE UTENVCAWA-NIGHT-SYSNUM      TO UTENVCAWS-NIGHT-SYSNUM       
+010500     WHEN '08' 
+010600       MOVE UTENVCAWA-NON24H-SYSNUM     TO UTENVCAWS-NON24H-SYSNUM      
+010700     WHEN '09' 
+010800       MOVE UTENVCAWA-DEF-RMODE         TO UTENVCAWS-DEF-RMODE          
+010900     WHEN '10' 
+011000       MOVE UTENVCAWA-MASTER-DB-1       TO UTENVCAWS-MASTER-DB-1        
+011100     WHEN '11' 
+011200       MOVE UTENVCAWA-MASTER-DB-2       TO UTENVCAWS-MASTER-DB-2
+             DISPLAY "UTENV 11"  UTENVCAWA-MASTER-DB-2
+011300     WHEN '12'
+011400       MOVE WA-COMMON-VAR TO UTENVCAWS-SERVICES-FLAG
+011500     WHEN OTHER
+011600       MOVE SPACES TO UTENVCAWS-BANCS-TRACE-STATE 
+011700                      UTENVCAWS-MASTER-DQPTYPE    
+011800                      UTENVCAWS-BANCS-HOST        
+011900                      UTENVCAWS-FNS-SYSNUM        
+012000                      UTENVCAWS-CTRL-SYSNUM       
+012100                      UTENVCAWS-DAY-SYSNUM        
+012200                      UTENVCAWS-NIGHT-SYSNUM      
+012300                      UTENVCAWS-NON24H-SYSNUM     
+012400                      UTENVCAWS-DEF-RMODE         
+012500                      UTENVCAWS-MASTER-DB-1       
+012600                      UTENVCAWS-MASTER-DB-2
+012700                      UTENVCAWS-SERVICES-FLAG
+012800   END-EVALUATE
+012900  END-IF.
+013000 A020-EXIT.
+013100  EXIT.
+013200
+
+---------------------------
+
+
+spring.jpa.database=default
+server.port=1003
+server.contextPath=/
+server.address=127.0.0.1
+spring.main.allow-bean-definition-overriding=true
+spring.jackson.default-property-inclusion=non_null
+spring.jpa.show-sql=true
+spring.jmx.enabled=false
+spring.banner.location=C://Users//V1010513//Desktop//VisualCobAPI//MetaData//PropertyFiles\\banner.txt
+
+spring.jpa.hibernate.naming.physical-strategy=org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+
+# Database configuration
+#day.datasource.jdbc-url=jdbc:oracle:thin:@10.189.15.163:1698:rtst
+day.datasource.jdbc-url=jdbc:oracle:thin:@10.176.15.54:6087:test_iardev
+day.datasource.username=microapi
+day.datasource.password=MICROAPI
+#day.datasource.password=ENC(faFShHa3l9oyu2qWrxaLJw==)
+day.datasource.driver-class-name=oracle.jdbc.driver.OracleDriver
+day.jpa.database-platform=org.hibernate.dialect.Oracle12cDialect
+day.jpa.properties.hibernate.dialect=org.hibernate.dialect.Oracle12cDialect
+
+
+#night.datasource.url=jdbc:oracle:thin:@10.189.15.163:1605:c013bans
+night.datasource.jdbc-url=jdbc:oracle:thin:@10.189.15.163:1698:rtst
+night.datasource.username=MICROAPI
+night.datasource.password=MICROAPI
+#night.datasource.password=ENC(faFShHa3l9oyu2qWrxaLJw==)
+night.datasource.driver-class-name=oracle.jdbc.driver.OracleDriver
+night.jpa.database-platform=com.tcs.bancs.microservices.configuration.CustomOracleDialect
+night.jpa.properties.hibernate.dialect=com.tcs.bancs.microservices.configuration.CustomOracleDialect
+#jasypt.encryptor.password=secret
+
+ref.datasource.jdbc-url=jdbc:oracle:thin:@10.189.15.163:1698:rtst
+ref.datasource.username=MICROAPI
+ref.datasource.password=MICROAPI
+#night.datasource.password=ENC(faFShHa3l9oyu2qWrxaLJw==)
+ref.datasource.driver-class-name=oracle.jdbc.driver.OracleDriver
+ref.jpa.database-platform=com.tcs.bancs.microservices.configuration.CustomOracleDialect
+ref.jpa.properties.hibernate.dialect=com.tcs.bancs.microservices.configuration.CustomOracleDialect
+
+#Logging framework
+logging.level.org.springframework = DEBUG
+logging.level.com.tcs.bancs = DEBUG
+logging.config=C:\\Users\\V1010513\\Desktop\\VisualCobAPI\\MetaData\\Config\\logback-spring.xml
+logging.file.location=C:\\Users\\V1010513\\Desktop\\VisualCobAPI\\MetaData\\SystemLogs
+logback.access.enabled=true
+logging.level.org.hibernate.SQL= TRACE
+logging.level.org.hibernate.type.descriptor.sql.BasicBinder=TRACE
+logging.level.org.hibernate.type=TRACE	
+
+#Actuator endpoints
+management.endpoints.health.sensitive=false
+management.health.db.enabled=true 
+management.endpoint.health.show-details=always 
+management.endpoint.shutdown.enabled=true
+
+#new Added Env Variables
+UTENVCALS-BANCS-TRACE-STATE=Y
+UTENVCALS-MASTER-DQPTYPE=Y 
+UTENVCALS-BANCS-HOST=1     
+UTENVCALS-FNS-SYSNUM=1     
+UTENVCALS-CTRL-SYSNUM=1    
+UTENVCALS-DAY-SYSNUM=1     
+UTENVCALS-NIGHT-SYSNUM=1   
+UTENVCALS-NON24H-SYSNUM=1  
+UTENVCALS-DEF-RMODE=Y      
+UTENVCALS-MASTER-DB-1=test_iardev    
+UTENVCALS-MASTER-DB-2=rprd    
+UTENVCALS-SERVICES-FLAG=Y  
+
+
+#Response outline
+response.outline.location=C:\\Users\\V1010513\\Desktop\\VisualCobAPI\\MetaData\\response_outline.txt
+
+
+----------------------------------
+
+||getCheckDigit|the env data is YY 111111Y      test_iardev    rprd    Y  
+INSIDE GETPASS type:dayMICROAPI
+Start in Java!!!!
+JDBC URL: jdbc:oracle:thin:@10.176.15.54:6087:test_iardev
+Username: microapi
+BEFORE GETPASSWORD
+Password: MICROAPI
+AFTER GETPASSWORD:
+Check changes
+2024-06-19 11:02:58,416 DEBUG org.springframework.orm.jpa.JpaTransactionManager [http-nio-127.0.0.1-1003-exec-1] Found thread-bound EntityManager [SessionImpl(1671016444<open>)] for JPA transaction
+||getCheckDigit|2024-06-19 11:02:58,416 DEBUG org.springframework.transaction.support.AbstractPlatformTransactionManager [http-nio-127.0.0.1-1003-exec-1] Creating new transaction with name [com.tcs.bancs.microservices.services.DBConnectionService.establishTwoconnections]: PROPAGATION_REQUIRED,ISOLATION_DEFAULT
+||getCheckDigit|2024-06-19 11:02:58,424 DEBUG org.springframework.orm.jpa.JpaTransactionManager [http-nio-127.0.0.1-1003-exec-1] Exposing JPA transaction as JDBC [org.springframework.orm.jpa.vendor.HibernateJpaDialect$HibernateConnectionHandle@41b4b3bf]
+||getCheckDigit|LOG Database connection established successfully!
+Call code in IOMISC :01
+ CONNECTION STRING IS : Driver=oracle.jdbc.driver.OracleDriver;URL=jdbc:oracle:thin:microapi/MICROAPI@10.176.15.54:6087:test_iardev                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             
+ CBS DB IS CONNECTED SQLCODE IS +0000000000
+2024-06-19 11:02:58,809 DEBUG org.springframework.transaction.support.AbstractPlatformTransactionManager [http-nio-127.0.0.1-1003-exec-1] Initiating transaction commit
+||getCheckDigit|2024-06-19 11:02:58,809 DEBUG org.springframework.orm.jpa.JpaTransactionManager [http-nio-127.0.0.1-1003-exec-1] Committing JPA transaction on EntityManager [SessionImpl(1671016444<open>)]
+||getCheckDigit|2024-06-19 11:02:58,814 DEBUG org.springframework.orm.jpa.JpaTransactionManager [http-nio-127.0.0.1-1003-exec-1] Not closing pre-bound JPA EntityManager after transaction
+||getCheckDigit|THE WA-COMMON-VAR TEXT1 IS t
+the start of jvmchkd
+11:02:58.       | DBIO:(A100) FILE-INDEX, FILE-NUM, NO-DATA-SETS: 0433 0432 0430                                                          
+11:02:58.       | DBIO:(A100) FIRST ENTRY = AACH                                                                                          
+THE DBIO CALL STATUS IS   
