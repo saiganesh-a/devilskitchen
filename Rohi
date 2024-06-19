@@ -523,3 +523,269 @@ the start of jvmchkd
 11:02:58.       | DBIO:(A100) FILE-INDEX, FILE-NUM, NO-DATA-SETS: 0433 0432 0430                                                          
 11:02:58.       | DBIO:(A100) FIRST ENTRY = AACH                                                                                          
 THE DBIO CALL STATUS IS   
+_-----------------------
+package com.tcs.bancs.microservices.services;
+
+import javax.servlet.http.HttpServletRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.http.HttpHeaders;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.google.gson.Gson;
+import com.microfocus.cobol.CobolException;
+import com.microfocus.cobol.RuntimeSystem;
+import com.microfocus.cobol.lang.ParameterList;
+import com.microfocus.cobol.lang.Pointer;
+import com.tcs.bancs.microservices.*;
+import com.tcs.bancs.microservices.aggregator.AggregationServiceImpl;
+import com.tcs.bancs.microservices.bean.request.RequestBean;
+import com.tcs.bancs.microservices.config.CacheConfig;
+import com.tcs.bancs.microservices.configuration.PropertyLoader;
+
+import com.tcs.bancs.microservices.util.DBProcess;
+import com.tcs.bancs.microservices.util.DaoUtilities;
+import com.tcs.bancs.microservices.util.FrameworkConstants;
+import com.tcs.bancs.microservices.service.response.model.CbsSixEnq;
+import com.tcs.bancs.microservices.service.response.model.CbsSixEnqResponce;
+
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+
+import java.util.Properties;
+
+@RestController
+@Api(value = "Aggregation_API", description = " ", tags = { "Aggregation API" })
+@RequestMapping("/")
+@Cacheable
+@CacheEvict
+@Component
+public class VisualCobol_Checkdigit_Wrapper {
+    private static boolean filterFlag = false;
+    @Autowired
+    AggregationServiceImpl aggregationServiceImpl;
+
+    @Autowired
+    DBProcess dbprocess;
+
+    @Autowired
+    DaoUtilities daoUtil;
+
+    @Autowired
+    HttpServletRequest HttpServletRequest;
+
+    private final DBConnectionController dbconnection;
+    private final Response response;
+
+    @Autowired
+    public VisualCobol_Checkdigit_Wrapper(DBConnectionController dbconnection, Response response) {
+        this.dbconnection = dbconnection;
+        this.response = response;
+    }
+
+    Logger logger = LoggerFactory.getLogger(VisualCobol_Checkdigit_Wrapper.class);
+
+    @Value("${day.datasource.jdbc-url}")
+    private String dayJdbcUrl;
+
+    @Value("${day.datasource.username}")
+    private String dayUsername;
+
+    @Value("${day.datasource.password}")
+    private String dayPassword;
+
+    @Value("${night.datasource.jdbc-url}")
+    private String nightJdbcUrl;
+
+    @Value("${night.datasource.username}")
+    private String nightUsername;
+
+    @Value("${night.datasource.password}")
+    private String nightPassword;
+
+    @Value("${ref.datasource.jdbc-url}")
+    private String refJdbcUrl;
+
+    @Value("${ref.datasource.username}")
+    private String refUsername;
+
+    @Value("${ref.datasource.password}")
+    private String refPassword;
+
+    @Value("${UTENVCALS-BANCS-TRACE-STATE}")
+    private String bancsTraceState;
+
+    @Value("${UTENVCALS-MASTER-DQPTYPE}")
+    private String masterDQType;
+
+    @Value("${UTENVCALS-BANCS-HOST}")
+    private String bancsHost;
+
+    @Value("${UTENVCALS-FNS-SYSNUM}")
+    private String fnsSysnum;
+
+    @Value("${UTENVCALS-CTRL-SYSNUM}")
+    private String ctrlSysnum;
+
+    @Value("${UTENVCALS-DAY-SYSNUM}")
+    private String daySysnum;
+
+    @Value("${UTENVCALS-NIGHT-SYSNUM}")
+    private String nightSysnum;
+
+    @Value("${UTENVCALS-NON24H-SYSNUM}")
+    private String non24hsum;
+
+    @Value("${UTENVCALS-DEF-RMODE}")
+    private String defRMode;
+
+    @Value("${UTENVCALS-MASTER-DB-1}")
+    private String masterDB1;
+
+    @Value("${UTENVCALS-MASTER-DB-2}")
+    private String masterDB2;
+
+    @Value("${UTENVCALS-SERVICES-FLAG}")
+    private String servicesFlag;
+
+    String sourceAuth = CacheConfig.frameworkConfigProperties.getProperty(FrameworkConstants.LOOKUP_FILES_PATH);
+    String IP_Configuration_Path = CacheConfig.frameworkConfigProperties.getProperty(FrameworkConstants.LOOKUP_FILES_PATH);
+    Properties sId = PropertyLoader.readPropertyFile(new String(sourceAuth + "/SourceIdList.properties"));
+    Properties ipprop = PropertyLoader.readPropertyFile(new String(IP_Configuration_Path + "/IpConfigMaster.properties"));
+
+    JVMCHKD jvmchkd = new JVMCHKD();
+    WaInputStringCheckDigit input1 = new WaInputStringCheckDigit();
+    WaValue input2 = new WaValue();
+    WaOutputResponce output = new WaOutputResponce();
+
+    UTENV obj1 = new UTENV();
+    WaCallCode input11 = new WaCallCode();
+    WaOptCode input22 = new WaOptCode();
+    WaCommonVar input33 = new WaCommonVar();
+    LsEnvcaRecArea input44 = new LsEnvcaRecArea();
+
+    @SuppressWarnings({ "unchecked", "rawtypes", "static-access" })
+    @ApiOperation(value = "Call COB code", notes = "Retrieve check Digit: This API is used to fetch accountNum with checkdigit.", response = CbsSixEnq.class)
+    @PostMapping(value = { "/CheckDigit" }, produces = { "application/json" })
+    @CrossOrigin()
+    @JsonIgnore
+    public String getCheckDigit(@RequestBody(required = true) RequestBean reqbean, HttpServletRequest request, @RequestHeader HttpHeaders headers) {
+
+        String callcode = "S";
+        String commonvar = "tempData";
+        String optcode = "01";
+        String envcaRecArea = getTrimmedProperty(bancsTraceState) +
+                              getTrimmedProperty(masterDQType) +
+                              getTrimmedProperty(bancsHost) +
+                              getTrimmedProperty(fnsSysnum) +
+                              getTrimmedProperty(ctrlSysnum) +
+                              getTrimmedProperty(daySysnum) +
+                              getTrimmedProperty(nightSysnum) +
+                              getTrimmedProperty(non24hsum) +
+                              getTrimmedProperty(defRMode) +
+                              getTrimmedProperty(masterDB1) +
+                              getTrimmedProperty(masterDB2) +
+                              getTrimmedProperty(servicesFlag);
+        System.out.println("The env data is " + envcaRecArea);
+
+        String dbtype = "day";
+
+        String jdbcUrl = getJdbcUrl(dbtype);
+        String username = getUsername(dbtype);
+        String password = getPassword(dbtype);
+
+        System.out.println("Start in Java!!!!");
+
+        System.out.println("JDBC URL: " + jdbcUrl);
+        System.out.println("Username: " + username);
+        System.out.println("BEFORE GETPASSWORD");
+        System.out.println("Password: " + password);
+        System.out.println("AFTER GETPASSWORD:");
+        System.out.println("Check changes");
+
+        input11.setWaCallCode(callcode);
+        input22.setWaOptCode(optcode);
+        input33.setWaCommonVar(commonvar);
+        input44.setLsEnvcaRecArea(envcaRecArea);
+
+        String ptrstring1;
+        String finalResponse = "";
+        CbsSixEnqResponce resp = new CbsSixEnqResponce();
+        Gson gson = new Gson();
+
+        String acc = reqbean.getAccountNum();
+        input1.setWaInputStringCheckDigit(acc);
+
+        String type = reqbean.getFlag();
+        input2.setWaValue(type);
+
+        char res = dbconnection.establishConnection("01");
+
+        try {
+            obj1.UTENV(input11, input22, input33, input44);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        System.out.println("The start of jvmchkd");
+
+        try {
+            jvmchkd.JVMCHKD(input1, input2, output);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        System.out.println("After jvmchkd");
+
+        ptrstring1 = output.getWaOutputResponce();
+        finalResponse = response.getResponse(ptrstring1);
+        return finalResponse;
+    }
+
+    private String getTrimmedProperty(String property) {
+        return property != null ? property.trim() : "";
+    }
+
+    public String getJdbcUrl(String type) {
+        switch (type) {
+            case "day":
+                return dayJdbcUrl.trim();
+            case "night":
+                return nightJdbcUrl.trim();
+            case "ref":
+                return refJdbcUrl.trim();
+            default:
+                throw new IllegalArgumentException("Unsupported datasource type: " + type);
+        }
+    }
+
+    public String getUsername(String type) {
+        switch (type) {
+            case "day":
+                return dayUsername.trim();
+            case "night":
+                return nightUsername.trim();
+            case "ref":
+                return refUsername.trim();
+            default:
+                throw new IllegalArgumentException("Unsupported datasource type: " + type);
+        }
+    }
+
+    public String getPassword(String type) {
+        switch (type) {
+            case "day":
+                System.out.println("INSIDE GETPASS type: " + type + dayPassword);
+                return dayPassword.trim();
+            case "night":
+                return nightPassword.trim();
+            case "ref
