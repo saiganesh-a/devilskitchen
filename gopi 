@@ -233,3 +233,52 @@ function FocusOnScreen() {
     </form>
 </body>
 </html>
+
+
+
+
+------
+
+// Function to handle cancel action
+function cancelAction() {
+    // Disable transmit button in parent window (67101.htm)
+    if (window.opener && window.opener.disableTransmitButton) {
+        window.opener.disableTransmitButton();
+    }
+}
+
+
+
+-------
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>067101 CIF: Create/Amend Customer Personal Details</title>
+    <meta http-equiv="X-UA-Compatible" content="IE=5" />
+    <meta content="Text/html; Charset=UTF-8" http-equiv="Content-type" />
+    <link href="../css/Screen.css" type="text/css" rel="stylesheet" />
+    <link href="../css/calenderNew.css" type="text/css" rel="stylesheet" />
+    <link href="../css/newCBSCommon.css" type="text/css" rel="stylesheet" />
+    <link href="../css/newCBSResponsive.css" type="text/css" rel="stylesheet" />
+    <script type="text/javascript">
+        // Function to disable transmit button
+        function disableTransmitButton() {
+            var transmitButton = document.getElementById("Transmit");
+            if (transmitButton) {
+                transmitButton.disabled = true;
+            }
+        }
+    </script>
+</head>
+<body>
+    <form>
+        <input type="text" id="accntNumber" name="accntNumber" />
+        <button type="button" onclick="validateFun()">Validate</button>
+        <button id="Transmit" type="button">Transmit</button>
+    </form>
+
+    <!-- Include your other scripts as needed -->
+    <script type="text/javascript" src="../js/your-other-scripts.js"></script>
+</body>
+</html>
