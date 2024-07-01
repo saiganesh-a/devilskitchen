@@ -124,3 +124,21 @@ function sendFlagout() {
 
     return true;
 }
+
+
+
+function checkCancelFlag() {
+            if (sessionStorage.getItem("cancelFlag") === "true") {
+                document.getElementById("Transmit").disabled = true;
+                // Reset the flag for future use
+                sessionStorage.setItem("cancelFlag", "false");
+            }
+        }
+
+        window.onload = function() {
+            // Reset the flag on load
+            sessionStorage.setItem("cancelFlag", "false");
+
+            // Check cancel flag every second
+            setInterval(checkCancelFlag, 1000);
+        };
