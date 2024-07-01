@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>067101 CIF: Create/Amend Customer Personal Details</title>
+    <meta http-equiv="X-UA-Compatible" content="IE=5" />
+    <meta content="Text/html; Charset=UTF-8" http-equiv="Content-type" />
+    <link href="../css/Screen.css" type="text/css" rel="stylesheet" />
+    <link href="../css/calenderNew.css" type="text/css" rel="stylesheet" />
+    <link href="../css/newCBSCommon.css" type="text/css" rel="stylesheet" />
+    <link href="../css/newCBSResponsive.css" type="text/css" rel="stylesheet" />
+    <script type="text/javascript" src="../js/060777.js"></script>
+    <script type="text/javascript">
+        function validateFun() {
+            var CustNo = document.getElementById("accntNumber").value;
+            if (CustNo != "") {
+                var oFlows = window.document.forms[0].getFlowComponent();
+                oFlows.returnValue = "True";
+                var sMessageBody = "<screenData><accntNumber>" + CustNo + "</accntNumber><TranNo>060777</TranNo></screenData>";
+                oFlows.startFlow(window.document.body, null, "060777flow", "StartHost", sMessageBody, true);
+                
+                // Open 60777 screen in a new window for communication
+                var newWindow = window.open("60777.htm", "popup", "width=600,height=400");
+                newWindow.opener = window;
+                
+                return true;
+            } else {
+                alert("not working");
+            }
+        }
+    </script>
+</head>
+<body>
+    <form>
+        <input type="text" id="accntNumber" name="accntNumber" />
+        <button type="button" onclick="validateFun()">Validate</button>
+        <button id="Transmit" type="button">Transmit</button>
+    </form>
+</body>
+</html>
+
+
+
+------------
+
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>060777: ATM/INB Validation</title>
+    <meta http-equiv="X-UA-Compatible" content="IE=5" />
+    <meta content="1.0" name="Version" />
+    <meta content="Screen" name="FNSTYPE" />
+    <meta http-equiv="Content-type" content="Text/html; Charset=UTF8" />
+    <link href="../css/Screen.css" type="text/css" rel="stylesheet" />
+    <link href="../css/FATCA.css" type="text/css" rel="stylesheet" />
+    <script type="text/javascript" src="../js/060777.js"></script>
+</head>
+<body id="FNSScreen" bgColor="#c0c0c0" FNSType="SINGLEPAGESCREEN" Class="screen" onunload="FocusOnScreen()">
+    <form class="transaction" style="WIDTH: 95%" name="060777" method="post" FNSType="transaction" RXTransaction="060777" TXTransaction="060777" CustomAction="DefaultTransmit">
+        <div>
+            <label style="left: 100px; top: 10px">Do you want to Proceed</label><br><br>
+            <button id="ProceedBtn" class="button button_round button_new1" style="left:70PX; top:70px" onclick="Proceed();CloseScreen();" accesskey="P"> <u>P</u>roceed</button>
+            <button id="CancelBtn" class="button button_round button_new1" style="left:210PX; top:70px" onclick="sendFlagout(); CloseScreen();" accesskey="C"> <u>C</u>ancel</button>
+            <input class="fieldinput" style="display:none;" value="Y" name="Val_Flag"  maxLength="1" DisplayFormat="X(1)" FNSType="fieldinput" TXField="Val_Flag" RXField="Val_Flag" ID="Val_Flag">
+            <input class="fieldinput" style="display:none;" value="Y" name="sendFlag"  maxLength="1" DisplayFormat="X(1)" FNSType="fieldinput" TXField="sendFlag" RXField="sendFlag" ID="sendFlag">
+        </div>
+    </form>
+</body>
+</html>
+
+
+
+-----------
+
+
+
+function validateFun() {
+    var CustNo = document.getElementById("accntNumber").value;
+    if (CustNo != "") {
+        var oFlows = window.document.forms[0].getFlowComponent();
+        oFlows.returnValue = "True";
+        var sMessageBody = "<screenData><accntNumber>" + CustNo + "</accntNumber><TranNo>060777</TranNo></screenData>";
+        oFlows.startFlow(window.document.body, null, "060777flow", "StartHost", sMessageBody, true);
+        return true;
+    } else {
+        alert("not working");
+    }
+}
+
+function Proceed() {
+    alert("proceed working");
+}
+
+function FocusOnScreen() {
+    try {
+        window.dialogArguments.document.frames("MainScreen").focus();
+    } catch (e) {
+        // Handle exception (if any)
+    }
+    return true;
+}
+
+function sendFlagout() {
+    alert("getting into flow");
+    var sendFlag = document.getElementById("sendFlag").value;
+    var oFlows = window.document.forms[0].getFlowComponent();
+    oFlows.returnValue = "True";
+    var sMessageBody = "<screenData><sendFlag>" + sendFlag + "</sendFlag><TranNo>060777</TranNo></screenData>";
+    alert(sMessageBody);
+    oFlows.startFlow(window.document.body, null, "060777flow", "VerifyFlag", sMessageBody, true);
+
+    // Disable Transmit button on the parent (67101.htm) screen
+    if (window.opener && !window.opener.closed) {
+        window.opener.document.getElementById("Transmit").disabled = true;
+    }
+
+    return true;
+}
