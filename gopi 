@@ -1,19 +1,64 @@
-function checkCancelFlag() {
-            if (sessionStorage.getItem("cancelFlag") === "true") {
-                document.getElementById("Transmit").disabled = true;
-                // Reset the flag for future use
-                sessionStorage.setItem("cancelFlag", "false");
-            }
+// Global variable to track cancel flag
+var cancelFlag = false;
+
+// Function to set the cancel flag
+function setCancelFlag(flag) {
+    cancelFlag = flag;
+}
+
+// Function to check and handle cancel flag
+function handleCancelFlag() {
+    if (cancelFlag) {
+        var transmitButton = document.getElementById("Transmit");
+        if (transmitButton) {
+            transmitButton.disabled = true;
         }
+        // Reset the flag after handling
+        cancelFlag = false;
+    }
+}
 
-        window.onload = function() {
-            // Reset the flag on load
-            sessionStorage.setItem("cancelFlag", "false");
+// Existing sendFlagout function (updated)
+function sendFlagout() {
+    var sendFlag = true; // Example logic to determine when to set the flag
+    setCancelFlag(sendFlag);
 
-            // Check cancel flag every second
-            setInterval(checkCancelFlag, 1000);
-        };
+    // Additional actions as needed
+    var oFlows = window.document.forms[0].getFlowComponent();
+    oFlows.returnValue = "True";
+    var sMessageBody = "<screenData><sendFlag>" + sendFlag + "</sendFlag><TranNo>060777</TranNo></screenData>";
+    oFlows.startFlow(window.document.body, null, "060777flow", "VerifyFlag", sMessageBody, true);
 
+    return true;
+}
+
+// Other functions remain the same
+function validateFun() {
+    var CustNo = document.getElementById("accntNumber").value;
+    if (CustNo != "") {
+        var oFlows = window.document.forms[0].getFlowComponent();
+        oFlows.returnValue = "True";
+        var sMessageBody = "<screenData><accntNumber>" + CustNo + "</accntNumber><TranNo>060777</TranNo></screenData>";
+        oFlows.startFlow(window.document.body, null, "060777flow", "StartHost", sMessageBody, true);
+        return true;
+    } else {
+        alert("Account Number is required");
+        return false;
+    }
+}
+
+function Proceed() {
+    alert("Proceed working");
+}
+
+function FocusOnScreen() {
+    try {
+        window.dialogArguments.document.frames("MainScreen").focus();
+    } catch (e) {
+        // Handle exception (if any)
+    }
+    return true;
+}
 -----------------
 
 <!DOCTYPE html>
