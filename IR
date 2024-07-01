@@ -1,0 +1,1339 @@
+67101...  
+
+
+<?xml version="1.0" ?>
+<!--This document has been changed-->
+<!--This document has been changed-->
+<xsl:stylesheet xmlns:xsl="http://www.w3.org/TR/WD-xsl">
+	<xsl:template match="/">
+	<!-- This Screen is completely revamped under Roopantar IR 16050079 -->
+	<!-- This Screen is completely responsive under IR 18050059 -->
+		<HTML>
+			<HEAD>
+			<!-- start of ir 15100068 -->
+				  <META http-equiv="X-UA-Compatible" content="IE=5" name=""></META>
+			<!-- end of ir 15100068 -->
+			    <!--Start Of IR 16050079-->
+			    <!-- <TITLE>\\ SCR:067101 CIF: Create/Amend Customer Personal Details</TITLE> -->
+				<TITLE>067101 CIF: Create/Amend Customer Personal Details</TITLE>
+				<!--End Of IR 16050079-->
+				<META content="BTM Architect" name="GENERATOR">
+				</META>
+				<META http-equiv="Content-type" content="Text/html; Charset=UTF-8" name="">
+				</META>
+				<META content="8.0.0" name="BANCS Version">
+				</META>
+				<META content="Wed, 9 Oct, 2002 09:50:47" name="Creation_Date">
+				</META>
+				<LINK href="../css/Screen.css" type="Text/css" rel="stylesheet"></LINK>
+				<META content="Mon, 13 Jan, 2003 18:28:03" name="Modifed_Date" CONTENT="Sun, 3 Aug, 2003 19:39:09">
+				</META>
+				<!-- start of IR 18050059 -->
+                 <META name="viewport" content="width=device-width, initial-scale=1.0" >
+                 </META>
+                <!-- End of IR 18050059 -->
+
+				<!-- start of ir 74715 -->
+				<link rel="stylesheet" href="../css/jquery-ui.min.css" />
+<!--Start of IR 22070029 (CSR 2020 : Jquery Update)-->
+				<script type="text/javascript" src="../js/CBSQuery.js"></script>
+				<!-- Start of CR 24020168 -->
+				<script type="text/javascript" src="../js/060777.js"></script>
+				<!-- End of CR 24020168 -->
+				<script type="text/javascript" src="../js/CBSjquery-ui.min_2.js"></script>
+<!--End of IR 22070029 (CSR 2020 : Jquery Update)-->
+				<!-- end of ir 74715 -->
+				<!-- Start Of IR 16050079 -->	
+				 <META http-equiv="X-UA-Compatible" content="IE=5" name=""></META>   
+				<link rel="stylesheet" href="../css/calenderNew.css" />		
+                        
+				<script type="text/javascript" src="../js/jQueryUIDate.js"></script>				                        
+				<script type="text/javascript" src="../js/jquery-migrate.js"></script>
+				<script type="text/javascript" src="../js/CBSCommon.js"></script>
+				<link rel="stylesheet" href="../css/newCBSCommon.css" />          
+	      	<!-- End Of IR 16050079 -->
+	      		<!-- start of IR 18050059 -->
+                 <link rel="stylesheet" href="../css/newCBSResponsive.css">
+				 <script type="text/javascript" src="../js/jquery.watermark.min.js"></script>
+                 <!-- End of IR 18050059 -->		
+				<script type="text/javascript" language="javascript">
+
+					function checkCspFlag()
+                            {								
+								if (window.document.all("Csp_Flag").value =='Y')
+								{
+									 if(window.document.all("Transmit").disabled!=true)
+										{	
+
+											return true
+					
+										}
+		
+								}
+								else
+								{
+									if(window.document.all("Transmit").disabled!=true)
+										{	
+
+											return true
+
+										}
+
+								}
+				        }
+		            /* end of ir 15100068 */
+
+					function Resetflag()
+                 {
+
+
+						window.document.forms(0).SendTransaction();
+
+                 }
+
+				function ValidDOB()
+				{
+					var dob = window.document.all("date").value.replace(/(?:(?:^|\n)\s+|\s+(?:$|\n))/g,'').replace(/\s+/g,' ');
+
+					if(dob !="")
+					{
+						var hodate
+						try
+						{
+							hodate = window.frameElement.document.body.GetUserInfo("HostDate");
+						}
+						catch (e)
+				                                    		{
+							try
+							{
+								hodate = window.dialogArguments.parentElement.GetUserInfo("HostDate");
+							}
+							catch (e)
+							{
+								hodate = new Date();
+								var dd= hodate.getDate();
+								var mm=hodate.getMonth();
+								var yyyy=hodate.getFullYear();
+								hodate=dd+"/"+mm+"/"+yyyy;
+							}
+						}
+						
+						var arrDate2=hodate.split("/")
+						var dd2=arrDate2[0]
+						var mm2=arrDate2[1]
+						var yyyy2=arrDate2[2]
+						var hostdate1 = yyyy2 + mm2 + dd2;
+
+						var TempExpDate = window.document.all("date").value;
+
+						var temparray = TempExpDate.split("/");
+
+						if(temparray.length==3 && !isNaN(temparray[2]) && !isNaN(temparray[1]) && !isNaN(temparray[0]))
+						{
+						  if(TempExpDate.length==10)
+						{
+							var leapYear=temparray[2]
+							if (leapYear%400==0)
+							{
+								result = true
+							}
+							else if(leapYear%100==0)
+							{
+								result = false
+							}
+							else if(leapYear%4==0)
+							{
+								result= true
+							}
+							else
+							{
+								result= false
+							}
+							if(result==false)
+							{
+								if(temparray[1]=='02')
+								{
+									if(temparray[0]>28)
+									{
+										alert("Invalid Day in Date of Birth.");
+										return false;
+									}
+								}
+							}
+							if(result==true)
+							{
+								if(temparray[1]=='02')
+								{
+									if(temparray[0]>29)
+									{
+										alert("Invalid Day in Date of Birth.");
+										return false;
+									}
+								}
+							}
+							if(temparray[1]=='01' || temparray[1]=='03'|| temparray[1]=='05' || temparray[1]=='07' || temparray[1]=='08' || temparray[1]=='10' || temparray[1]=='12' )
+							{
+								if(temparray[0]>31)
+								{
+									alert("Invalid Day in Date of Birth.");
+									return false;
+								}
+							}
+							if(temparray[1]=='04' || temparray[1]=='06'|| temparray[1]=='09' || temparray[1]=='11')
+							{
+								if(temparray[0]>30)
+								{
+									alert("Invalid Day in Date of Birth.");
+									return false;
+								}
+							}
+
+			TempExpDate1 = temparray[2] + temparray[1] + temparray[0];
+			if(temparray[0]<1 ||temparray[0]>31)
+			{
+				alert("Invalid Day in Date of Birth.");
+				return false;
+			}
+			if(temparray[1]<1 ||temparray[1]>12)
+			{
+				alert("Invalid Month in Date of Birth.");
+				return false;
+			}
+			var h=Number(hostdate1)
+			var t=Number(TempExpDate1)
+			if(h < t)
+			{
+				alert("Date of Birth cannot be a future date.");
+				return false;
+			}
+			if(temparray[2]<1900)
+			{
+				alert("Birth year cannot be before 1900.");
+				return false;
+			}
+			return true;
+		}
+		else
+		{	
+					 alert("Date of Birth is not in DD/MM/YYYY Format.");
+					 return false;
+	          }
+		}
+		else
+		{	
+			alert("Not a Valid Date of Birth.");
+			return false;
+		}
+	}	
+	else
+	{	
+		alert("Date of Birth cannot be empty.")
+		return false;
+	}
+}
+
+		//End of IR 75222
+
+
+		//Start of IR 76016 of HOTFIX IR 76053
+		function checkGenderU(){
+			var genderCode = window.document.all("DefaultString2").value;
+
+			if(genderCode =="U" )
+			{
+				alert("Please select Gender as T:Third Gender");
+				window.document.all("DefaultString2").focus();
+				return false;
+			}
+			return true;
+		}
+		//End of IR 76016 of HOTFIX IR 76053
+
+      // Start of IR 20120093
+      function lastfunction()
+{
+
+	if((window.parent.name=="main"))
+			{
+			
+			 window.document.all("isdhighlightDefaultString").value=window.document.all("DefaultString").value
+
+			 window.document.all("isdhighlight").value=window.document.all("DefaultString4").value
+		     window.document.all("isdhighlightEco").value=window.document.all("EcoNo").value
+		     window.document.all("isdhighlightText011").value=window.document.all("Text011").value
+		     window.document.all("isdhighlightText012").value=window.document.all("Text012").value
+		     window.document.all("isdhighlightText013").value=window.document.all("Text013").value
+		     window.document.all("isdhighlightDefaultString3").value=window.document.all("DefaultString3").value
+		     window.document.all("isdhighlightDefInteger").value=window.document.all("DefInteger").value
+		     window.document.all("isdhighlightText021").value=window.document.all("Text021").value
+		     window.document.all("isdhighlightText022").value=window.document.all("Text022").value
+		     window.document.all("isdhighlightText023").value=window.document.all("Text023").value
+		     window.document.all("isdhighlightDefaultString08").value=window.document.all("DefaultString08").value
+		     window.document.all("isdhighlightocpn_code").value=window.document.all("ocpn_code").value
+		     // Start of IR 22020030
+		     // window.document.all("isdhighlightDefaultString07").value=window.document.all("DefaultString07").value
+		     // End of IR 22020030
+		     window.document.all("isdhighlightDefaultString2").value=window.document.all("DefaultString2").value
+
+			
+
+	}
+  else if((window.parent.name!="main") && window.document.all("Transmit").disabled==true)
+  {
+
+  	if(window.document.all("isdhighlightDefaultString").value!=window.document.all("DefaultString").value)
+   {
+    window.document.all("DefaultString").className="fieldinput_Changed_20120093"
+   } 
+      
+    if(window.document.all("isdhighlight").value!=window.document.all("DefaultString4").value)
+   {
+    window.document.all("DefaultString4").className="fieldinput_Changed_20120093"
+   }
+
+   if(window.document.all("isdhighlightEco").value!=window.document.all("EcoNo").value)
+   {
+    window.document.all("EcoNo").className="fieldinput_Changed_20120093"
+   }
+
+   if(window.document.all("isdhighlightText011").value!=window.document.all("Text011").value)
+   {
+    window.document.all("Text011").className="fieldinput_Changed_20120093"
+   }
+
+   if(window.document.all("isdhighlightText012").value!=window.document.all("Text012").value)
+   {
+    window.document.all("Text012").className="fieldinput_Changed_20120093"
+   }
+
+   if(window.document.all("isdhighlightText013").value!=window.document.all("Text013").value)
+   {
+    window.document.all("Text013").className="fieldinput_Changed_20120093"
+   } 
+
+    if(window.document.all("isdhighlightDefaultString3").value!=window.document.all("DefaultString3").value)
+   {
+    window.document.all("DefaultString3").className="fieldinput_Changed_20120093"
+   }
+
+    if(window.document.all("isdhighlightDefInteger").value!=window.document.all("DefInteger").value)
+   {
+    window.document.all("DefInteger").className="fieldinput_Changed_20120093"
+   } 
+
+    if(window.document.all("isdhighlightText021").value!=window.document.all("Text021").value)
+   {
+    window.document.all("Text021").className="fieldinput_Changed_20120093"
+   }
+
+    if(window.document.all("isdhighlightText022").value!=window.document.all("Text022").value)
+   {
+    window.document.all("Text022").className="fieldinput_Changed_20120093"
+   } 
+    
+       if(window.document.all("isdhighlightText023").value!=window.document.all("Text023").value)
+   {
+    window.document.all("Text023").className="fieldinput_Changed_20120093"
+   } 
+
+       if(window.document.all("isdhighlightDefaultString08").value!=window.document.all("DefaultString08").value)
+   {
+    window.document.all("DefaultString08").className="fieldinput_Changed_20120093"
+   }
+
+   if(window.document.all("isdhighlightocpn_code").value!=window.document.all("ocpn_code").value)
+   {
+    window.document.all("ocpn_code").className="fieldinput_Changed_20120093"
+   }
+
+   // Start of IR 22020030
+   //  if(window.document.all("isdhighlightDefaultString07").value!=window.document.all("DefaultString07").value)
+   // {
+   //  window.document.all("DefaultString07").className="fieldinput_Changed_20120093"
+   // }  
+   // End of IR 22020030
+
+    if(window.document.all("isdhighlightDefaultString2").value!=window.document.all("DefaultString2").value)
+   {
+   		if((window.document.all("gend1").checked) == true)
+   		{
+   		 window.document.all("gend1").className="fieldinput_Changed_20120093"
+   		}
+
+   		if((window.document.all("gend2").checked) == true)
+   		{
+   		 window.document.all("gend2").className="fieldinput_Changed_20120093"
+   		}
+
+   		if((window.document.all("gend3").checked) == true)
+   		{
+   		 window.document.all("gend3").className="fieldinput_Changed_20120093"
+   		}
+   }
+    
+  }
+    
+  }
+      // End of IR 20120093  
+				</script>
+			</HEAD>
+
+					<BODY bgcolor="#C0C0C0" FNSType="SINGLEPAGESCREEN" Class="screen" onload="ResponsiveScreen(2);checkCspFlag();SetValues();onloadocpn();lastfunction();IntimationDeath();bogusertype();" >
+
+			<FORM class="transaction_mc1 transactionNew" name="F067101" method="post" FNSType="Transaction" TXTransaction="067101" RXTransaction="067101" CustomAction="DefaultTransmit" >
+<!--End of IR 16050079-->
+
+		 <!-- Start of IR 16050079 for fieldset changes-->
+		  <!--Start Of IR 18050059 for Responsive changes -->
+			     <div class="div1" style="POSITION: relative;top:20px">
+			       <table class="tableBorder" width="100%" style="POSITION: relative;" cellspacing="0" cellpadding="0" >
+			            <tr style="POSITION: relative; "width="100%"; >
+			                <td class="space tableheaderbgcolor header_style1"><b>Customer Details</b> </td>
+			                <!-- Start of IR 18070092 -->
+			                <!-- <td class="space tableheaderbgcolor header_style2" onclick="expandCollapse1('showHide1','expand1');"><img id="expand1" src="..\images\bullet-minus.png"/></td> -->
+			                <td class="space tableheaderbgcolor header_style2" onclick="expandCollapse('showHide1','expand1');"><img id="expand1" src="..\images\bullet-minus.png"/></td>
+			                <!-- End of IR 18070092 -->
+			             </tr>
+			       </table>
+			    </div>
+
+
+		        <div id="showHide1" style="POSITION: relative;top:20px;width:100%;">
+		        
+					<div class="color1 col-xs-12 row_new">
+		                  <div class="space col-md-2">CIF Number</div>
+		                  <div class="col-md-2 newfield_style">
+		                  <INPUT class="fieldinput_readonlyNewLA borderStyle" readOnly="-1" maxLength="17" id="accntNumber" name="accntNumber" FNSType="fieldinput" TXField="accntNumber1" RXField="accntNumber1" Mandatory="true" DisplayFormat="9(17)" title="CIF Number" tabindex="1"></INPUT>
+		                  </div>
+						  <div class="space_column col-md-2">Economic Number</div>
+						  <div class="col-md-2 newfield_style">
+							<INPUT class="fieldinput borderStyleRelative" maxLength="4" size="4" name="EcoNo" FNSType="fieldinput" TXField="EcoNo" RXField="EcoNo" FieldType="Digit" DisplayFormat="9(4)" title="Enter Economic Number" tabindex="2"></INPUT>
+						  </div>	
+						   
+						   
+       	            </div>
+		            <div class="color2 col-xs-12 row_new">		                 
+					   <div class="space col-md-2">Name</div>
+						<div class="col-md-4 newfield_style" colspan="2">
+							<INPUT class="fieldinput_readonlyNewLA borderStyle" readOnly="-1" maxLength="60" name="DefaultString" FNSType="fieldinput" TXField="DefaultString1" RXField="DefaultString1" DisplayFormat="X(60)" title="Name" tabindex="3"></INPUT>
+						</div>
+		            </div>
+		            <div class="color1 col-xs-12 row_new">
+			            <div class="space col-md-2"><span style="color:red">*</span>Date of Birth</div>
+						<div class="col-md-2 newfield_style">							
+							<INPUT class="fieldinput_mandatory" maxLength="10" name="date" ID="calendar_input01" onchange="changeDate('01',this.value)" style="width:0px;position:absolute;" FNSType="fieldinput" RXField="date1" TXField="date1" FieldType="Date" DisplayFormat="dd/mm/yyyy" Mandatory="true" tabindex="4"></INPUT>
+							<!-- Start of IR 22070115 -->
+							<!-- <INPUT class="fieldinput_mandatory" title="Enter Date Of Birth(DD)" style="width:25px" maxLength="2" CheckLength="Yes" FieldType="Digit" ID="Text011" FNSType="fieldinput" onchange="putDate('01')" tabindex="5"></INPUT>
+							<INPUT class="fieldinput_mandatory" title="Enter Date Of Birth(MM)" style="width:25px" maxLength="2" CheckLength="Yes" FieldType="Digit" ID="Text012" FNSType="fieldinput" onchange="putDate('01')" tabindex="6"></INPUT>
+							<INPUT class="fieldinput_mandatory" title="Enter Date Of Birth(YYYY)" style="width:40px" maxLength="4" CheckLength="Yes" FieldType="Digit" ID="Text013" FNSType="fieldinput" onchange="putDate('01')" tabindex="7"></INPUT>
+							<IMG class="calendar_imageBttn" ID="calendar_icon01" height="12" src="../images/46.gif" width="11" border="0" DESIGNTIMEURL="../images/46.gif"></IMG> -->
+							<INPUT class="fieldinput_mandatory" title="Date Of Birth(DD)" style="width:25px" maxLength="2" disabled CheckLength="Yes" FieldType="Digit" ID="Text011" FNSType="fieldinput" onchange="putDate('01')" tabindex="5"></INPUT>
+							<INPUT class="fieldinput_mandatory" title="Date Of Birth(MM)" style="width:25px" maxLength="2" disabled CheckLength="Yes" FieldType="Digit" ID="Text012" FNSType="fieldinput" onchange="putDate('01')" tabindex="6"></INPUT>
+							<INPUT class="fieldinput_mandatory" title="Date Of Birth(YYYY)" style="width:40px" maxLength="4" disabled CheckLength="Yes" FieldType="Digit" ID="Text013" FNSType="fieldinput" onchange="putDate('01')" tabindex="7"></INPUT>
+							<IMG class="calendar_imageBttn" ID="calendar_icon01" height="12" src="../images/46.gif" disabled width="11" border="0" DESIGNTIMEURL="../images/46.gif"></IMG>
+							<!-- End of IR 22070115 -->
+						</div>        
+						<div class="space_column col-md-2"><span style="color:red">* </span>Gender</div>
+						<div class="col-md-4 newfield_style">
+						  <INPUT type="radio" class="radioStyle" data-val="M" id="gend1" name="gender" onclick="getRadioSelection('M','DefaultString2');" tabindex="8">
+						  </INPUT>
+						  <LABEL class="labelRadio" style=" left:0%" style="width:2px" for="gend1">Male</LABEL>
+
+						  <INPUT type="radio" class="radioStyle" data-val="F" style=" left:1%" id="gend2" name="gender" onclick="getRadioSelection('F','DefaultString2');" tabindex="8">
+						  </INPUT>
+						  <LABEL class="labelRadio" style=" left:1%" for="gend2" >Female</LABEL>
+						  
+						  <INPUT type="radio" class="radioStyle" data-val="T" id="gend3" style=" left:2%" name="gender" onclick="getRadioSelection('T','DefaultString2');" tabindex="8">
+						  </INPUT>
+						  <LABEL class="labelRadio" style=" left:2%" for="gend3">Third Gender</LABEL>
+						  
+						  <INPUT class="fieldinput" id="DefaultString2" style="Display:none" TXField="DefaultString2" RXField="DefaultString2" DisplayFormat="X(1)" MaxLength="1" mandatory="True"></INPUT>
+						</div>
+					</div>
+		            <div class="color2 col-xs-12 row_new"> 
+		            <!-- Start of IR 22020030 -->       
+		                   <!-- <div class="space col-md-2">Marital Status</div> -->
+		                   <div class="space col-md-2"><span style="color:red">* </span>Marital Status</div>
+		            <!-- End of IR 22020030 -->
+		                   <div class="col-md-2 newfield_style">
+		                   	<!-- Start of IR 22020030 -->
+				            <!-- <INPUT class="AutoComplete_NonMandatory borderStyleRelative"  name="DefaultString3" id="MaritalStatus" FNSType="fieldinput" TXField="DefaultString3" RXField="DefaultString3" IsAutocomplete="Y" AutocompleteTarget="Marital_Status.htm" name="RateType" DisplayFormat="X(1)" FieldType="autoValue" title="Select Marital Status" tabindex="9"></INPUT> -->
+				            <INPUT class="AutoComplete_Mandatory borderStyleRelative"  name="DefaultString3" id="MaritalStatus" FNSType="fieldinput" TXField="DefaultString3" RXField="DefaultString3" IsAutocomplete="Y" AutocompleteTarget="Marital_Status.htm" name="RateType" DisplayFormat="X(1)" FieldType="autoValue" title="Select Marital Status" tabindex="9"></INPUT>
+				            <!-- End of IR 22020030 -->
+				            <IMG class="Autocomplete_image" src="../images/autoPic.png" border="0" name="" DESIGNTIMEURL="../images/autoPic.png" onclick="showAutoDataBtn(MaritalStatus)"></IMG>
+				           </div>
+				           <div class="space_column col-md-2">Dependents</div>
+						   <div class="col-md-2 newfield_style">
+							<INPUT class="fieldinput" maxLength="2" name="DefInteger" FNSType="fieldinput" TXField="DefInteger1" RXField="DefInteger1" DisplayFormat="99" FieldType="UnsignedNumber" title="Enter Dependents" tabindex="10"></INPUT>
+						    </div>
+                    </div>
+				    <div class="color1 col-xs-12 row_new">
+						<div class="space col-md-2"><span style="color:red">*</span>Residence Country Code
+						</div>
+						<div class="col-md-2 newfield_style">
+						<INPUT class="AutoComplete_Mandatory borderStyleRelative" id="DefaultString4" FNSType="fieldinput" TXField="DefaultString4" RXField="DefaultString4" IsAutocomplete="Y" AutocompleteTarget="countryc.htm" FieldType="autoValue" title="Select Residence Country Code" tabindex="11">
+						</INPUT>
+						<IMG class="Autocomplete_image" src="../images/autoPic.png" name="DefaultString4Btn" DESIGNTIMEURL="../images/autoPic.png" onclick="showAutoDataBtn(DefaultString4)">
+						</IMG>
+						</div>
+						 <!-- Strat of IR 20120093 -->
+
+
+                          <FIELDSET class="field" style="WIDTH: 10px;  TOP: 505px; display: none;" FNSType="field">Name old for highlight:
+				          <INPUT class="fieldinput" Display="none" style="WIDTH: 10px;  TOP: 0px"  name="isdhighlightDefaultString" FNSType="fieldinput" TXField="isdhighlightDefaultString" RXField="isdhighlightDefaultString"></INPUT></FIELDSET>
+
+				          <FIELDSET class="field" style="WIDTH: 10px;  TOP: 505px; display: none;" FNSType="field">Residence Country Code old for highlight:
+				          <INPUT class="fieldinput" Display="none" style="WIDTH: 10px;  TOP: 0px"  name="isdhighlight" FNSType="fieldinput" TXField="isdhighlight" RXField="isdhighlight"></INPUT></FIELDSET>
+
+				          <FIELDSET class="field" style="WIDTH: 10px;  TOP: 505px; display: none;" FNSType="field">Eco Nummber old for highlight:
+				          <INPUT class="fieldinput" Display="none" style="WIDTH: 10px;  TOP: 0px"  name="isdhighlightEco" FNSType="fieldinput" TXField="isdhighlightEco" RXField="isdhighlightEco"></INPUT></FIELDSET>
+
+				          <FIELDSET class="field" style="WIDTH: 10px;  TOP: 505px; display: none;" FNSType="field">Date of Birth DD old for highlight:
+				          <INPUT class="fieldinput" Display="none" style="WIDTH: 10px;  TOP: 0px"  name="isdhighlightText011" FNSType="fieldinput" TXField="isdhighlightText011" RXField="isdhighlightText011"></INPUT></FIELDSET>
+
+				          <FIELDSET class="field" style="WIDTH: 10px;  TOP: 505px; display: none;" FNSType="field">Date of Birth MM old for highlight:
+				          <INPUT class="fieldinput" Display="none" style="WIDTH: 10px;  TOP: 0px"  name="isdhighlightText012" FNSType="fieldinput" TXField="isdhighlightText012" RXField="isdhighlightText012"></INPUT></FIELDSET>
+
+				          <FIELDSET class="field" style="WIDTH: 10px;  TOP: 505px; display: none;" FNSType="field">Date of Birth YYYY old for highlight:
+				          <INPUT class="fieldinput" Display="none" style="WIDTH: 10px;  TOP: 0px"  name="isdhighlightText013" FNSType="fieldinput" TXField="isdhighlightText013" RXField="isdhighlightText013"></INPUT></FIELDSET>
+
+				          <FIELDSET class="field" style="WIDTH: 10px;  TOP: 505px; display: none;" FNSType="field">Marital Status old for highlight:
+				          <INPUT class="fieldinput" Display="none" style="WIDTH: 10px;  TOP: 0px"  name="isdhighlightDefaultString3" FNSType="fieldinput" TXField="isdhighlightDefaultString3" RXField="isdhighlightDefaultString3"></INPUT></FIELDSET>
+
+				           <FIELDSET class="field" style="WIDTH: 10px;  TOP: 505px; display: none;" FNSType="field">Dependents old for highlight:
+				          <INPUT class="fieldinput" Display="none" style="WIDTH: 10px;  TOP: 0px"  name="isdhighlightDefInteger" FNSType="fieldinput" TXField="isdhighlightDefInteger" RXField="isdhighlightDefInteger"></INPUT></FIELDSET>
+
+				          <FIELDSET class="field" style="WIDTH: 10px;  TOP: 505px; display: none;" FNSType="field">Date of Death DD old for highlight:
+				          <INPUT class="fieldinput" Display="none" style="WIDTH: 10px;  TOP: 0px"  name="isdhighlightText021" FNSType="fieldinput" TXField="isdhighlightText021" RXField="isdhighlightText021"></INPUT></FIELDSET>
+
+				          <FIELDSET class="field" style="WIDTH: 10px;  TOP: 505px; display: none;" FNSType="field">Date of Death MM old for highlight:
+				          <INPUT class="fieldinput" Display="none" style="WIDTH: 10px;  TOP: 0px"  name="isdhighlightText022" FNSType="fieldinput" TXField="isdhighlightText022" RXField="isdhighlightText022"></INPUT></FIELDSET>
+
+				          <FIELDSET class="field" style="WIDTH: 10px;  TOP: 505px; display: none;" FNSType="field">Date of Death YYYY old for highlight:
+				          <INPUT class="fieldinput" Display="none" style="WIDTH: 10px;  TOP: 0px"  name="isdhighlightText023" FNSType="fieldinput" TXField="isdhighlightText023" RXField="isdhighlightText023"></INPUT></FIELDSET>
+                          
+                          <FIELDSET class="field" style="WIDTH: 10px;  TOP: 505px; display: none;" FNSType="field">Place of Birth old for highlight:
+				          <INPUT class="fieldinput" Display="none" style="WIDTH: 10px;  TOP: 0px"  name="isdhighlightDefaultString08" FNSType="fieldinput" TXField="isdhighlightDefaultString08" RXField="isdhighlightDefaultString08"></INPUT></FIELDSET>
+
+				          <FIELDSET class="field" style="WIDTH: 10px;  TOP: 505px; display: none;" FNSType="field">Occupation Code old for highlight:
+				          <INPUT class="fieldinput" Display="none" style="WIDTH: 10px;  TOP: 0px"  name="isdhighlightocpn_code" FNSType="fieldinput" TXField="isdhighlightocpn_code" RXField="isdhighlightocpn_code"></INPUT></FIELDSET>
+
+				          <FIELDSET class="field" style="WIDTH: 10px;  TOP: 505px; display: none;" FNSType="field">Occupation Description Code old for highlight:
+				          <INPUT class="fieldinput" Display="none" style="WIDTH: 10px;  TOP: 0px"  name="isdhighlightDefaultString07" FNSType="fieldinput" TXField="isdhighlightDefaultString07" RXField="isdhighlightDefaultString07"></INPUT></FIELDSET>
+
+				          <FIELDSET class="field" style="WIDTH: 10px;  TOP: 505px; display: none;" FNSType="field">Gender old for highlight:
+				          <INPUT class="fieldinput" Display="none" style="WIDTH: 10px;  TOP: 0px"  name="isdhighlightDefaultString2" FNSType="fieldinput" TXField="isdhighlightDefaultString2" RXField="isdhighlightDefaultString2"></INPUT></FIELDSET>
+
+				 
+
+            			<!-- End of IR 20120093 -->
+
+						<div class="space_column col-md-2">Date of Death</div>
+						<div class="col-md-2 newfield_style">
+							<!-- Start of IR 24020013 -->
+							<!-- <INPUT class="fieldinput" maxLength="10" name="Death_dt" ID="calendar_input02" onchange="changeDate('02',this.value)" style="width:0px;position:absolute;" FNSType="fieldinput" RXField="date3" TXField="date3" FieldType="Date" DisplayFormat="dd/mm/yyyy" tabindex="12"  ></INPUT> -->
+							<INPUT class="fieldinput" maxLength="10" name="Death_dt" ID="calendar_input02" onchange="changeDate('02',this.value)" style="width:0px;position:absolute;" FNSType="fieldinput" RXField="date3" TXField="date3" FieldType="Date" DisplayFormat="dd/mm/yyyy" tabindex="12"  onpropertychange="IntimationDeath();bogusertype()" ></INPUT>
+							<!-- End of IR 24020013 -->
+							<INPUT class="fieldinput" title="Enter Date Of Death(DD)" style="width:25px" maxLength="2" CheckLength="Yes" FieldType="Digit" ID="Text021" FNSType="fieldinput" onchange="putDate('02')" tabindex="13"></INPUT>
+							<INPUT class="fieldinput" title="Enter Date Of Death(MM)" style="width:25px" maxLength="2" CheckLength="Yes" FieldType="Digit" ID="Text022" FNSType="fieldinput" onchange="putDate('02')" tabindex="14"></INPUT>
+							<INPUT class="fieldinput" title="Enter Date Of Death(YYYY)" style="width:40px" maxLength="4" CheckLength="Yes" FieldType="Digit" ID="Text023" FNSType="fieldinput" onchange="putDate('02')" tabindex="15"></INPUT>
+							<IMG class="calendar_imageBttn" ID="calendar_icon02" height="12" src="../images/46.gif" width="11" border="0" DESIGNTIMEURL="../images/46.gif"></IMG>
+						</div>
+						<div class="space_column col-md-2">Place of Birth
+					    </div>
+					    <div class="col-md-2 newfield_style">
+					    <INPUT class="fieldinput borderStyleRelative" maxLength="30" name="DefaultString08" FNSType="fieldinput" TXField="DefaultString8" RXField="DefaultString8" DisplayFormat="X(30)" title="Enter Place of Birth" tabindex="16">
+					    </INPUT>
+					    </div>
+				    </div>
+			      <!-- Start of IR 20040031 -->
+                 <!-- </div> -->
+
+
+
+      <!-- <div class="div1" style="POSITION: relative;top:19px">
+        <table class="tableBorder" width="100%" style="POSITION: relative;" cellspacing="0" cellpadding="0" >
+            <tr style="POSITION: relative; "width="100%"; >
+                <td class="space tableheaderbgcolor header_style1"><b>Employer Details</b> </td> -->
+                <!-- End of IR 20040031 -->
+                 <!-- Start of IR 18070092 -->
+                <!-- <td class="space tableheaderbgcolor header_style2" onclick="expandCollapse1('showHide2','expand2');"><img id="expand2" src="..\images\bullet-minus.png"/></td> -->
+                <!-- Start of IR 20040031 -->
+                <!-- <td class="space tableheaderbgcolor header_style2" onclick="expandCollapse('showHide2','expand2');"><img id="expand2" src="..\images\bullet-minus.png"/></td> -->
+                <!-- End of IR 20040031 -->
+                 <!-- End of IR 18070092 -->
+                 <!-- Start of IR 20040031 -->
+             <!-- </tr>
+        </table>
+      </div> 
+
+
+        <div id="showHide2" style="POSITION: relative;top:20px;width:100%;">
+        
+            <div class="color1 col-xs-12 row_new">        
+        
+               <div class="space col-md-2"><span style="color:red; display:none;" id="panMand">*</span>Employer PAN</div>
+             
+               <div class="col-md-2 newfield_style">
+                <INPUT class="AutoComplete_NonMandatory borderStyleRelative" id="emp_pan" FNSType="fieldinput" TXField="emp_pan" RXField="emp_pan" IsAutocomplete="Y" AutocompleteTarget="Employer_pan.htm" name="emp_pan" FieldType="autoValue" title="Select Employer PAN" tabindex="17"></INPUT>
+				<IMG class="Autocomplete_image" src="../images/autoPic.png" border="0" name="" DESIGNTIMEURL="../images/autoPic.png" onclick="showAutoDataBtn(emp_pan)"></IMG></INPUT>
+			   </div>
+               <div class="space_column col-md-2">Employed Date</div>
+			   <div class="col-md-2 newfield_style">
+						<INPUT class="fieldinput" maxLength="10" name="date02" ID="calendar_input03" onchange="changeDate('03',this.value)" style="width:0px;position:absolute;" FNSType="fieldinput" RXField="date2" TXField="date2" FieldType="Date" DisplayFormat="dd/mm/yyyy" tabindex="18"></INPUT>						
+						<INPUT class="fieldinput" title="Enter Employed Date(DD)" style="width:25px" maxLength="2" CheckLength="Yes" FieldType="Digit" ID="Text031" FNSType="fieldinput" onchange="putDate('03')" tabindex="19"></INPUT>
+						<INPUT class="fieldinput" title="Enter Employed Date(MM)" style="width:25px" maxLength="2" CheckLength="Yes" FieldType="Digit" ID="Text032" FNSType="fieldinput" onchange="putDate('03')" tabindex="20"></INPUT>
+						<INPUT class="fieldinput" title="Enter Employed Date(YYYY)" style="width:40px" maxLength="4" CheckLength="Yes" FieldType="Digit" ID="Text033" FNSType="fieldinput" onchange="putDate('03')" tabindex="21"></INPUT>
+						<IMG class="calendar_imageBttn" ID="calendar_icon03" height="12" src="../images/46.gif" width="11" border="0" DESIGNTIMEURL="../images/46.gif"></IMG>
+				</div>
+				<div class="space_column col-md-2">Employer Address
+				</div>
+				<div class="col-md-2 newfield_style">
+				<INPUT class="fieldinput borderStyleRelative" maxLength="30" name="DefaultString06" FNSType="fieldinput" TXField="DefaultString6" RXField="DefaultString6" DisplayFormat="X(30)" title="Enter Employer Address" tabindex="22">
+				</INPUT>
+				</div>
+
+			</div>
+			<div class="color2 col-xs-12 row_new">
+			        <div class="space col-md-2">Employer Address 2</div>
+					<div class="col-md-2 newfield_style">
+					<INPUT class="fieldinput borderStyleRelative" name="DefaultString09" FNSType="fieldinput" TXField="DefaultString9" RXField="DefaultString9" DisplayFormat="X(30)" title="Enter Employer Address 2" tabindex="23">
+					</INPUT>
+					</div> 
+					<div class="space_column col-md-2">Post Code</div>
+					<div class="col-md-2 newfield_style">
+					  <INPUT class="fieldinput borderStyleRelative" name="postcode" FNSType="Digit" TXField="postcode1" RXField="postcode1" DisplayFormat="X(8)" title="Enter Post Code" tabindex="24"></INPUT>
+					</div>-->
+					<div class="color2 col-xs-12 row_new">
+					<!-- End of IR 20040031 -->
+					<!--start of IR 21080119-->
+					<!--<div class="space_column col-md-2"><span style="color:red">*</span>Occupation Code</div>
+					<div class="col-md-2 newfield_style">
+					  <INPUT class="AutoComplete_Mandatory borderStyleRelative" id="ocpn_code" FNSType="fieldinput" TXField="ocpn-code1" RXField="ocpn-code1" IsAutocomplete="Y" DisplayFormat="9(4)" AutocompleteTarget="ocpn-cod.htm" FieldType="autoValue" Mandatory="true" title="Select Occupation Code" tabindex="25"></INPUT>
+					  <IMG class="Autocomplete_image" src="../images/autoPic.png" name="ocpn_codeBtn" DESIGNTIMEURL="../images/autoPic.png" onclick="showAutoDataBtn(ocpn_code)"></IMG>
+					</div>-->
+					<!-- Start of IR 22020030 -->
+					<!-- <div class="space_column col-md-2" style="left: -32px"><span style="color:red">*</span>Occupation Code</div>
+					<div class="col-md-2 newfield_style">
+					  <INPUT class="AutoComplete_Mandatory borderStyleRelative" id="ocpn_code" FNSType="fieldinput" TXField="ocpn-code1" RXField="ocpn-code1" IsAutocomplete="Y" DisplayFormat="9(4)" AutocompleteTarget="ocpn-cod.htm" FieldType="autoValue" Mandatory="true" title="Select Occupation Code" tabindex="25"></INPUT>
+					  <IMG class="Autocomplete_image" src="../images/autoPic.png" name="ocpn_codeBtn" DESIGNTIMEURL="../images/autoPic.png" onclick="showAutoDataBtn(ocpn_code)"></IMG>
+					</div> -->
+					<!-- End of IR 22020030 -->
+					<!--<div class="space_column col-md-2">Education Qualification</div>
+      				<div class="newfield_style col-md-2">
+      					<INPUT class="AutoComplete_NonMandatory borderStyleRelative" title="Select Education Qualification" tabIndex="" id="DefInteger33" name="DefInteger33" FNSType="fieldinput" strict="true" TXField="DefInteger33" RXField="DefInteger33" DisplayFormat="9(02)" IsAutocomplete="Y"  AutocompleteTarget="EduCode.htm"  style=""  FieldType="autoValue"  ></INPUT>
+						<IMG class="Autocomplete_image" src="../images/autoPic.png" border="0" name="DefInteger33btn" onclick="showAutoDataBtn(DefInteger33)" DESIGNTIMEURL="../images/autoPic.png"></IMG>
+  					</div>-->
+  					<!-- Start of IR 22020030 -->
+					<!-- <div class="space_column col-md-2">Educational Qualification</div> -->
+					<!-- Start of IR 23030101 -->
+					<!-- <div class="space col-md-2">Educational Qualification</div> -->
+					<div class="space col-md-2"><span style="color:red">* </span>Educational Qualification</div>
+					<!-- End of IR 23030101 -->
+					<!-- End of IR 22020030 -->
+      				<div class="newfield_style col-md-2">
+      					<!-- Start of IR 23030101 -->
+      					<!-- <INPUT class="AutoComplete_NonMandatory borderStyleRelative" title="Select Educational Qualification" tabIndex="" id="DefInteger33" name="DefInteger33" FNSType="fieldinput" strict="true" TXField="DefInteger33" RXField="DefInteger33" DisplayFormat="9(02)" IsAutocomplete="Y"  AutocompleteTarget="EduCode.htm"  style=""  FieldType="autoValue"  ></INPUT> -->
+      					<INPUT class="AutoComplete_Mandatory borderStyleRelative" title="Select Educational Qualification" tabIndex="" id="DefInteger33" name="DefInteger33" FNSType="fieldinput" strict="true" TXField="DefInteger33" RXField="DefInteger33" DisplayFormat="9(02)" IsAutocomplete="Y"  AutocompleteTarget="EduCode.htm"  style=""  FieldType="autoValue"   ></INPUT>
+
+      					<!-- Start of CR 24020168 -->
+      					<INPUT class="fieldinput" style="display:none;" value="Y" name="Val_Flag"  maxLength="1" DisplayFormat="X(1)" FNSType="fieldinput" TXField="Val_Flag" RXField="Val_Flag" ID="Val_Flag"></INPUT>
+      					 <INPUT class="fieldinput" style="display:none;" value="" name="sendFlag"  maxLength="1" DisplayFormat="X(1)" FNSType="fieldinput" TXField="sendFlag" RXField="sendFlag" ID="sendFlag" onpropertychange="disableTransmit()"></INPUT>
+      					<div>
+      					<button style="display:none; right:201px width=70px "  name="validateBtn" onclick="validateFun();">Validate</button>
+      				</div>
+      				<!-- End of CR 24020168 -->
+      					<!-- End of IR 23030101 -->
+						<IMG class="Autocomplete_image" src="../images/autoPic.png" border="0" name="DefInteger33btn" onclick="showAutoDataBtn(DefInteger33)" DESIGNTIMEURL="../images/autoPic.png"></IMG>
+  					</div>
+					<!--end of IR 21080119-->
+					
+  					<!-- start of IR 21100098 -->
+  					<div class="space_column col-md-2">Cause of Death</div>
+      				<div class="col-md-2 newfield_style">
+      					<INPUT class="AutoComplete_NonMandatory borderStyleRelative" title="Select Cause of Death" tabIndex="" id="causeofdeath" name="causeofdeath" FNSType="fieldinput" TXField="causeofdeath" RXField="causeofdeath" DisplayFormat="X(02)" IsAutocomplete="Y"  AutocompleteTarget="causeofdeath.htm" FieldType="autoValue" ></INPUT>
+						<IMG class="Autocomplete_image" src="../images/autoPic.png" border="0" name="causeofdeathbtn" onclick="showAutoDataBtn(causeofdeath)" DESIGNTIMEURL="../images/autoPic.png"></IMG>
+  					</div>
+  					<!-- end of IR 21100098 -->
+					<!--end of IR 21080119-->
+			</div>
+			<!-- Start of IR 18100014-->`
+			<!--<div class="color1 col-xs-12 row_new">
+				<div class="space col-md-2"><span style="color:red">*</span>Occupation Description 
+				</div>
+				<div class="col-md-2 newfield_style">
+				 <INPUT class="fieldinput_mandatory1 borderStyleRelative" mandatory="true" maxLength="30" name="DefaultString07" FNSType="fieldinput" TXField="DefaultString7" RXField="DefaultString7" DisplayFormat="X(30)" title="Enter Occupation Description" tabindex="26"></INPUT>
+				</div>
+				
+			</div>-->
+			<!--Start of IR 22020030-->
+		<!-- <div class="color1 col-xs-12 row_new" id="OccudescInnerdiv">
+				<div class="space col-md-2"><span style="color:red" id="OccudescHeader">*</span>Occupation Description 
+				</div>
+				<div class="col-md-2 newfield_style">
+				 <INPUT class="fieldinput_mandatory1 borderStyleRelative RestictSpaceDot" mandatory="true" maxLength="30" name="DefaultString07" FieldType="NoSpecial" FNSType="fieldinput" TXField="DefaultString7" RXField="DefaultString7" DisplayFormat="X(30)" title="Enter Occupation Description" tabindex="26"></INPUT>
+				</div>
+				
+			</div> -->
+			<div class="color1 col-xs-12 row_new">
+		                   <div class="space col-md-2"><span style="color:red">* </span>Occupation Type</div>
+		                   <div class="col-md-2 newfield_style">
+		                   <!-- 	Start of IR 23120177 -->
+				            <!-- <INPUT class="AutoComplete_Mandatory borderStyleRelative"  name="ocpn_cat" id="ocpn_cat" FNSType="fieldinput" TXField="ocpn_cat" mandatory="true" RXField="ocpn_cat" IsAutocomplete="Y" AutocompleteTarget="ocpn_cat.htm" name="ocpn_cat" DisplayFormat="X(1)" FieldType="autoValue" title="Select Occupation Type" tabindex="26"></INPUT> -->
+				            <INPUT class="AutoComplete_Mandatory borderStyleRelative"  name="ocpn_cat" id="ocpn_cat" FNSType="fieldinput" TXField="ocpn_cat" mandatory="true" RXField="ocpn_cat" IsAutocomplete="Y" AutocompleteTarget="ocpn_cat.htm" name="ocpn_cat" DisplayFormat="X(1)" FieldType="autoValue" title="Select Occupation Type" tabindex="26" onblur="occupationsubtypeempty()"></INPUT>
+				           <!--  End of IR 23120177 -->
+				            <IMG class="Autocomplete_image" src="../images/autoPic.png" border="0" name="" DESIGNTIMEURL="../images/autoPic.png" onclick="showAutoDataBtn(ocpn_cat);occupationsubtypeempty();"></IMG>
+				           </div>
+
+				           <div class="space_column col-md-2"><span style="color:red">*</span>Occupation Subtype</div>
+							<div class="col-md-2 newfield_style">
+							  <INPUT class="AutoComplete_Mandatory borderStyleRelative" id="ocpn_code" FNSType="fieldinput" TXField="ocpn-code1" RXField="ocpn-code1" IsAutocomplete="Y" DisplayFormat="9(4)" AutocompleteTarget="OCPN-MAP_23020112.htm" FieldType="autoValue" filterreqd="true" filterfield="ocpn_cat" Mandatory="true" title="Select Occupation Subtype" tabindex="25"></INPUT>
+							  <IMG class="Autocomplete_image" src="../images/autoPic.png" name="ocpn_codeBtn" DESIGNTIMEURL="../images/autoPic.png" onclick="showAutoDataBtn(ocpn_code)"></IMG>
+							</div>
+			<!--End of IR 22020030-->
+			</div>
+			<!-- Start of IR 24020013 -->
+	<div class="div8" style="position:relative;display: none;" id="div8">
+	<div class="color1 col-xs-12 row_new">
+							<div class="space col-md-2" id ="IntimationDeathlabel"><span id="IntimationDeathSpan" style="color:red;display: none;">*</span>Intimation of Death</div>
+							<div class="col-md-2 newfield_style">
+								<INPUT class="fieldinput" maxLength="10" name="Intimate_Death_dt" ID="calendar_input08" onchange="changeDate('08',this.value)" style="width:0px;position:absolute;" FNSType="fieldinput" RXField="date8" TXField="date8" FieldType="Date" DisplayFormat="dd/mm/yyyy" tabindex=""></INPUT>
+								<INPUT class="fieldinput" title="Enter Intimation of Death(DD)" style="width:25px" maxLength="2" CheckLength="Yes" FieldType="Digit" ID="Text081" FNSType="fieldinput" onchange="putDate('08')" tabindex=""></INPUT>
+								<INPUT class="fieldinput" title="Enter Intimation of Death(MM)" style="width:25px" maxLength="2" CheckLength="Yes" FieldType="Digit" ID="Text082" FNSType="fieldinput" onchange="putDate('08')" tabindex=""></INPUT>
+								<INPUT class="fieldinput" title="Enter Intimation of Death(YYYY)" style="width:40px" maxLength="4" CheckLength="Yes" FieldType="Digit" ID="Text083" FNSType="fieldinput" onchange="putDate('08')" tabindex=""></INPUT>
+								<IMG class="calendar_imageBttn" ID="calendar_icon08" height="12" src="../images/46.gif" width="11" border="0" DESIGNTIMEURL="../images/46.gif"></IMG>
+							</div>
+	</div>
+	</div>
+	<!-- End of IR 24020013 -->
+			<!-- Start of IR 20040031 -->
+	     </div>
+<!-- End of IR 20040031 -->
+
+
+	     <div class="col-xs-12 button_Resp" style="border-color:transparent; Position:relative; top:30px;">
+	     		<!-- Start of IR 20010066 -->
+				<!-- <BUTTON class="button button_round button_new1" accessKey="T" onclick="if(checkGenderU()){if(ValidDOB()){Resetflag()}}" name="Transmit" FNSType="button" value="&amp;lt;U&amp;gt;T&amp;lt;/U&amp;gt;ransmit" style=""><U>T</U>ransmit</BUTTON> -->
+				<!-- start of IR 21100098 -->
+				<!-- <BUTTON class="button button_round button_new1" accessKey="T" onclick="if(usertype()){if(checkGenderU()){if(ValidDOB()){Resetflag()}}}" name="Transmit" FNSType="button" value="&amp;lt;U&amp;gt;T&amp;lt;/U&amp;gt;ransmit" style=""><U>T</U>ransmit</BUTTON> -->
+				<!-- Start of IR 22020030 -->
+				<!-- <BUTTON class="button button_round button_new1" accessKey="T" onclick="if(drop()){if(usertype()){if(checkGenderU()){if(ValidDOB()){Resetflag()}}}}" name="Transmit" FNSType="button" value="&amp;lt;U&amp;gt;T&amp;lt;/U&amp;gt;ransmit" style=""><U>T</U>ransmit</BUTTON> -->
+				<!-- Start of IR 24020013 -->
+				<!-- <BUTTON class="button button_round button_new1" accessKey="T" onclick="if(drop()){if(usertype()){if(checkGenderU()){if(ValidDOB()){if(checkmartialstatus()){Resetflag()}}}}}" name="Transmit" FNSType="button" value="&amp;lt;U&amp;gt;T&amp;lt;/U&amp;gt;ransmit" style=""><U>T</U>ransmit</BUTTON> -->
+				<BUTTON class="button button_round button_new1" accessKey="T" onclick="if(drop()){if(usertype()){if(checkGenderU()){if(ValidDOB()){if(validintimatedeath()){if(checkIntimationDeath()){if(checkIntimationDeath1()){if(checkmartialstatus()){Resetflag()}}}}}}}}" name="Transmit" FNSType="button" value="&amp;lt;U&amp;gt;T&amp;lt;/U&amp;gt;ransmit" style=""><U>T</U>ransmit</BUTTON>
+				<!-- End of IR 24020013 -->
+				<!-- End of IR 22020030 -->
+				<!-- end of IR 21100098 -->
+				<!-- End of IR 20010066 -->
+				<BUTTON class="button button_round button_new1" accessKey="C" onclick="CloseScreen()" name="Close" FNSType="button" value="&amp;lt;U&amp;gt;C&amp;lt;/U&amp;gt;lose" style="Left:120PX"><U>C</U>lose</BUTTON>
+
+		</div>
+        
+<!--End of IR 16050079-->
+<FIELDSET class="field" style=" display: none;" FNSType="field">
+	<INPUT class="fieldinput"  name="Csp_Flag"  maxLength="1" DisplayFormat="X(1)" FNSType="fieldinput" TXField="Csp_Flag" RXField="Csp_Flag" ID="Csp_Flag"></INPUT>
+</FIELDSET>
+  <!--End Of IR 18050059 for Responsive changes -->
+				</FORM>
+			</BODY>
+<!--Start of IR 16050079-->
+<SCRIPT type="text/javascript">
+// Start of IR 23120177
+$("#ocpn_cat").on("autocompleteselect",occupationsubtypeempty);
+$("#ocpn_cat").on("autocompletechange",occupationsubtypeempty);
+// End of IR 23120177
+// Start of IR 24020013
+$("#calendar_input02").on("autocompleteselect",bogusertype)
+$("#calendar_input02").on("autocompletechange",bogusertype)
+// End of IR 24020013
+
+$(document).ready(function() {
+		var date1,date2,date3;
+		date1 = $("#calendar_input01").val();
+		date2 = $("#calendar_input02").val();
+		//Start of IR 20060041
+		// date3 = $("#calendar_input02").val();
+		date3 = $("#calendar_input03").val();
+		//End of IR 20060041
+		// Start of IR 24020013
+		var date8;
+		date8 = $("#calendar_input08").val();
+		// End of IR 24020013
+		if(date1.length != 0){
+			$("#Text011").val(date1.substring(0,2));
+			$("#Text012").val(date1.substring(3,5));
+			$("#Text013").val(date1.substring(6,10));
+		}
+		if(date2.length != 0){
+			$("#Text021").val(date2.substring(0,2));
+			$("#Text022").val(date2.substring(3,5));
+			$("#Text023").val(date2.substring(6,10));
+		}
+		// Start of IR 24020013
+		if(date8.length != 0){
+			$("#Text081").val(date8.substring(0,2));
+			$("#Text082").val(date8.substring(3,5));
+			$("#Text083").val(date8.substring(6,10));
+		}
+		// End of IR 24020013
+        //Start of IR 20040031
+		//if(date3.length != 0){
+		//End of IR 20040031
+			// Start of IR 20060041
+			// $("#Text031").val(date1.substring(0,2));
+			// $("#Text032").val(date1.substring(3,5));
+			// $("#Text033").val(date1.substring(6,10));
+			//Start of IR 20040031
+			//$("#Text031").val(date3.substring(0,2));
+			//$("#Text032").val(date3.substring(3,5));
+			//$("#Text033").val(date3.substring(6,10));
+			//End of IR 20040031
+			// End of IR 20060041
+		//Start of IR 20040031	
+		//}
+		//End of IR 20040031
+		// Start of IR 24020013
+		// LoadCalendar('03');
+		 LoadCalendar('08');
+		// End of IR 24020013
+		var gen = document.getElementById("DefaultString2").value;		
+		//Gender Check
+		document.getElementById("DefaultString2").value == "M" ? document.getElementById("gend1").checked=true : document.getElementById("DefaultString2").value == "F" ? document.getElementById("gend2").checked=true : document.getElementById("DefaultString2").value == "T" ? document.getElementById("gend3").checked=true : document.getElementById("gend4").checked=true;
+		setTimeout(function(){
+			if(document.getElementById("DefaultString2").value=="true")
+			{
+				document.getElementById("DefaultString2").value = gen;
+			}
+		},2000);
+	});
+//Start of IR 18100014
+//Start of IR 22020030
+// $("#ocpn_code").on("autocompleteselect",occupdesc);
+// function occupdesc()
+// {		
+// 	if(window.document.getElementById("ocpn_code").datavalue=="0999")
+// 	{
+// 		window.document.all("OccudescInnerdiv").style.display = "inline";
+// 		window.document.all("OccudescHeader").style.display = "inline";
+// 		window.document.all("DefaultString07").Mandatory = "true";
+// 	}
+// 	else
+// 	{
+// 		window.document.all("DefaultString07").value = "";
+// 		window.document.all("DefaultString07").Mandatory = "false";
+// 		window.document.all("OccudescInnerdiv").style.display = "none";
+// 		window.document.all("OccudescHeader").style.display = "none";
+		
+// 		}
+
+// }
+
+//function specialcopy()
+//{
+//   if(/^[a-zA-Z0-9- ]*$/.test(window.document.all("DefaultString07").value) == false)
+// 	{
+// 		alert("Special Characters are not Allowed in Occupation Description");
+// 		window.document.all("DefaultString07").value = ""
+// 		window.document.all("DefaultString07").focus();
+// 		return false;
+// 	}
+// 	else
+// 	{
+// 		return true;
+// 	}
+//}
+// End of IR 22020030
+$('.RestictSpaceDot').keyup(function(){
+  val = $(this).val();
+  if(val.indexOf(" ") == 0){
+    alert("Space is not Allowed as First Character in Occupation Description");
+    $(this).val("");
+    $(this).focus();
+   }
+});
+//End of IR 18100014
+//Start of IR 20010066
+	function usertype()
+    {
+    	var usertype  
+        try
+        {
+        	usertype=window.frameElement.document.body.GetUserInfo("UserType");
+        }
+        catch(e) 
+        {
+            usertype=window.dialogArguments.parentElement.GetUserInfo("UserType");
+        }
+        if(usertype == 11) 
+        {
+            alert ("Only Enquiry is allowed for Logged-in User")
+            return false;
+        }
+        else 
+        {
+            return true;
+        }
+    }
+//End of IR 20010066
+
+//Start of IR 20060041
+function SetValues()
+{
+        var date1,date2,date3;
+		date1 = $("#calendar_input01").val();
+		date2 = $("#calendar_input02").val();
+		date3 = $("#calendar_input03").val();
+		// Start of IR 24020013
+		var date8;
+		date8 = $("#calendar_input08").val();
+		// End of IR 24020013
+		if(date1.length != 0)
+		{
+			$("#Text011").val(date1.substring(0,2));
+			$("#Text012").val(date1.substring(3,5));
+			$("#Text013").val(date1.substring(6,10));
+		}
+		if(date2.length != 0){
+			$("#Text021").val(date2.substring(0,2));
+			$("#Text022").val(date2.substring(3,5));
+			$("#Text023").val(date2.substring(6,10));
+		}
+		// Start of IR 24020013
+		if(date8.length != 0){
+			$("#Text081").val(date8.substring(0,2));
+			$("#Text082").val(date8.substring(3,5));
+			$("#Text083").val(date8.substring(6,10));
+		}
+		// End of IR 24020013
+
+  //Start of IR 20040031
+		//if(date3.length != 0)
+		//{	
+	    //$("#Text031").val(date3.substring(0,2));
+	   // $("#Text032").val(date3.substring(3,5));
+	   // $("#Text033").val(date3.substring(6,10));	
+	   //}
+  //End of IR 20040031
+
+
+	   if(window.document.all("DefaultString2").value=="M")
+		{
+           window.document.getElementById("gend1").checked=true;
+		}
+		else if(window.document.all("DefaultString2").value=="F")
+		{
+            window.document.getElementById("gend2").checked=true;
+		} 
+		else if(window.document.all("DefaultString2").value=="T")
+		{
+			window.document.getElementById("gend3").checked=true;
+		}
+
+	if((window.parent.name != "main") && (window.document.all("Transmit").disabled==true))
+  {
+			window.document.all("Text011").title="Date Of Birth(DD)";
+			window.document.all("Text012").title="Date Of Birth(MM)";
+			window.document.all("Text013").title="Date Of Birth(YYYY)";
+
+			window.document.all("Text021").title="Date Of Death(DD)";
+			window.document.all("Text022").title="Date Of Death(MM)";
+			window.document.all("Text023").title="Date Of Death(YYYY)";
+            //Start of IR 20040031
+			//window.document.all("Text031").title="Employed Date(DD)";
+			//window.document.all("Text032").title="Employed Date(MM)";
+			//window.document.all("Text033").title="Employed Date(YYYY)";
+			//End of IR 20040031
+
+			window.document.all("DefaultString3").title="Marital Status";
+			window.document.all("DefInteger").title="Dependents";
+			window.document.all("DefaultString4").title="Residence Country Code";
+			window.document.all("DefaultString08").title="Place of Birth";
+			// Start of IR 22020030
+			// window.document.all("ocpn_code").title="Occupation Code";
+			window.document.all("ocpn_code").title="Occupation Subtype";
+			//window.document.all("DefaultString07").title="Occupation Description";
+			// End of IR 22020030
+			//Start of IR 20040031  
+            //window.document.all("emp_pan").title="Employer PAN";
+            //window.document.all("DefaultString06").title="Employer Address";
+            //window.document.all("DefaultString09").title="Employer Address 2";
+            //window.document.all("postcode").title="Post Code";
+            //End of IR 20040031
+            window.document.all("EcoNo").title="Economic Number";
+            //start of IR 21080119
+            window.document.all("DefInteger33").title="Educational Qualification";
+            //end of IR 21080119
+            // start of IR 21100098
+            window.document.all("causeofdeath").title="Cause of Death";
+            var existingGroup=window.document.all("causeofdeath").datavalue;
+            window.document.all("causeofdeath").value=window.document.all("causeofdeath").getDataFromAutoComplete(window.document.all("causeofdeath").AutocompleteTarget,existingGroup);
+            window.document.all("Close").focus();
+            //end of IR 21100098
+            // Start of IR 22020030
+            window.document.all("ocpn_cat").title="Occupation Type";
+            // End of IR 22020030
+    }
+// start of IR 21100098
+    	if((window.parent.name != "main") && (window.document.all("Transmit").disabled==false))
+    	{
+    		var existingGroup=window.document.all("causeofdeath").datavalue;
+    		window.document.all("causeofdeath").value=window.document.all("causeofdeath").getDataFromAutoComplete(window.document.all("causeofdeath").AutocompleteTarget,existingGroup);
+    		if(window.document.getElementById("causeofdeath").style.display == "inline")
+					{
+					window.document.all("causeofdeath").value=window.document.all("causeofdeath").getDataFromAutoComplete(window.document.all("causeofdeath").AutocompleteTarget,window.document.all("causeofdeath").value);
+					}
+    	}
+//end of IR 21100098
+
+}
+//End of IR 20060041
+// start of IR 21100098
+function drop()
+{
+	if (window.document.all("Death_dt").value != "" && window.document.all("causeofdeath").value == "")
+    {
+                 			alert("Please Select Cause of Death");
+                 			window.document.all("causeofdeath").focus();
+                 			return false;
+    }
+    else if (window.document.all("Death_dt").value == "" && window.document.all("causeofdeath").value != "")
+    {
+                 		 	alert("Cause of Death Cannot Be Captured without Capturing Date of Death");
+                 		 	window.document.all("Death_dt").focus();
+                 		 	return false;
+    }
+    // Start of IR 23030101
+    else if (window.document.all("DefInteger33").value == "")
+    {
+    								alert("You must select a value in Educational Qualification");
+               			window.document.all("DefInteger33").focus();
+               			return false;
+    }
+    // end of IR 23030101
+    else 
+    {
+    	return true;
+    }
+
+
+}
+//end of IR 21100098
+//Start of IR 22020030
+function onloadocpn()
+{
+	if (window.document.getElementById("ocpn_code").value == "0999:Not Categorized" || window.document.getElementById("ocpn_code").datavalue=="0999")
+	{
+		window.document.getElementById("ocpn_code").value="0999:";
+        window.document.getElementById("ocpn_code").focus();
+	}
+    else{
+      return true;
+    }
+}
+function checkmartialstatus()
+  {
+    if(window.document.all("DefaultString3").value==""){
+      alert("You must enter a value in Marital Status")
+      window.document.getElementById("DefaultString3").focus();
+      return false;
+    }
+	else if (window.document.getElementById("ocpn_code").value == "0999:Not Categorized" || window.document.getElementById("ocpn_code").datavalue=="0999" || window.document.getElementById("ocpn_code").value=="0999:")
+	{
+	window.document.getElementById("ocpn_code").value="0999:";
+	alert("You must select a proper value in Occupation Subtype");
+      window.document.getElementById("ocpn_code").focus();
+      return false;
+	}
+    else{
+      return true;
+    }
+  }
+function occupationsubtypeempty(){
+	document.getElementById('ocpn_code').value='';
+}
+  //End of IR 22020030
+   // Start of IR 24020013
+  function IntimationDeath(){
+  	deathdate=window.document.all("Death_dt").value
+  	if (deathdate!=""){
+  		$("#div8").css("display","block")
+  		window.document.all("IntimationDeathSpan").style.display="inline-block";
+  		window.document.all("calendar_input08").className="fieldinput_mandatory";
+  		window.document.all("Text081").className="fieldinput_mandatory";
+  		window.document.all("Text082").className="fieldinput_mandatory";
+  		window.document.all("Text083").className="fieldinput_mandatory"
+  	}
+  }
+  function bogusertype()
+    {
+    	var usertype  
+        try
+        {
+        	usertype=window.frameElement.document.body.GetUserInfo("UserType");
+        }
+        catch(e) 
+        {
+            usertype=window.dialogArguments.parentElement.GetUserInfo("UserType");
+        }
+        if(usertype == 5) 
+        {
+            deathdate=window.document.all("Death_dt").value
+            
+  			if (deathdate==""){
+  				$("#div8").css("display","none")
+  				window.document.all("IntimationDeathSpan").style.display="none";
+  				window.document.all("calendar_input08").className="AutoComplete_nonMandatory";
+  				window.document.all("Text081").className="AutoComplete_nonMandatory";
+  				window.document.all("Text082").className="AutoComplete_nonMandatory";
+  				window.document.all("Text083").className="AutoComplete_nonMandatory"
+  				window.document.all("Intimate_Death_dt").value=""
+  				}
+        }
+        
+    }
+    
+    function validintimatedeath(){
+            deathdate=window.document.all("Death_dt").value
+            deathdate1=commondate(deathdate)
+            deathdate2=Number(deathdate1)
+            intimatedate=window.document.all("Intimate_Death_dt").value
+            intimatedate1=commondate(intimatedate)
+            intimatedate2=Number(intimatedate1)
+            if (deathdate2==0){
+  				alert("not a valid date")
+  				window.document.all("Death_dt").focus();
+  				return false;
+  				}
+  			else if(intimatedate2==0){
+  				alert("not a valid date");
+  				window.document.all("Intimate_Death_dt").focus();
+  				return false;
+  			}
+  			else{ 
+  				return true;
+  			}
+
+    }
+
+  function commondate(hdate5)
+	{
+		var arrDate8=hdate5.split("/");
+		var dd8=arrDate8[0];
+		var mm8=arrDate8[1];
+		var yyyy8=arrDate8[2];
+		var hostdate8 = yyyy8 + mm8 + dd8;
+		return hostdate8;
+	}
+  function checkIntimationDeath1(){
+  	deathdate=window.document.all("Death_dt").value
+  	intimatedate=window.document.all("Intimate_Death_dt").value
+  	todaydate=new Date();
+	try
+        {
+            var hdate5 = window.frameElement.document.body.GetUserInfo("HostDate");
+        }
+    catch(e)
+        {
+            var hdate5 =window.dialogArguments.parentElement.GetUserInfo("HostDate");
+        }
+  	deathdt=commondate(deathdate)
+  	intimatedt=commondate(intimatedate)
+  	todaydt=commondate(hdate5)
+  	if(deathdate!=""){
+  		if (intimatedate!=""){
+  			if(intimatedt<=todaydt){
+  				return true;
+  			}
+  			else{
+  				alert("Intimation of Death cannot be a future date")
+  				window.document.all("Intimate_Death_dt").focus();
+  				return false;
+  			}
+  		}
+  		else{
+  			alert("Please enter the date of Intimation of Death")
+  			window.document.all("Intimate_Death_dt").focus();
+  			return false; 			
+  		}
+  	}
+  	else{
+  		if (intimatedate!=""){
+  			window.document.all("Death_dt").focus();
+  			return false;
+  		}
+  		else{
+  			return true;
+  		}
+  		
+  	}
+
+
+  }
+  function checkIntimationDeath(){
+  	deathdate=window.document.all("Death_dt").value
+  	intimatedate=window.document.all("Intimate_Death_dt").value
+  	deathdt=commondate(deathdate)
+  	intimatedt=commondate(intimatedate)
+  	if(deathdate!=""){
+  		if (intimatedate!=""){
+  			if(intimatedt>=deathdt){
+  				return true;
+  			}
+  			else{
+  				alert("Intimation of Death cannot be prior to Date of Death")
+  				window.document.all("Intimate_Death_dt").focus();
+  				return false;
+  				
+  			}
+  		}
+  		else{
+  			alert("Please enter the date of Intimation of Death")
+  			window.document.all("Intimate_Death_dt").focus();
+  			return false;
+  			
+  		}
+  	}
+  	else{
+  		if (intimatedate!=""){
+  			window.document.all("Death_dt").focus();
+  			return false;
+  		}
+  		else{
+  			return true;
+  		}
+  	}
+
+  }
+// End of IR 24020013
+
+//Start of CR 24020168
+  $("#DefInteger33").on("autocompleteselect",hideValidate);
+
+function hideValidate()
+{
+	
+
+	if(window.document.all("DefInteger33").value=="99:ILLITERATE")
+	{
+		window.document.all("validateBtn").style.display="inline";
+		return true;
+	}
+	else
+	{
+		window.document.all("validateBtn").style.display="none";
+		return true;
+	}
+}   
+
+function disableTransmit()
+{
+	alert(window.document.all("sendFlag").value);
+	if(window.document.all("sendFlag").value == "Y")
+	{
+		window.document.all("Transmit").disabled=true;
+		return true;
+	}
+  
+}
+//End of CR 24020168
+</SCRIPT>
+<!--End of IR 16050079-->
+		</HTML>
+	</xsl:template>
+</xsl:stylesheet>
+----------------------------------------
+
+60777.htm
+
+<?xml version="1.0"?>
+<xsl:stylesheet xmlns:xsl="http://www.w3.org/TR/WD-xsl">
+<xsl:template match="/">
+<HTML>
+  <HEAD>
+    <TITLE>060777: ATM/INB Validation</TITLE>
+    <META http-equiv="X-UA-Compatible" content="IE=5" name=""></META>
+    <META content="1.0" name="Version"></META>
+    <META content="Screen" name="FNSTYPE"></META>
+    <META name="Creation_Date" CONTENT=""></META>
+    <META http-equiv="Content-type" content="Text/html; Charset=UTF8" name=""></META>
+    <LINK href="../css/Screen.css" type="Text/css" rel="stylesheet"></LINK>
+    <LINK href="../css/FATCA.css" type="Text/css" rel="stylesheet"></LINK>
+    <SCRIPT type="text/javascript" src="../js/CBSQuery.min.js"></SCRIPT>
+    <SCRIPT type="text/javascript" src="../js/060777.js"></SCRIPT>
+  </HEAD>
+      <BODY id="FNSScreen" bgColor="#c0c0c0" FNSType="SINGLEPAGESCREEN" Class="screen" onunload="FocusOnScreen()">
+  <FORM class="transaction" style="WIDTH: 95%" name="060777" method="post" FNSType="transaction" RXTransaction="060777" TXTransaction="060777" CustomAction="DefaultTransmit">
+    <div>
+    <label style="left: 100px; top: 10px">Do you want to Proceed</label><br><br>
+
+      <button id="ProceedBtn" class="button button_round button_new1" style="left:70PX; top:70px" onclick="Proceed();CloseScreen();" accesskey="P"> <u>P</u>roceed</button>
+              
+       <button id="CancelBtn" class="button button_round button_new1" style="left:210PX; top:70px" onclick="sendFlagout();CloseScreen();" accesskey="C"> <u>C</u>ancel</button>
+       <INPUT class="fieldinput" style="display:none;" value="Y" name="Val_Flag"  maxLength="1" DisplayFormat="X(1)" FNSType="fieldinput" TXField="Val_Flag" RXField="Val_Flag" ID="Val_Flag"></INPUT>
+       <INPUT class="fieldinput" style="display:none;" value="Y" name="sendFlag"  maxLength="1" DisplayFormat="X(1)" FNSType="fieldinput" TXField="sendFlag" RXField="sendFlag" ID="sendFlag"></INPUT>
+       </div>
+  </FORM>
+  </BODY>
+</HTML>
+</xsl:template>
+</xsl:stylesheet>
+
+----------------------------
+
+
+js
+
+
+function validateFun()
+{
+	
+			var CustNo = document.getElementById("accntNumber").value;
+			if (CustNo!="")
+			{
+				
+				var oFlows = window.document.forms(0).getFlowComponent()
+			    oFlows.returnValue = "True";
+			    var sMessageBody = "<screenData><accntNumber>"+CustNo+"</accntNumber><TranNo>060777</TranNo></screenData>";
+				oFlows.startFlow(window.document.body, null, "060777flow", "StartHost", sMessageBody, true);
+				return true;
+
+			}
+			else
+				{
+					alert("not working")
+				}
+				
+}
+
+
+		function Proceed()
+              {
+                alert("proceed working");
+                
+              }          
+    
+			function FocusOnScreen()
+                {
+                  try{
+                    window.dialogArguments.document.frames("MainScreen").focus(); 
+                  }
+                  catch (e) {
+
+                  }
+                  return true;
+                }
+
+                function sendFlagout()
+                {
+                	alert("getting into flow");
+                	var sendFlag = document.getElementById("sendFlag").value;
+                	var oFlows = window.document.forms(0).getFlowComponent()
+				    oFlows.returnValue = "True";
+				    var sMessageBody = "<screenData><sendFlag>"+sendFlag+"</sendFlag><TranNo>060777</TranNo></screenData>";
+				    alert(sMessageBody);
+					oFlows.startFlow(window.document.body, null, "060777flow", "VerifyFlag", sMessageBody, true);
+					return true;
+                }
+
+
+----------------
