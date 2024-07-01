@@ -10,6 +10,14 @@
     <link href="../css/newCBSResponsive.css" type="text/css" rel="stylesheet" />
     <script type="text/javascript" src="../js/060777.js"></script>
     <script type="text/javascript">
+        window.addEventListener("storage", function(event) {
+            if (event.key === "cancelFlag" && event.newValue === "true") {
+                document.getElementById("Transmit").disabled = true;
+                // Reset the flag for future use
+                localStorage.setItem("cancelFlag", "false");
+            }
+        });
+
         function validateFun() {
             var CustNo = document.getElementById("accntNumber").value;
             if (CustNo != "") {
@@ -17,11 +25,11 @@
                 oFlows.returnValue = "True";
                 var sMessageBody = "<screenData><accntNumber>" + CustNo + "</accntNumber><TranNo>060777</TranNo></screenData>";
                 oFlows.startFlow(window.document.body, null, "060777flow", "StartHost", sMessageBody, true);
-                
+
                 // Open 60777 screen in a new window for communication
                 var newWindow = window.open("60777.htm", "popup", "width=600,height=400");
                 newWindow.opener = window;
-                
+
                 return true;
             } else {
                 alert("not working");
@@ -40,7 +48,11 @@
 
 
 
-------------
+
+
+
+-----------------
+
 
 
 <!DOCTYPE html>
@@ -71,8 +83,6 @@
 
 
 -----------
-
-
 
 function validateFun() {
     var CustNo = document.getElementById("accntNumber").value;
@@ -109,10 +119,8 @@ function sendFlagout() {
     alert(sMessageBody);
     oFlows.startFlow(window.document.body, null, "060777flow", "VerifyFlag", sMessageBody, true);
 
-    // Disable Transmit button on the parent (67101.htm) screen
-    if (window.opener && !window.opener.closed) {
-        window.opener.document.getElementById("Transmit").disabled = true;
-    }
+    // Set flag in local storage to disable the Transmit button on 67101.htm
+    localStorage.setItem("cancelFlag", "true");
 
     return true;
 }
