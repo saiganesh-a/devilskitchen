@@ -88,3 +88,49 @@ function onloadFlag() {
                 }
             }*/
 
+.--------
+
+
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>067101 CIF: Create/Amend Customer Personal Details</title>
+    <meta http-equiv="X-UA-Compatible" content="IE=5" />
+    <meta content="Text/html; Charset=UTF-8" http-equiv="Content-type" />
+    <link href="../css/Screen.css" type="text/css" rel="stylesheet" />
+    <link href="../css/calenderNew.css" type="text/css" rel="stylesheet" />
+    <link href="../css/newCBSCommon.css" type="text/css" rel="stylesheet" />
+    <link href="../css/newCBSResponsive.css" type="text/css" rel="stylesheet" />
+    <script type="text/javascript">
+        function checkCancelFlag() {
+            var cancelFlagInput = document.getElementById("cancelFlagInput");
+            if (cancelFlagInput && cancelFlagInput.value === "true") {
+                document.getElementById("Transmit").disabled = true;
+                cancelFlagInput.value = "false"; // Reset the flag for future use
+            }
+        }
+
+        function startPolling() {
+            setInterval(checkCancelFlag, 1000);
+        }
+
+        window.onload = function() {
+            // Inject hidden input field to check the cancel flag
+            var cancelFlagInput = document.createElement("input");
+            cancelFlagInput.type = "hidden";
+            cancelFlagInput.id = "cancelFlagInput";
+            cancelFlagInput.value = "false";
+            document.body.appendChild(cancelFlagInput);
+            startPolling();
+        };
+    </script>
+</head>
+<body>
+    <form>
+        <input type="text" id="accntNumber" name="accntNumber" />
+        <button type="button" onclick="validateFun()">Validate</button>
+        <button id="Transmit" type="button">Transmit</button>
+    </form>
+</body>
+</html>
