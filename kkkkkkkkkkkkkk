@@ -37,100 +37,97 @@ function validateFun()
                   return true;
                 }
 
+//                 function sendFlagout()
+//                 {
+                	
+//                 	var sendFlag = document.getElementById("sendFlag").value;
+//     				localStorage.setItem("cancelFlag", sendFlag);
+// 					return true;
+//                 }
+                
+//                  function checkCancelFlag() 
+//                  {
+// 			                	// alert("cancelFlag");
+// 			           var cancelFlag = localStorage.getItem("cancelFlag");
+// 			                	// alert(localStorage.getItem("cancelFlag"));
+// 			            if (cancelFlag === "Y")
+// 			             {
+// 			                document.getElementById("Transmit").disabled = "True";
+// 			                // Reset the flag for future use
+// 			                localStorage.removeItem("cancelFlag");
+// 			            }
+//         		}
+
+
+// function onloadFlag() {
+//             // Reset the flag on load
+//             localStorage.removeItem("cancelFlag");
+
+//             // Check cancel flag every second
+//            setInterval(checkCancelFlag, 1000);
+//         };
+
+     //            function sendFlagout()
+     //            {
+     //              alert("getting into flow");
+     //              setCancelFlag();
+     //            	alert("getting into flow");
+     //            	var sendFlag = document.getElementById("sendFlag").value;
+     //            	var oFlows = window.document.forms(0).getFlowComponent()
+				 //    oFlows.returnValue = "True";
+				 //    var sMessageBody = "<screenData><sendFlag>"+sendFlag+"</sendFlag><TranNo>060777</TranNo></screenData>";
+				 //    alert(sMessageBody);
+					// oFlows.startFlow(window.document.body, null, "060777flow", "VerifyFlag", sMessageBody, true);
+					// return true;
+					// populateData();
+     //            }
+
+     //            function populateData()
+     //            {
+     //            	if(window.parent.name == main)
+     //            	{
+     //            	$("#sendFlag").empty();
+					// PopulateCardGrid(window.document.all("PrimaryCardData").value,"Primary Account Card Details",window.document.all("PrimaryCardDataCount").value);
+     //            }
+     //        }
+
+     var flag = "N"; 
+
                 function sendFlagout()
                 {
-                	
-                	var sendFlag = document.getElementById("sendFlag").value;
-    				localStorage.setItem("cancelFlag", sendFlag);
-					return true;
-                }
-                 function checkCancelFlag() 
-                 {
-			                	// alert("cancelFlag");
-			           var cancelFlag = localStorage.getItem("cancelFlag");
-			                	// alert(localStorage.getItem("cancelFlag"));
-			            if (cancelFlag === "Y")
-			             {
-			                document.getElementById("Transmit").disabled = "True";
-			                // Reset the flag for future use
-			                localStorage.removeItem("cancelFlag");
-			            }
-        		}
+                  alert("IN");
+                   var sndflg = window.document.all("sendFlag").value;
+                   alert (sndflg);
+                   flag = sndflg;
+                  alert (flag);
+                  }
 
 
-function onloadFlag() {
-            // Reset the flag on load
-            localStorage.removeItem("cancelFlag");
+           function checkCancelFlag() {
+              alert("In1");
+              alert(flag);
+              if(flag === "Y"){
 
-            // Check cancel flag every second
-           setInterval(checkCancelFlag, 1000);
-        };
-
-                /*function sendFlagout()
-                {
-                	alert("getting into flow");
-                	var sendFlag = document.getElementById("sendFlag").value;
-                	var oFlows = window.document.forms(0).getFlowComponent()
-				    oFlows.returnValue = "True";
-				    var sMessageBody = "<screenData><sendFlag>"+sendFlag+"</sendFlag><TranNo>060777</TranNo></screenData>";
-				    alert(sMessageBody);
-					oFlows.startFlow(window.document.body, null, "060777flow", "VerifyFlag", sMessageBody, true);
-					return true;
-					populateData();
-                }
-
-                function populateData()
-                {
-                	if(window.parent.name == main)
-                	{
-                	$("#sendFlag").empty();
-					PopulateCardGrid(window.document.all("PrimaryCardData").value,"Primary Account Card Details",window.document.all("PrimaryCardDataCount").value);
-                }
-            }*/
-
-.--------
-
-
-
-<!DOCTYPE html>
-<html>
-<head>
-    <title>067101 CIF: Create/Amend Customer Personal Details</title>
-    <meta http-equiv="X-UA-Compatible" content="IE=5" />
-    <meta content="Text/html; Charset=UTF-8" http-equiv="Content-type" />
-    <link href="../css/Screen.css" type="text/css" rel="stylesheet" />
-    <link href="../css/calenderNew.css" type="text/css" rel="stylesheet" />
-    <link href="../css/newCBSCommon.css" type="text/css" rel="stylesheet" />
-    <link href="../css/newCBSResponsive.css" type="text/css" rel="stylesheet" />
-    <script type="text/javascript">
-        function checkCancelFlag() {
-            var cancelFlagInput = document.getElementById("cancelFlagInput");
-            if (cancelFlagInput && cancelFlagInput.value === "true") {
-                document.getElementById("Transmit").disabled = true;
-                cancelFlagInput.value = "false"; // Reset the flag for future use
+                window.document.all("Transmit").disabled = true;
+              }
+            // var cancelFlagInput = document.getElementById("cancelFlagInput");
+            // alert(cancelFlagInput);
+            // if (cancelFlagInput && cancelFlagInput.value === "true") {
+            //     document.getElementById("Transmit").disabled = true;
+            //     cancelFlagInput.value = "false"; // Reset the flag for future use
             }
-        }
+        //          function checkCancelFlag() 
+        //          {
+        //                // alert("cancelFlag");
+        //                if(getCancelFlag()){
 
-        function startPolling() {
-            setInterval(checkCancelFlag, 1000);
-        }
+        //              document.getElementById("Transmit").disabled = "True";
+        //              // Reset the flag for future use
+        //          }
+        //    }
+        //    function onloadFlag() {
+        //     // Reset the flag on load
 
-        window.onload = function() {
-            // Inject hidden input field to check the cancel flag
-            var cancelFlagInput = document.createElement("input");
-            cancelFlagInput.type = "hidden";
-            cancelFlagInput.id = "cancelFlagInput";
-            cancelFlagInput.value = "false";
-            document.body.appendChild(cancelFlagInput);
-            startPolling();
-        };
-    </script>
-</head>
-<body>
-    <form>
-        <input type="text" id="accntNumber" name="accntNumber" />
-        <button type="button" onclick="validateFun()">Validate</button>
-        <button id="Transmit" type="button">Transmit</button>
-    </form>
-</body>
-</html>
+        //     // Check cancel flag every second
+        //    setInterval(checkCancelFlag, 1000);
+        // };
