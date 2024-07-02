@@ -1,0 +1,90 @@
+function validateFun()
+{
+	
+			var CustNo = document.getElementById("accntNumber").value;
+			if (CustNo!="")
+			{
+				
+				var oFlows = window.document.forms(0).getFlowComponent()
+			    oFlows.returnValue = "True";
+			    var sMessageBody = "<screenData><accntNumber>"+CustNo+"</accntNumber><TranNo>060777</TranNo></screenData>";
+				oFlows.startFlow(window.document.body, null, "060777flow", "StartHost", sMessageBody, true);
+				return true;
+
+			}
+			else
+				{
+					alert("not working")
+				}
+				
+}
+
+
+		function Proceed()
+              {
+                alert("proceed working");
+                
+              }          
+    
+			function FocusOnScreen()
+                {
+                  try{
+                    window.dialogArguments.document.frames("MainScreen").focus(); 
+                  }
+                  catch (e) {
+
+                  }
+                  return true;
+                }
+
+                function sendFlagout()
+                {
+                	
+                	var sendFlag = document.getElementById("sendFlag").value;
+    				localStorage.setItem("cancelFlag", sendFlag);
+					return true;
+                }
+                 function checkCancelFlag() 
+                 {
+			                	// alert("cancelFlag");
+			           var cancelFlag = localStorage.getItem("cancelFlag");
+			                	// alert(localStorage.getItem("cancelFlag"));
+			            if (cancelFlag === "Y")
+			             {
+			                document.getElementById("Transmit").disabled = "True";
+			                // Reset the flag for future use
+			                localStorage.removeItem("cancelFlag");
+			            }
+        		}
+
+
+function onloadFlag() {
+            // Reset the flag on load
+            localStorage.removeItem("cancelFlag");
+
+            // Check cancel flag every second
+           setInterval(checkCancelFlag, 1000);
+        };
+
+                /*function sendFlagout()
+                {
+                	alert("getting into flow");
+                	var sendFlag = document.getElementById("sendFlag").value;
+                	var oFlows = window.document.forms(0).getFlowComponent()
+				    oFlows.returnValue = "True";
+				    var sMessageBody = "<screenData><sendFlag>"+sendFlag+"</sendFlag><TranNo>060777</TranNo></screenData>";
+				    alert(sMessageBody);
+					oFlows.startFlow(window.document.body, null, "060777flow", "VerifyFlag", sMessageBody, true);
+					return true;
+					populateData();
+                }
+
+                function populateData()
+                {
+                	if(window.parent.name == main)
+                	{
+                	$("#sendFlag").empty();
+					PopulateCardGrid(window.document.all("PrimaryCardData").value,"Primary Account Card Details",window.document.all("PrimaryCardDataCount").value);
+                }
+            }*/
+
