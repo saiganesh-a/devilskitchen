@@ -114,3 +114,114 @@ response.outline.location=C:\\Users\\V1010513\\Desktop\\VisualCobAPI\\MetaData\\
 -DChannelsPropConfigPath=C:\Users\V1010513\Desktop\VisualCobAPI\MetaData
 -Dspring.config.location=C:\Users\V1010513\Desktop\VisualCobAPI\MetaData\PropertyFiles\
 -Dspring.config.name=application
+
+
+
+spring.jpa.database=default
+server.port=1003
+server.contextPath=/
+server.address=127.0.0.1
+spring.main.allow-bean-definition-overriding=true
+spring.jackson.default-property-inclusion=non_null
+spring.jpa.show-sql=true
+spring.jmx.enabled=false
+spring.banner.location=C://Users//V1010513//Desktop//VisualCobAPI//MetaData//PropertyFiles\\banner.txt
+
+spring.jpa.hibernate.naming.physical-strategy=org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+
+# Database configuration
+# day datasource
+day.datasource.jdbc-url=jdbc:oracle:thin:@10.176.15.54:6087:test_iardev
+day.datasource.username=microapi
+day.datasource.password=MICROAPI
+#day.datasource.password=ENC(faFShHa3l9oyu2qWrxaLJw==)
+day.datasource.driver-class-name=oracle.jdbc.driver.OracleDriver
+day.jpa.database-platform=org.hibernate.dialect.Oracle12cDialect
+day.jpa.properties.hibernate.dialect=org.hibernate.dialect.Oracle12cDialect
+
+# HikariCP settings for day datasource
+day.datasource.hikari.minimum-idle=10
+day.datasource.hikari.maximum-pool-size=50
+day.datasource.hikari.idle-timeout=30000
+day.datasource.hikari.connection-timeout=20000
+day.datasource.hikari.max-lifetime=1800000
+day.datasource.hikari.keepalive-time=60000
+day.datasource.hikari.pool-name=DayHikariPool
+day.datasource.hikari.validation-timeout=5000
+day.datasource.hikari.connection-test-query=SELECT 1 FROM DUAL
+
+# night datasource
+night.datasource.jdbc-url=jdbc:oracle:thin:@10.189.15.163:1698:rtst
+night.datasource.username=MICROAPI
+night.datasource.password=MICROAPI
+#night.datasource.password=ENC(faFShHa3l9oyu2qWrxaLJw==)
+night.datasource.driver-class-name=oracle.jdbc.driver.OracleDriver
+night.jpa.database-platform=com.tcs.bancs.microservices.configuration.CustomOracleDialect
+night.jpa.properties.hibernate.dialect=com.tcs.bancs.microservices.configuration.CustomOracleDialect
+
+# HikariCP settings for night datasource
+night.datasource.hikari.minimum-idle=10
+night.datasource.hikari.maximum-pool-size=50
+night.datasource.hikari.idle-timeout=30000
+night.datasource.hikari.connection-timeout=20000
+night.datasource.hikari.max-lifetime=1800000
+night.datasource.hikari.keepalive-time=60000
+night.datasource.hikari.pool-name=NightHikariPool
+night.datasource.hikari.validation-timeout=5000
+night.datasource.hikari.connection-test-query=SELECT 1 FROM DUAL
+
+# ref datasource
+ref.datasource.jdbc-url=jdbc:oracle:thin:@10.189.15.163:1698:rtst
+ref.datasource.username=MICROAPI
+ref.datasource.password=MICROAPI
+#ref.datasource.password=ENC(faFShHa3l9oyu2qWrxaLJw==)
+ref.datasource.driver-class-name=oracle.jdbc.driver.OracleDriver
+ref.jpa.database-platform=com.tcs.bancs.microservices.configuration.CustomOracleDialect
+ref.jpa.properties.hibernate.dialect=com.tcs.bancs.microservices.configuration.CustomOracleDialect
+
+# HikariCP settings for ref datasource
+ref.datasource.hikari.minimum-idle=10
+ref.datasource.hikari.maximum-pool-size=50
+ref.datasource.hikari.idle-timeout=30000
+ref.datasource.hikari.connection-timeout=20000
+ref.datasource.hikari.max-lifetime=1800000
+ref.datasource.hikari.keepalive-time=60000
+ref.datasource.hikari.pool-name=RefHikariPool
+ref.datasource.hikari.validation-timeout=5000
+ref.datasource.hikari.connection-test-query=SELECT 1 FROM DUAL
+
+# Logging framework
+logging.level.org.springframework = DEBUG
+logging.level.org.springframework.boot = DEBUG
+logging.level.com.tcs.bancs = DEBUG
+logging.config=C:\\Users\\V1010513\\Desktop\\VisualCobAPI\\MetaData\\Config\\logback-spring.xml
+logging.file.location=C:\\Users\\V1010513\\Desktop\\VisualCobAPI\\MetaData\\SystemLogs
+logback.access.enabled=true
+logging.level.org.hibernate.SQL= TRACE
+logging.level.org.hibernate.type.descriptor.sql.BasicBinder=TRACE
+logging.level.org.hibernate.type=TRACE        
+
+# Actuator endpoints
+management.endpoints.health.sensitive=false
+management.health.db.enabled=true 
+management.endpoint.health.show-details=always 
+management.endpoint.shutdown.enabled=true
+
+# New added environment variables
+UTENVCALS-BANCS-TRACE-STATE=Y
+UTENVCALS-MASTER-DQPTYPE=Y 
+UTENVCALS-BANCS-HOST=1     
+UTENVCALS-FNS-SYSNUM=1     
+UTENVCALS-CTRL-SYSNUM=1    
+UTENVCALS-DAY-SYSNUM=1     
+UTENVCALS-NIGHT-SYSNUM=1   
+UTENVCALS-NON24H-SYSNUM=1  
+UTENVCALS-DEF-RMODE=Y      
+UTENVCALS-MASTER-DB-1=test_iardev    
+UTENVCALS-MASTER-DB-2=rprd    
+UTENVCALS-SERVICES-FLAG=Y  
+
+# Response outline
+response.outline.location=C:\\Users\\V1010513\\Desktop\\VisualCobAPI\\MetaData\\response_outline.txt
+
+
