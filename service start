@@ -23,3 +23,6 @@ spring.datasource.hikari.max-lifetime=1800000
 
 logging.level.org.springframework=DEBUG
 logging.level.org.hibernate=DEBUG
+
+
+-Xms512m -Xmx2048m -XX:+UseG1GC -XX:MaxGCPauseMillis=200
