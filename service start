@@ -26,3 +26,7 @@ logging.level.org.hibernate=DEBUG
 
 
 -Xms512m -Xmx2048m -XX:+UseG1GC -XX:MaxGCPauseMillis=200
+
+
+
+-XX:+UseParallelGC -Xms256m -Xmx1024m -XX:MetaspaceSize=256m -XX:MaxMetaspaceSize=512m
