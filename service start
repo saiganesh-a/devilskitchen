@@ -108,3 +108,9 @@ UTENVCALS-SERVICES-FLAG=Y
 
 #Response outline
 response.outline.location=C:\\Users\\V1010513\\Desktop\\VisualCobAPI\\MetaData\\response_outline.txt
+
+
+
+-DChannelsPropConfigPath=C:\Users\V1010513\Desktop\VisualCobAPI\MetaData
+-Dspring.config.location=C:\Users\V1010513\Desktop\VisualCobAPI\MetaData\PropertyFiles\
+-Dspring.config.name=application
