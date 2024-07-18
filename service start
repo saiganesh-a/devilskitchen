@@ -225,3 +225,143 @@ UTENVCALS-SERVICES-FLAG=Y
 response.outline.location=C:\\Users\\V1010513\\Desktop\\VisualCobAPI\\MetaData\\response_outline.txt
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+------------------------------------------------
+
+
+
+SLF4J: Class path contains multiple SLF4J bindings.
+SLF4J: Found binding in [jar:file:/C:/Users/v1010513/Desktop/VisualCobAPI/ChannelEnq_lib/logback-classic-1.2.3.jar!/org/slf4j/impl/StaticLoggerBinder.class]
+SLF4J: Found binding in [jar:file:/C:/Users/v1010513/Desktop/VisualCobAPI/DBConnectionService.jar!/org/slf4j/impl/StaticLoggerBinder.class]
+SLF4J: See http://www.slf4j.org/codes.html#multiple_bindings for an explanation.
+SLF4J: Actual binding is of type [ch.qos.logback.classic.util.ContextSelectorStaticBinder]
+=======================================================================
+** /$$$$$$$$   /$$$$$$  /$$$$$$   **
+**|__  $$__/  /$$|___$$ \$$$$$$$  **
+**   | $$    | $$|       \ $$\    **
+**   | $$    | $$|        \ $$\   **
+**   | $$    | $$|         \ $$\  **
+**   | $$    | $$|___$$     \ $$\ **
+**   | $$    |  $$$$$$/  $$$$$$$/ **
+**   |__/     \______/    $$$$$/  **
+=======================================================================
+============>>>>>:: QueryMicroservices  :: Running Spring Boot 2.3.6.RELEASE
+2024-07-18 18:47:52,561 INFO org.hibernate.validator.internal.util.Version [background-preinit] HV000001: Hibernate Validator 6.0.10.Final
+|||2024-07-18 18:47:52,572 INFO org.springframework.boot.StartupInfoLogger [main] Starting OpenBankingServicesApp on GCHTCS0671 with PID 21228 (C:\Users\v1010513\Desktop\CSRC_040724\TCSBaNCSQueryMicroservices\target\classes started by V1010513 in C:\Users\v1010513\Desktop\CSRC_040724\TCSBaNCSQueryMicroservices)
+|||2024-07-18 18:47:52,587 INFO org.springframework.boot.SpringApplication [main] No active profile set, falling back to default profiles: default
+|||2024-07-18 18:48:17,000 INFO org.springframework.data.repository.config.RepositoryConfigurationDelegate [main] Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+|||2024-07-18 18:48:17,004 INFO org.springframework.data.repository.config.RepositoryConfigurationDelegate [main] Finished Spring Data repository scanning in 4ms. Found 0 JPA repository interfaces.
+|||Config.properties configuration successful 
+2024-07-18 18:48:17,319 INFO com.tcs.bancs.microservices.util.AggregatorConfigLoader [main] TableConfiguration.properties configuration successful
+|||2024-07-18 18:48:17,334 INFO com.tcs.bancs.microservices.util.AggregatorConfigLoader [main] SYSCDetails.properties configuration successful 
+|||2024-07-18 18:48:17,806 INFO org.springframework.boot.web.embedded.tomcat.TomcatWebServer [main] Tomcat initialized with port(s): 1003 (http)
+|||2024-07-18 18:48:17,821 INFO org.apache.juli.logging.DirectJDKLog [main] Initializing ProtocolHandler ["http-nio-127.0.0.1-1003"]
+|||2024-07-18 18:48:17,821 INFO org.apache.juli.logging.DirectJDKLog [main] Starting service [Tomcat]
+|||2024-07-18 18:48:17,821 INFO org.apache.juli.logging.DirectJDKLog [main] Starting Servlet engine: [Apache Tomcat/9.0.39]
+|||2024-07-18 18:48:17,979 INFO org.apache.juli.logging.DirectJDKLog [main] Initializing Spring embedded WebApplicationContext
+|||2024-07-18 18:48:17,995 INFO org.springframework.boot.web.servlet.context.ServletWebServerApplicationContext [main] Root WebApplicationContext: initialization completed in 25360 ms
+|||2024-07-18 18:48:18,120 ERROR org.apache.juli.logging.DirectJDKLog [main] For security constraints with URL pattern [/*] only the HTTP methods [TRACE HEAD DELETE OPTIONS PUT] are covered. All other methods are uncovered.
+|||2024-07-18 18:48:18,285 INFO org.hibernate.jpa.internal.util.LogHelper [main] HHH000204: Processing PersistenceUnitInfo [name: day]
+|||2024-07-18 18:48:18,332 INFO org.hibernate.Version [main] HHH000412: Hibernate ORM core version 5.4.23.Final
+|||2024-07-18 18:48:18,426 INFO org.hibernate.annotations.common.reflection.java.JavaReflectionManager [main] HCANN000001: Hibernate Commons Annotations {5.1.2.Final}
+|||2024-07-18 18:48:18,553 INFO com.zaxxer.hikari.HikariDataSource [main] HikariPool-1 - Starting...
+|||2024-07-18 18:48:18,584 WARN com.zaxxer.hikari.util.DriverDataSource [main] Registered driver with driverClassName=oracle.jdbc.driver.OracleDriver was not found, trying direct instantiation.
+|||2024-07-18 18:48:19,042 INFO com.zaxxer.hikari.HikariDataSource [main] HikariPool-1 - Start completed.
+|||2024-07-18 18:48:19,057 INFO org.hibernate.dialect.Dialect [main] HHH000400: Using dialect: org.hibernate.dialect.Oracle12cDialect
+|||2024-07-18 18:48:19,294 ERROR org.hibernate.engine.jdbc.env.internal.JdbcEnvironmentImpl [main] Could not fetch the SequenceInformation from the database
+|||java.sql.SQLException: Numeric Overflow
+	at oracle.jdbc.driver.NumberCommonAccessor.throwOverflow(NumberCommonAccessor.java:4136)
+	at oracle.jdbc.driver.NumberCommonAccessor.getLong(NumberCommonAccessor.java:634)
+	at oracle.jdbc.driver.GeneratedStatement.getLong(GeneratedStatement.java:206)
+	at oracle.jdbc.driver.GeneratedScrollableResultSet.getLong(GeneratedScrollableResultSet.java:259)
+	at oracle.jdbc.driver.GeneratedResultSet.getLong(GeneratedResultSet.java:558)
+	at com.zaxxer.hikari.pool.HikariProxyResultSet.getLong(HikariProxyResultSet.java)
+	at org.hibernate.tool.schema.extract.internal.SequenceInformationExtractorLegacyImpl.resultSetMinValue(SequenceInformationExtractorLegacyImpl.java:134)
+	at org.hibernate.tool.schema.extract.internal.SequenceInformationExtractorLegacyImpl.extractMetadata(SequenceInformationExtractorLegacyImpl.java:60)
+	at org.hibernate.engine.jdbc.env.internal.JdbcEnvironmentImpl.sequenceInformationList(JdbcEnvironmentImpl.java:403)
+	at org.hibernate.engine.jdbc.env.internal.JdbcEnvironmentImpl.<init>(JdbcEnvironmentImpl.java:268)
+	at org.hibernate.engine.jdbc.env.internal.JdbcEnvironmentInitiator.initiateService(JdbcEnvironmentInitiator.java:114)
+	at org.hibernate.engine.jdbc.env.internal.JdbcEnvironmentInitiator.initiateService(JdbcEnvironmentInitiator.java:35)
+	at org.hibernate.boot.registry.internal.StandardServiceRegistryImpl.initiateService(StandardServiceRegistryImpl.java:101)
+	at org.hibernate.service.internal.AbstractServiceRegistryImpl.createService(AbstractServiceRegistryImpl.java:263)
+	at org.hibernate.service.internal.AbstractServiceRegistryImpl.initializeService(AbstractServiceRegistryImpl.java:237)
+	at org.hibernate.service.internal.AbstractServiceRegistryImpl.getService(AbstractServiceRegistryImpl.java:214)
+	at org.hibernate.id.factory.internal.DefaultIdentifierGeneratorFactory.injectServices(DefaultIdentifierGeneratorFactory.java:152)
+	at org.hibernate.service.internal.AbstractServiceRegistryImpl.injectDependencies(AbstractServiceRegistryImpl.java:286)
+	at org.hibernate.service.internal.AbstractServiceRegistryImpl.initializeService(AbstractServiceRegistryImpl.java:243)
+	at org.hibernate.service.internal.AbstractServiceRegistryImpl.getService(AbstractServiceRegistryImpl.java:214)
+	at org.hibernate.boot.internal.InFlightMetadataCollectorImpl.<init>(InFlightMetadataCollectorImpl.java:176)
+	at org.hibernate.boot.model.process.spi.MetadataBuildingProcess.complete(MetadataBuildingProcess.java:118)
+	at org.hibernate.jpa.boot.internal.EntityManagerFactoryBuilderImpl.metadata(EntityManagerFactoryBuilderImpl.java:1224)
+	at org.hibernate.jpa.boot.internal.EntityManagerFactoryBuilderImpl.build(EntityManagerFactoryBuilderImpl.java:1255)
+	at org.springframework.orm.jpa.vendor.SpringHibernateJpaPersistenceProvider.createContainerEntityManagerFactory(SpringHibernateJpaPersistenceProvider.java:58)
+	at org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean.createNativeEntityManagerFactory(LocalContainerEntityManagerFactoryBean.java:365)
+	at org.springframework.orm.jpa.AbstractEntityManagerFactoryBean.buildNativeEntityManagerFactory(AbstractEntityManagerFactoryBean.java:391)
+	at org.springframework.orm.jpa.AbstractEntityManagerFactoryBean.afterPropertiesSet(AbstractEntityManagerFactoryBean.java:378)
+	at org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean.afterPropertiesSet(LocalContainerEntityManagerFactoryBean.java:341)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.invokeInitMethods(AbstractAutowireCapableBeanFactory.java:1853)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.initializeBean(AbstractAutowireCapableBeanFactory.java:1790)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:594)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:516)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:324)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:234)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:322)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:202)
+	at org.springframework.context.support.AbstractApplicationContext.getBean(AbstractApplicationContext.java:1109)
+	at org.springframework.context.support.AbstractApplicationContext.finishBeanFactoryInitialization(AbstractApplicationContext.java:869)
+	at org.springframework.context.support.AbstractApplicationContext.refresh(AbstractApplicationContext.java:551)
+	at org.springframework.boot.web.servlet.context.ServletWebServerApplicationContext.refresh(ServletWebServerApplicationContext.java:143)
+	at org.springframework.boot.SpringApplication.refresh(SpringApplication.java:758)
+	at org.springframework.boot.SpringApplication.refresh(SpringApplication.java:750)
+	at org.springframework.boot.SpringApplication.refreshContext(SpringApplication.java:405)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:315)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1237)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1226)
+	at com.tcs.bancs.microservices.utils.OpenBankingServicesApp.main(OpenBankingServicesApp.java:43)
+2024-07-18 18:48:19,439 WARN org.hibernate.mapping.RootClass [main] HHH000038: Composite-id class does not override equals(): com.tcs.bancs.microservices.db.model.Syscpk
+|||2024-07-18 18:48:19,439 WARN org.hibernate.mapping.RootClass [main] HHH000039: Composite-id class does not override hashCode(): com.tcs.bancs.microservices.db.model.Syscpk
+|||2024-07-18 18:48:19,739 INFO org.hibernate.engine.transaction.jta.platform.internal.JtaPlatformInitiator [main] HHH000490: Using JtaPlatform implementation: [org.hibernate.engine.transaction.jta.platform.internal.NoJtaPlatform]
+|||2024-07-18 18:48:19,751 INFO org.springframework.orm.jpa.AbstractEntityManagerFactoryBean [main] Initialized JPA EntityManagerFactory for persistence unit 'day'
+|||2024-07-18 18:48:19,783 INFO org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor [main] Autowired annotation is not supported on static fields: private static java.lang.String com.tcs.bancs.microservices.services.DBConnectionService.RES_FILE_PATH
+|||2024-07-18 18:48:20,019 WARN org.springframework.boot.autoconfigure.orm.jpa.JpaBaseConfiguration$JpaWebConfiguration [main] spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+|||2024-07-18 18:48:20,145 INFO org.springframework.boot.actuate.endpoint.web.EndpointLinksResolver [main] Exposing 2 endpoint(s) beneath base path '/actuator'
+|||2024-07-18 18:48:20,208 INFO springfox.documentation.spring.web.PropertySourcedRequestMappingHandlerMapping [main] Mapped URL path [/v2/api-docs] onto method [springfox.documentation.swagger2.web.Swagger2Controller#getDocumentation(String, HttpServletRequest)]
+|||Config.properties configuration successful 
+2024-07-18 18:48:20,318 INFO org.springframework.scheduling.concurrent.ExecutorConfigurationSupport [main] Initializing ExecutorService 'applicationTaskExecutor'
+|||2024-07-18 18:48:20,540 INFO org.apache.juli.logging.DirectJDKLog [main] Starting ProtocolHandler ["http-nio-127.0.0.1-1003"]
+|||2024-07-18 18:48:20,568 INFO org.springframework.boot.web.embedded.tomcat.TomcatWebServer [main] Tomcat started on port(s): 1003 (http) with context path ''
+|||2024-07-18 18:48:20,568 INFO springfox.documentation.spring.web.plugins.DocumentationPluginsBootstrapper [main] Context refreshed
+|||2024-07-18 18:48:20,584 INFO springfox.documentation.spring.web.plugins.DocumentationPluginsBootstrapper [main] Found 1 custom documentation plugin(s)
+|||2024-07-18 18:48:20,615 INFO springfox.documentation.spring.web.scanners.ApiListingReferenceScanner [main] Scanning for api listing references
+|||2024-07-18 18:48:20,725 INFO org.springframework.boot.StartupInfoLogger [main] Started OpenBankingServicesApp in 28.589 seconds (JVM running for 29.128)
+|||
