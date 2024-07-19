@@ -389,3 +389,22 @@ public class CustomOracleDialect extends Oracle12cDialect{
 	}
 
 }
+
+
+
+
+---------------------
+
+
+
+=======================================================================
+${AnsiColor.GREEN}** /$$$$$$$$   /$$$$$$  /$$$$$$   **
+${AnsiColor.GREEN}**|__  $$__/  /$$|___$$ \$$$$$$$  **
+${AnsiColor.GREEN}**   | $$    | $$|       \ $$\    **
+${AnsiColor.GREEN}**   | $$    | $$|        \ $$\   **
+${AnsiColor.GREEN}**   | $$    | $$|         \ $$\  **
+${AnsiColor.GREEN}**   | $$    | $$|___$$     \ $$\ **
+${AnsiColor.GREEN}**   | $$    |  $$$$$$/  $$$$$$$/ **
+${AnsiColor.GREEN}**   |__/     \______/    $$$$$/  **
+=======================================================================
+${AnsiColor.BRIGHT_BLUE}============>>>>>:: QueryMicroservices  :: Running Spring Boot ${spring-boot.version}
