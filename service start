@@ -365,3 +365,27 @@ SLF4J: Actual binding is of type [ch.qos.logback.classic.util.ContextSelectorSta
 |||2024-07-18 18:48:20,615 INFO springfox.documentation.spring.web.scanners.ApiListingReferenceScanner [main] Scanning for api listing references
 |||2024-07-18 18:48:20,725 INFO org.springframework.boot.StartupInfoLogger [main] Started OpenBankingServicesApp in 28.589 seconds (JVM running for 29.128)
 |||
+
+
+
+----------------------------------------
+
+
+
+package com.tcs.bancs.microservices.configuration;
+
+import org.hibernate.dialect.Oracle12cDialect;
+
+@SuppressWarnings("unused")
+public class CustomOracleDialect extends Oracle12cDialect{
+	
+	@Override
+    public String getQuerySequencesString() {
+        return "select SEQUENCE_OWNER, SEQUENCE_NAME, greatest(MIN_VALUE,         -9223372036854775807) MIN_VALUE,\n"+
+                "Least(MAX_VALUE, 9223372036854775807) MAX_VALUE, INCREMENT_BY,     CYCLE_FLAG, ORDER_FLAG, CACHE_SIZE,\n"+
+                "Least(greatest(LAST_NUMBER, -9223372036854775807), 9223372036854775807) LAST_NUMBER,\n"+
+                "SESSION_FLAG, KEEP_VALUE\n"+
+                "from all_sequences";
+	}
+
+}
