@@ -16,7 +16,7 @@ Response.Gender:01
 Response.QRUID:04
 Response.LINPR:24
 
-
+---------------------------------------
 public class RecordProvider {
     public static int getRecordCount() {
         return 15; // or any other logic to determine the record count
@@ -54,6 +54,144 @@ public class ResponseModifier {
         // Replace the found pattern with "353*" + recordCount
         String replacement = "353*" + recordCount;
         // Return the modified response
+
+-------------------------
+
+
+package com.tcs.bancs.microservices.services;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+public class TestResponse {
+	
+	public static void main(String args[]) {
+		 String linkoutRes = "111111111111111112222222222222222233333333333333333333333334444aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb5555555599999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999900000000888999999999999999999977777777666666669999999999999999999"; 
+	     String RES_FILE_PATH = "C:\\Users\\V1010513\\Desktop\\VisualCobAPI\\MetaData\\response_outline_13000.txt";
+	     System.out.println(getResponse1(linkoutRes, RES_FILE_PATH, "0024", "98674", "04234"));
+	}
+	
+	public static String getResponse1(String linkoutRes, String RES_FILE_PATH, String refno, String tellerno, String branchno) {
+        Map<String, String> paramLengthMap = new LinkedHashMap<>();
+        String errno = "0000";
+        String errdesc = "Ok! Success";
+        String json = "";
+        try {
+            Files.lines(Paths.get(RES_FILE_PATH)).forEach(line -> {
+                String[] lineSplit = line.split(":");
+                paramLengthMap.put(lineSplit[0], lineSplit[1]);
+            });
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("Reference Number", refno);
+        result.put("Teller Number", tellerno);
+        result.put("Branch Number", branchno);
+        result.put("Error Number", errno);
+        result.put("Error Description", errdesc);
+       Map<String, Object> cobResponse = splitAndStoreResponse(linkoutRes, paramLengthMap);
+       result.putAll(cobResponse);
+        json = convertMapToJson(result);
+
+        return json;
+    }
+
+	public static Map<String, Object> splitAndStoreResponse(String str, Map<String, String> paramLengthMap) {
+        Map<String, Object> splitResponse = new LinkedHashMap<>();
+        int curIndex = 0;
+
+        for (Map.Entry<String, String> entry : paramLengthMap.entrySet()) {
+            String key = entry.getKey();
+            String lengthAndRepetition = entry.getValue();
+            String[] lengthAndRepSplit = lengthAndRepetition.split("\\*");
+            int length = Integer.parseInt(lengthAndRepSplit[0]);
+            int repetitions = lengthAndRepSplit.length > 1 ? Integer.parseInt(lengthAndRepSplit[1]) : 1;
+
+            if (repetitions > 1) {
+                List<Map<String, Object>> repeatedItems = new ArrayList<>();
+                for (int i = 0; i < repetitions; i++) {
+                    if (curIndex + length <= str.length()) {
+                        Map<String, Object> item = new LinkedHashMap<>();
+                        processSubStructure(str.substring(curIndex, curIndex + length), item, key, paramLengthMap);
+                        repeatedItems.add(item);
+                        curIndex += length;
+                    } else {
+                        break; // In case remaining length is less than expected
+                    }
+                }
+                splitResponse.put(key, repeatedItems);
+            } else {
+                if (curIndex + length <= str.length()) {
+                    processSubStructure(str.substring(curIndex, curIndex + length), splitResponse, key, paramLengthMap);
+                    curIndex += length;
+                } else {
+                    break; // In case remaining length is less than expected
+                }
+            }
+        }
+
+        return splitResponse;
+    }
+
+    public static void processSubStructure(String subStr, Map<String, Object> map, String prefix, Map<String, String> paramLengthMap) {
+        Map<String, Integer> subParamLengthMap = new LinkedHashMap<>();
+        int curIndex = 0;
+
+        for (Map.Entry<String, String> entry : paramLengthMap.entrySet()) {
+            String key = entry.getKey();
+            if (key.startsWith(prefix + ".")) {
+                String subKey = key.substring((prefix + ".").length());
+                subParamLengthMap.put(subKey, Integer.parseInt(entry.getValue()));
+            }
+        }
+
+        for (Map.Entry<String, Integer> entry : subParamLengthMap.entrySet()) {
+            String key = entry.getKey();
+            int length = entry.getValue();
+
+            if (curIndex + length <= subStr.length()) {
+                insertValue(map, key, subStr.substring(curIndex, curIndex + length).trim());
+                curIndex += length;
+            } else {
+                break; // In case remaining length is less than expected
+            }
+        }
+    }
+
+    public static void insertValue(Map<String, Object> map, String key, String value) {
+        String[] keys = key.split("\\.");
+        Map<String, Object> currentMap = map;
+        for (int i = 0; i < keys.length - 1; i++) {
+            if (!(currentMap.get(keys[i]) instanceof Map)) {
+                currentMap.put(keys[i], new LinkedHashMap<String, Object>());
+            }
+            currentMap = (Map<String, Object>) currentMap.get(keys[i]);
+        }
+        currentMap.put(keys[keys.length - 1], value.trim());
+    }
+
+    public static String convertMapToJson(Map<String, Object> map) {
+        ObjectMapper objectMapper = new ObjectMapper();
+        try {
+            return objectMapper.writeValueAsString(map);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+            return "{}"; // return empty JSON object in case of error
+        }
+
+    }
+}
+
         return responseText.replaceFirst(pattern, replacement);
     }
 }
