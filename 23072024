@@ -15,3 +15,45 @@ Response.MOB:12
 Response.Gender:01
 Response.QRUID:04
 Response.LINPR:24
+
+
+public class RecordProvider {
+    public static int getRecordCount() {
+        return 15; // or any other logic to determine the record count
+    }
+}
+
+public class ResponseModifier {
+    public static void main(String[] args) {
+        String responseText = "Response:353*\n" +
+                "Response.CIF:16\n" +
+                "Response.FirstName:40\n" +
+                "Response.LastName:40\n" +
+                "Response.FatherName:40\n" +
+                "Response.Pincode:08\n" +
+                "Response.PAN:24\n" +
+                "Response.UID:24\n" +
+                "Response.Passport:24\n" +
+                "Response.Voter:24\n" +
+                "Response.Driv:24\n" +
+                "Response.NREGA:24\n" +
+                "Response.PPO:24\n" +
+                "Response.MOB:12\n" +
+                "Response.Gender:01\n" +
+                "Response.QRUID:04\n" +
+                "Response.LINPR:24";
+
+        int recordCount = RecordProvider.getRecordCount();
+        String modifiedResponse = modifyResponse(responseText, recordCount);
+        System.out.println(modifiedResponse);
+    }
+
+    private static String modifyResponse(String responseText, int recordCount) {
+        // Define the pattern to find "353*"
+        String pattern = "353\\*";
+        // Replace the found pattern with "353*" + recordCount
+        String replacement = "353*" + recordCount;
+        // Return the modified response
+        return responseText.replaceFirst(pattern, replacement);
+    }
+}
