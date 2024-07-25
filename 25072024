@@ -19,3 +19,126 @@ java.lang.ArrayIndexOutOfBoundsException: arraycopy: last source index 2116 out 
 	at com.tcs.bancs.microservices.java.teller.Branch_Validation.validateBranch(Branch_Validation.java:40)
 	at com.tcs.bancs.microservices.java.teller.Branch_Validation.main(Branch_Validation.java:21)
 [ ,     ]
+
+
+
+000100*            SBI Core Banking Project, CBD HYDERABAD             *
+000200*                     Hyderbad , India.                          *
+000300******************************************************************
+000400*                                                                *
+000500*  PROGRAM - JVMTELLER.COB                                       *
+000600*                                                                *
+000700******************************************************************
+000800*                 P R O G R A M    H I S T O R Y                 *
+000900*                                                                *
+001000* PROGRAMMER : DATE       : SPR NO :COMMENTS                     *
+001100*----------------------------------------------------------------*
+001200* ROHITH MALAPATI: 18/07/2024 : ******** : INTRODUCING JVM LAYER *
+001300*                                          TO HAVE BRANCH        *
+001400*                                          VALIDATIONS FOR THE   * 
+001500*                                          MICROSERVICES         *
+001600*----------------------------------------------------------------*
+001700 IDENTIFICATION DIVISION.
+001800 PROGRAM-ID. JVMBRANCH.
+001900 AUTHOR. TATA CONSULTANCY SERVICES.
+002000 DATE-WRITTEN.  
+002100 ENVIRONMENT DIVISION.
+002200 CONFIGURATION SECTION.
+002300 SOURCE-COMPUTER. VAX.
+002400 OBJECT-COMPUTER. VAX.
+002500 SPECIAL-NAMES.
+002600 CONSOLE IS CONS.
+002700 INPUT-OUTPUT SECTION.
+002800 FILE-CONTROL.
+002900 DATA DIVISION.
+003000 FILE SECTION.
+003100 WORKING-STORAGE SECTION.
+003200
+003300 01 WA-SERVICES-FLAG               PIC X(01).
+003400 01 WA-FIRST-FLAG                  PIC X(01) VALUE "N".
+003500 01  WA-BRHM-KEY.
+003600     03 WA-BRHM-INST-NO                  PIC 9(03).
+003700     03 WA-BRHM-BR-NO                    PIC 9(16).
+003800 01  WA-BRHMMAST-RECORD-AREA.
+003900     COPY BRHMMAST    IN LIBRYMIS.
+004000     COPY DBIOCALL    IN LIBRYMIS.
+004100     
+004200 LINKAGE SECTION.
+004300     
+004400 01 LS-BRANCH-NO                    PIC X(16).
+004500 01 LS-BRANCH-ALLOW-FLAG            PIC X(01).
+004600 01 LS-BRANCH-ERROR-NO              PIC X(04).
+004700 
+004800 PROCEDURE DIVISION USING LS-BRANCH-NO
+004900                          LS-BRANCH-ALLOW-FLAG
+005000                          LS-BRANCH-ERROR-NO.
+005100 
+005200 A000-MAIN-PARA.
+005300    
+                 exec sql
+004100    connect using "Driver=oracle.jdbc.driver.OracleDriver;URL=jdbc:oracle:thin:microapi/MICROAPI@10.176.15.54:6087:test_iardev"
+004200    end-exec
+          
+005400     PERFORM A001-INIT-PARA         THRU A001-EXIT
+005500     PERFORM A002-READ-BRHM         THRU A002-EXIT.
+005600     
+005700 A000-EXIT.
+005800 EXIT.
+005900 EXIT PROGRAM.
+006000 
+006100 
+006200 A001-INIT-PARA.
+006300
+006400     INITIALIZE WA-BRHM-KEY
+006500                WA-BRHMMAST-RECORD-AREA
+006600                LS-BRANCH-ALLOW-FLAG
+006700                LS-BRANCH-ERROR-NO.
+006800     CALL "UTSERV"  USING WA-SERVICES-FLAG.
+006900     IF WA-SERVICES-FLAG = 'Y' AND WA-FIRST-FLAG = "N"
+007000        CALL "DBIO" USING DBIO-CALL-PARAM
+007100                          DBIO-CALL-SYS-AREA
+007200                          DBIO-CALL-KEY-AREA
+007300                          DBIO-CALL-STATUS
+007400        MOVE "Y" TO WA-FIRST-FLAG
+007500     END-IF.
+007600     
+007700 A001-EXIT.
+007800 EXIT.
+007900 
+008000 A002-READ-BRHM.
+008100     display "thr branch is " LS-BRANCH-NO
+008200     MOVE LS-BRANCH-NO            TO WA-BRHM-BR-NO.
+008300     MOVE "003"                   TO WA-BRHM-INST-NO.
+008400     MOVE "71"                    TO DBIO-CALL-FUNC.
+008500     MOVE SPACES                  TO DBIO-CALL-STATUS.
+008600     MOVE "BRHM"                  TO DBIO-CALL-SYS-AREA.
+008700     MOVE WA-BRHM-KEY             TO DBIO-CALL-KEY-AREA.
+008800     PERFORM A003-CALL-BRHM       THRU A003-EXIT
+008900     EVALUATE DBIO-CALL-STATUS
+009000     WHEN "MRNF"
+009100         MOVE "N"                 TO LS-BRANCH-ALLOW-FLAG
+009200         MOVE 188                 TO LS-BRANCH-ERROR-NO
+009300         DISPLAY "A002(JVMBRANCH) : BRANCH NOT FOUND IN BRHM : "
+009400                  WA-BRHM-BR-NO
+009500     WHEN "****"
+009700         MOVE "Y"                 TO LS-BRANCH-ALLOW-FLAG
+009800         MOVE ZEROES              TO LS-BRANCH-ERROR-NO
+009900     WHEN OTHER
+010000         MOVE "N"                 TO LS-BRANCH-ALLOW-FLAG
+010100         MOVE 155                 TO LS-BRANCH-ERROR-NO
+010200         DISPLAY "A002(JVMBRANCH) : ERROR IN READING BRHM TABLE : "
+010300                  WA-BRHM-BR-NO
+010400     END-EVALUATE.
+010500     
+010600 A002-EXIT.
+010700 EXIT.
+010800 
+010900 A003-CALL-BRHM.
+011100        CALL "DBIO" USING DBIO-CALL-PARAM
+011200                          DBIO-CALL-SYS-AREA
+011300                          DBIO-CALL-KEY-AREA
+011400                          DBIO-CALL-STATUS
+011500                          WA-BRHMMAST-RECORD-AREA.
+011700     
+011800 A003-EXIT.
+011900 EXIT.
