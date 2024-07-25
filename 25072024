@@ -1,0 +1,21 @@
+17:35:14.       | DBIO:(A100) FILE-INDEX, FILE-NUM, NO-DATA-SETS: 0433 0432 0430                                                          
+17:35:14.       | DBIO:(A100) FIRST ENTRY = AACH                                                                                          
+thr branch is 0000000999999999
+java.lang.ArrayIndexOutOfBoundsException: arraycopy: last source index 2116 out of bounds for byte[2088]
+	at java.base/java.lang.System.arraycopy(Native Method)
+	at com.tcs.bancs.microservices.jvm.branch.DBIODIST.__MF_SLICE_000000001(DBIODIST.COB:3986)
+	at com.tcs.bancs.microservices.jvm.branch.DBIODIST._MF_PERFORM_4_1(DBIODIST.COB:65535)
+	at com.tcs.bancs.microservices.jvm.branch.DBIODIST.DBIODIST(DBIODIST.COB:65535)
+	at com.tcs.bancs.microservices.jvm.branch.DBIO.__MF_SLICE_000000142(DBIO.COB:10033)
+	at com.tcs.bancs.microservices.jvm.branch.DBIO._MF_PERFORM_4_45(DBIO.COB:65535)
+	at com.tcs.bancs.microservices.jvm.branch.DBIO.__MF_SLICE_000000006(DBIO.COB:7385)
+	at com.tcs.bancs.microservices.jvm.branch.DBIO._MF_PERFORM_4_45(DBIO.COB:65535)
+	at com.tcs.bancs.microservices.jvm.branch.DBIO.DBIO(DBIO.COB:65535)
+	at com.tcs.bancs.microservices.jvm.branch.JVMBRANCH._MF_PERFORM_4_3(JVMBRANCH.COB:470)
+	at com.tcs.bancs.microservices.jvm.branch.JVMBRANCH._MF_PERFORM_4_3(JVMBRANCH.COB:449)
+	at com.tcs.bancs.microservices.jvm.branch.JVMBRANCH._MF_PERFORM_4_3(JVMBRANCH.COB:416)
+	at com.tcs.bancs.microservices.jvm.branch.JVMBRANCH.JVMBRANCH(JVMBRANCH.COB:65535)
+	at com.tcs.bancs.microservices.jvm.branch.JVMBRANCH.JVMBRANCH(JVMBRANCH.COB:65535)
+	at com.tcs.bancs.microservices.java.teller.Branch_Validation.validateBranch(Branch_Validation.java:40)
+	at com.tcs.bancs.microservices.java.teller.Branch_Validation.main(Branch_Validation.java:21)
+[ ,     ]
