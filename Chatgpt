@@ -1,0 +1,21 @@
+git clone https://github.com/EleutherAI/gpt-neo
+cd gpt-neo
+
+python -m venv venv
+source venv/bin/activate  # On Windows use `venv\Scripts\activate`
+
+pip install -r requirements.txt
+
+from transformers import GPTNeoForCausalLM, GPT2Tokenizer
+
+model_name = "EleutherAI/gpt-neo-2.7B"  # or any other model variant
+model = GPTNeoForCausalLM.from_pretrained(model_name)
+tokenizer = GPT2Tokenizer.from_pretrained(model_name)
+
+import torch
+
+prompt = "Your prompt here"
+inputs = tokenizer(prompt, return_tensors="pt")
+outputs = model.generate(**inputs)
+text = tokenizer.decode(outputs[0], skip_special_tokens=True)
+print(text)
