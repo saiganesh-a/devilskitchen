@@ -55,3 +55,49 @@ sendRequests(100);
 
 
 http://10.243.6.71:1003/CSRC
+
+
+// Function to generate a unique reference number
+function generateReferenceNumber() {
+    const timestamp = Date.now().toString();
+    const randomNum = Math.floor(Math.random() * 100000).toString();
+    return timestamp + randomNum;
+}
+
+// Function to send 100 requests
+function sendRequests(count) {
+    for (let i = 0; i < count; i++) {
+        const referenceNumber = generateReferenceNumber();
+
+        pm.sendRequest({
+            url: 'http://10.243.6.71:1003/CSRC',
+            method: 'POST',
+            header: {
+                'Content-Type': 'application/json'
+            },
+            body: {
+                mode: 'raw',
+                raw: JSON.stringify({
+                    "Reference Number": referenceNumber,
+                    "Teller Number": "164",
+                    "Branch Number": "04234",
+                    "option": "01",
+                    "first_name": "rohith",
+                    "last_name": "mala",
+                    "date_of_birth": "06052001",
+                    "pf_number": "",
+                    "mobile_number": ""
+                })
+            }
+        }, function (err, res) {
+            if (err) {
+                console.log(`Error on request ${i}: `, err);
+            } else {
+                console.log(`Response for request ${i}: `, res);
+            }
+        });
+    }
+}
+
+// Send 100 requests
+sendRequests(100);
