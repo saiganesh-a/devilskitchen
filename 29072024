@@ -1,0 +1,40 @@
+// Function to generate a unique reference number
+function generateReferenceNumber() {
+    const timestamp = Date.now().toString();
+    const randomNum = Math.floor(Math.random() * 100000).toString();
+    return timestamp + randomNum;
+}
+
+// Function to send 100 requests
+function sendRequests(count) {
+    for (let i = 0; i < count; i++) {
+        const referenceNumber = generateReferenceNumber();
+
+        pm.sendRequest({
+            url: pm.variables.get('your_request_url'),  // Replace with your request URL
+            method: 'POST',
+            header: {
+                'Content-Type': 'application/json'
+            },
+            body: {
+                mode: 'raw',
+                raw: JSON.stringify({
+                    transaction: {
+                        referenceNumber: referenceNumber,
+                        amount: 100,
+                        currency: 'USD'
+                    }
+                })
+            }
+        }, function (err, res) {
+            if (err) {
+                console.log(`Error on request ${i}: `, err);
+            } else {
+                console.log(`Response for request ${i}: `, res);
+            }
+        });
+    }
+}
+
+// Send 100 requests
+sendRequests(100);
