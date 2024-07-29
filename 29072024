@@ -38,3 +38,20 @@ function sendRequests(count) {
 
 // Send 100 requests
 sendRequests(100);
+
+
+
+{
+"Reference Number" : "7744441",
+"Teller Number" : "164",
+"Branch Number" : "04234",
+"option" : "01",
+"first_name" : "rohith",
+"last_name" : "mala",
+"date_of_birth": "06052001",
+"pf_number" : "",
+"mobile_number" : ""
+}
+
+
+http://10.243.6.71:1003/CSRC
