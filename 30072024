@@ -551,3 +551,156 @@ public class MainApp {
         }
     }
 }
+
+
+
+
+-----------
+import java.util.Properties;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import org.springframework.core.env.Environment;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+@Component
+public class DatabaseSwitcher {
+    // Properties object to hold database connection details
+    private static Properties dbProperties = new Properties();
+    // String to hold the current database URL
+    private static String currentDbUrl;
+    // ScheduledExecutorService to handle periodic tasks
+    private static ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+
+    @Autowired
+    public DatabaseSwitcher(Environment env) {
+        // Load properties from the application.properties file
+        dbProperties.setProperty("pr.url", env.getProperty("pr.url"));
+        dbProperties.setProperty("dr.url", env.getProperty("dr.url"));
+        dbProperties.setProperty("nr.url", env.getProperty("nr.url"));
+        dbProperties.setProperty("db.user", env.getProperty("db.user"));
+        dbProperties.setProperty("db.password", env.getProperty("db.password"));
+        // Initialize with the PR database URL
+        currentDbUrl = dbProperties.getProperty("pr.url");
+    }
+
+    // Method to start the scheduler for switching databases based on time intervals
+    public void start() {
+        // Schedule the switch to PR database at 6 AM
+        scheduleSwitch("pr.url", 6, TimeUnit.HOURS);
+        // Schedule the switch to DR database at 10 PM (16 hours after 6 AM)
+        scheduleSwitch("dr.url", 16, TimeUnit.HOURS);
+        // Schedule the switch to NR database at 3 AM (21 hours after 6 AM)
+        scheduleSwitch("nr.url", 21, TimeUnit.HOURS);
+    }
+
+    // Method to schedule the database switch at a specified time
+    private static void scheduleSwitch(String dbKey, long delay, TimeUnit unit) {
+        scheduler.scheduleAtFixedRate(() -> {
+            // Switch the current database URL to the one specified by dbKey
+            currentDbUrl = dbProperties.getProperty(dbKey);
+            System.out.println("Switched to " + dbKey + " database");
+        }, delay, 24, unit); // Repeat every 24 hours
+    }
+
+    // Method to get the current database URL
+    public static String getCurrentDbUrl() {
+        return currentDbUrl;
+    }
+
+    // Method to get the database properties
+    public static Properties getDbProperties() {
+        return dbProperties;
+    }
+}
+
+
+-----------
+
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+import java.sql.Connection;
+import java.sql.SQLException;
+
+@SpringBootApplication
+public class MainApp implements CommandLineRunner {
+    @Autowired
+    private DatabaseSwitcher databaseSwitcher;
+
+    public static void main(String[] args) {
+        SpringApplication.run(MainApp.class, args);
+    }
+
+    @Override
+    public void run(String... args) throws Exception {
+        // Start the database switcher
+        databaseSwitcher.start();
+
+        // Example usage of database connection
+        try (Connection connection = DatabaseConnectionManager.getConnection()) {
+            // Perform database operations
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+}
+
+
+---------
+
+import java.util.Properties;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import org.springframework.core.env.Environment;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+@Component // Indicates that this class is a Spring component
+public class DatabaseSwitcher {
+    private static Properties dbProperties = new Properties(); // Holds database connection details
+    private static String currentDbUrl; // Stores the current database URL
+    private static ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1); // Schedules periodic tasks
+
+    @Autowired // Injects Environment object to read properties
+    public DatabaseSwitcher(Environment env) {
+        // Load properties from the application.properties file
+        dbProperties.setProperty("pr.url", env.getProperty("pr.url"));
+        dbProperties.setProperty("dr.url", env.getProperty("dr.url"));
+        dbProperties.setProperty("nr.url", env.getProperty("nr.url"));
+        dbProperties.setProperty("db.user", env.getProperty("db.user"));
+        dbProperties.setProperty("db.password", env.getProperty("db.password"));
+        // Initialize with the PR database URL
+        currentDbUrl = dbProperties.getProperty("pr.url");
+    }
+
+    public void start() {
+        // Schedule the switch to PR database at 6 AM
+        scheduleSwitch("pr.url", 6, TimeUnit.HOURS);
+        // Schedule the switch to DR database at 10 PM (16 hours after 6 AM)
+        scheduleSwitch("dr.url", 16, TimeUnit.HOURS);
+        // Schedule the switch to NR database at 3 AM (21 hours after 6 AM)
+        scheduleSwitch("nr.url", 21, TimeUnit.HOURS);
+    }
+
+    private static void scheduleSwitch(String dbKey, long delay, TimeUnit unit) {
+        scheduler.scheduleAtFixedRate(() -> {
+            // Switch the current database URL to the one specified by dbKey
+            currentDbUrl = dbProperties.getProperty(dbKey);
+            System.out.println("Switched to " + dbKey + " database");
+        }, delay, 24, unit); // Repeat every 24 hours
+    }
+
+    public static String getCurrentDbUrl() {
+        return currentDbUrl;
+    }
+
+    public static Properties getDbProperties() {
+        return dbProperties;
+    }
+}
