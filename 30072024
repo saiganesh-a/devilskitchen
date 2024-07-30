@@ -769,3 +769,17 @@ public class DatabaseConnectionManager {
         }
     }
 }
+
+
+----------
+
+
+16:04:03.554 [main] ERROR com.zaxxer.hikari.HikariConfig - HikariPool-1 - dataSource or dataSourceClassName or jdbcUrl is required.
+Exception in thread "main" java.lang.ExceptionInInitializerError
+	at com.tcs.bancs.microservices.services.Main.main(Main.java:11)
+Caused by: java.lang.IllegalArgumentException: dataSource or dataSourceClassName or jdbcUrl is required.
+	at com.zaxxer.hikari.HikariConfig.validate(HikariConfig.java:1004)
+	at com.zaxxer.hikari.HikariDataSource.<init>(HikariDataSource.java:77)
+	at com.tcs.bancs.microservices.services.DatabaseConnectionManager.configureDataSource(DatabaseConnectionManager.java:29)
+	at com.tcs.bancs.microservices.services.DatabaseConnectionManager.<clinit>(DatabaseConnectionManager.java:19)
+	... 1 more
