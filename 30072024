@@ -219,3 +219,214 @@ class DBConnectionController {
 		return resFlag;
 	}
 }
+
+
+---------------------------------------------------------------
+
+package com.tcs.bancs.microservices.services;
+
+import javax.servlet.http.HttpServletRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.tcs.bancs.microservices.*;
+import com.tcs.bancs.microservices.IOMISC.*;
+import com.tcs.bancs.microservices.aggregator.AggregationServiceImpl;
+import com.tcs.bancs.microservices.config.CacheConfig;
+import com.tcs.bancs.microservices.configuration.PropertyLoader;
+
+import com.tcs.bancs.microservices.util.DBProcess;
+import com.tcs.bancs.microservices.util.DaoUtilities;
+import com.tcs.bancs.microservices.util.FrameworkConstants;
+import io.swagger.annotations.Api;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
+
+import java.sql.*;
+import java.util.Properties;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+
+@Component
+@Service
+public class DBConnectionService {
+
+    @Autowired
+    AggregationServiceImpl aggregationServiceImpl;
+
+    @Autowired
+    DBProcess dbprocess;
+
+    @Autowired
+    DaoUtilities daoUtil;
+
+    @Autowired
+    HttpServletRequest HttpServletRequest;
+
+    Logger logger = LoggerFactory.getLogger(DBConnectionService.class);
+
+    String sourceAuth = CacheConfig.frameworkConfigProperties.getProperty(FrameworkConstants.LOOKUP_FILES_PATH);
+    String IP_Configuration_Path = CacheConfig.frameworkConfigProperties.getProperty(FrameworkConstants.LOOKUP_FILES_PATH);
+
+    @Value("${day.datasource.jdbc-url}")
+    private String dayJdbcUrl;
+
+    @Value("${day.datasource.username}")
+    private String dayUsername;
+
+    @Value("${day.datasource.password}")
+    private String dayPassword;
+
+    @Value("${night.datasource.jdbc-url}")
+    private String nightJdbcUrl;
+
+    @Value("${night.datasource.username}")
+    private String nightUsername;
+
+    @Value("${night.datasource.password}")
+    private String nightPassword;
+
+    @Value("${ref.datasource.jdbc-url}")
+    private String refJdbcUrl;
+
+    @Value("${ref.datasource.username}")
+    private String refUsername;
+
+    @Value("${ref.datasource.password}")
+    private String refPassword;
+
+    @Value("${response.outline.location}")
+    private static String RES_FILE_PATH;
+
+    Properties ipprop = PropertyLoader.readPropertyFile(new String(IP_Configuration_Path + "/IpConfigMaster.properties"));
+
+    public char logDBErrorFlag = 'N';
+    public char cbsDBErrorFlag = 'N';
+
+    IOMISC obj2 = new IOMISC();
+    WaCallCode input21 = new WaCallCode();
+    WaLinkConnectionString input22 = new WaLinkConnectionString();
+    WaErrorCode input23 = new WaErrorCode();
+
+    private HikariDataSource dataSource;
+    private ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+
+    // Initialize the scheduler for time-based switching
+    public DBConnectionService() {
+        scheduleDatabaseSwitching();
+    }
+
+    private void scheduleDatabaseSwitching() {
+        scheduler.scheduleAtFixedRate(this::switchToDayDb, getInitialDelay(6), 24 * 60 * 60, TimeUnit.SECONDS);  // Switch to day DB at 6 AM
+        scheduler.scheduleAtFixedRate(this::switchToNightDb, getInitialDelay(22), 24 * 60 * 60, TimeUnit.SECONDS);  // Switch to night DB at 10 PM
+        scheduler.scheduleAtFixedRate(this::switchToRefDb, getInitialDelay(3), 24 * 60 * 60, TimeUnit.SECONDS);  // Switch to ref DB at 3 AM
+    }
+
+    private long getInitialDelay(int targetHour) {
+        long currentTime = System.currentTimeMillis();
+        long targetTime = currentTime + TimeUnit.HOURS.toMillis(targetHour) - (currentTime % TimeUnit.DAYS.toMillis(1));
+        return (targetTime - currentTime) % TimeUnit.DAYS.toMillis(1);
+    }
+
+    private void switchToDayDb() {
+        configureDataSource(dayJdbcUrl, dayUsername, dayPassword);
+        System.out.println("Switched to day DB");
+    }
+
+    private void switchToNightDb() {
+        configureDataSource(nightJdbcUrl, nightUsername, nightPassword);
+        System.out.println("Switched to night DB");
+    }
+
+    private void switchToRefDb() {
+        configureDataSource(refJdbcUrl, refUsername, refPassword);
+        System.out.println("Switched to ref DB");
+    }
+
+    private void configureDataSource(String jdbcUrl, String username, String password) {
+        if (dataSource != null) {
+            dataSource.close();
+        }
+        HikariConfig config = new HikariConfig();
+        config.setJdbcUrl(jdbcUrl);
+        config.setUsername(username);
+        config.setPassword(password);
+        config.setMaximumPoolSize(10);  // Adjust based on your needs
+        dataSource = new HikariDataSource(config);
+    }
+
+    @Transactional
+    @CacheEvict
+    public char establishTwoconnections(String callCode) {
+        char resLOG = getLogDBConnection();
+        char resCBS = getCBSDBConnection(callCode);
+        return (resLOG == 'Y' && resCBS == 'Y') ? 'Y' : 'N';
+    }
+
+    @Cacheable
+    public char getLogDBConnection() {
+        try (Connection logDBCon = getConnection()) {
+            if (logDBCon != null && !logDBCon.isClosed()) {
+                System.out.println("LOG DB is connected!");
+                logDBErrorFlag = 'Y';
+            } else {
+                System.out.println("LOG DB is not connected");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return logDBErrorFlag;
+    }
+
+    @Cacheable
+    public char getCBSDBConnection(String callCode) {
+        String connectionString = dataSource.getJdbcUrl().split("@")[0] + dataSource.getUsername() + "/" + dataSource.getPassword() + "@" + dataSource.getJdbcUrl().split("@")[1];
+
+        input21.setWaCallCode(callCode);
+        input22.setWaLinkConnectionString(connectionString);
+        input23.setWaErrorCode("XXXX");
+
+        try {
+            obj2.IOMISC(input21, input22, input23);
+            cbsDBErrorFlag = 'Y';
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return cbsDBErrorFlag;
+    }
+
+    public Connection getConnection() throws SQLException {
+        return dataSource.getConnection();
+    }
+}
+
+@RestController
+@RequestMapping("/")
+@Api(value = "Aggregation_API", description = " ", tags = { "Aggregation API" })
+class DBConnectionController {
+
+    @Autowired
+    private DBConnectionService dbconnectionservice;
+
+    @PostMapping(value = { "/DBConnection" }, produces = { "application/json" })
+    @CrossOrigin()
+    @JsonIgnore
+    public char establishConnection(String callCode) {
+        return dbconnectionservice.establishTwoconnections(callCode);
+    }
+}
