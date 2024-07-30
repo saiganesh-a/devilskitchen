@@ -430,3 +430,124 @@ class DBConnectionController {
         return dbconnectionservice.establishTwoconnections(callCode);
     }
 }
+
+
+
+--------------
+
+Properties 
+
+# Database connection URLs for PR, DR, and NR databases
+pr.url=jdbc:oracle:thin:@pr-db-host:1521:mydb
+dr.url=jdbc:oracle:thin:@dr-db-host:1521:mydb
+nr.url=jdbc:oracle:thin:@nr-db-host:1521:mydb
+
+# Database credentials
+db.user=myuser
+db.password=mypassword
+
+,---------
+
+import java.util.Properties;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+
+public class DatabaseSwitcher {
+    private static Properties dbProperties = new Properties();
+    private static String currentDbUrl;
+    private static ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+
+    static {
+        try {
+            dbProperties.load(DatabaseSwitcher.class.getClassLoader().getResourceAsStream("db.properties"));
+            currentDbUrl = dbProperties.getProperty("pr.url");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void start() {
+        scheduleSwitch("pr.url", 6, TimeUnit.HOURS);
+        scheduleSwitch("dr.url", 16, TimeUnit.HOURS);  // 10 PM - 6 AM is 16 hours
+        scheduleSwitch("nr.url", 21, TimeUnit.HOURS);  // 3 AM - 6 AM is 21 hours
+    }
+
+    private static void scheduleSwitch(String dbKey, long delay, TimeUnit unit) {
+        scheduler.scheduleAtFixedRate(() -> {
+            currentDbUrl = dbProperties.getProperty(dbKey);
+            System.out.println("Switched to " + dbKey + " database");
+        }, delay, 24, unit); // Repeat every 24 hours
+    }
+
+    public static String getCurrentDbUrl() {
+        return currentDbUrl;
+    }
+}
+
+-----------
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
+
+import javax.sql.DataSource;
+import java.sql.Connection;
+import java.sql.SQLException;
+
+public class DatabaseConnectionManager {
+    private static HikariDataSource dataSource;
+    private static final int MAX_RETRIES = 3;
+
+    static {
+        configureDataSource(DatabaseSwitcher.getCurrentDbUrl());
+    }
+
+    private static void configureDataSource(String dbUrl) {
+        HikariConfig config = new HikariConfig();
+        config.setJdbcUrl(dbUrl);
+        config.setUsername(DatabaseSwitcher.dbProperties.getProperty("db.user"));
+        config.setPassword(DatabaseSwitcher.dbProperties.getProperty("db.password"));
+        config.setMaximumPoolSize(10);  // Adjust based on your needs
+        dataSource = new HikariDataSource(config);
+    }
+
+    public static Connection getConnection() throws SQLException {
+        int retries = 0;
+        while (retries < MAX_RETRIES) {
+            try {
+                return dataSource.getConnection();
+            } catch (SQLException e) {
+                retries++;
+                if (retries >= MAX_RETRIES) {
+                    switchToNextDb();
+                    configureDataSource(DatabaseSwitcher.getCurrentDbUrl());
+                }
+            }
+        }
+        throw new SQLException("Unable to connect to any database");
+    }
+
+    private static void switchToNextDb() {
+        String currentUrl = DatabaseSwitcher.getCurrentDbUrl();
+        if (currentUrl.equals(DatabaseSwitcher.dbProperties.getProperty("pr.url"))) {
+            DatabaseSwitcher.scheduleSwitch("dr.url", 0, TimeUnit.SECONDS);
+        } else if (currentUrl.equals(DatabaseSwitcher.dbProperties.getProperty("dr.url"))) {
+            DatabaseSwitcher.scheduleSwitch("nr.url", 0, TimeUnit.SECONDS);
+        } else {
+            DatabaseSwitcher.scheduleSwitch("pr.url", 0, TimeUnit.SECONDS);
+        }
+    }
+}
+----------
+public class MainApp {
+    public static void main(String[] args) {
+        // Start the database switcher
+        DatabaseSwitcher.start();
+
+        // Example usage of database connection
+        try (Connection connection = DatabaseConnectionManager.getConnection()) {
+            // Perform database operations
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+}
