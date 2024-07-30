@@ -704,3 +704,68 @@ public class DatabaseSwitcher {
         return dbProperties;
     }
 }
+
+
+-------------------
+
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
+import org.springframework.stereotype.Component;
+
+import javax.sql.DataSource;
+import java.sql.Connection;
+import java.sql.SQLException;
+
+@Component
+public class DatabaseConnectionManager {
+    // HikariDataSource instance for connection pooling
+    private static HikariDataSource dataSource;
+    // Maximum number of retry attempts
+    private static final int MAX_RETRIES = 3;
+
+    static {
+        configureDataSource(DatabaseSwitcher.getCurrentDbUrl());
+    }
+
+    // Method to configure the data source based on the current database URL
+    private static void configureDataSource(String dbUrl) {
+        HikariConfig config = new HikariConfig();
+        config.setJdbcUrl(dbUrl);
+        config.setUsername(DatabaseSwitcher.getDbProperties().getProperty("db.user"));
+        config.setPassword(DatabaseSwitcher.getDbProperties().getProperty("db.password"));
+        config.setMaximumPoolSize(10);  // Adjust based on your needs
+        dataSource = new HikariDataSource(config);
+    }
+
+    // Method to get a database connection with retry and failover logic
+    public static Connection getConnection() throws SQLException {
+        int retries = 0;
+        while (retries < MAX_RETRIES) {
+            try {
+                // Try to get a connection from the data source
+                return dataSource.getConnection();
+            } catch (SQLException e) {
+                retries++;
+                if (retries >= MAX_RETRIES) {
+                    // If maximum retries are reached, switch to the next database
+                    switchToNextDb();
+                    // Reconfigure the data source with the new database URL
+                    configureDataSource(DatabaseSwitcher.getCurrentDbUrl());
+                }
+            }
+        }
+        throw new SQLException("Unable to connect to any database");
+    }
+
+    // Method to switch to the next available database in the order PR -> DR -> NR -> PR
+    private static void switchToNextDb() {
+        String currentUrl = DatabaseSwitcher.getCurrentDbUrl();
+        if (currentUrl.equals(DatabaseSwitcher.getDbProperties().getProperty("pr.url"))) {
+            DatabaseSwitcher.scheduleSwitch("dr.url", 0, TimeUnit.SECONDS);
+        } else if (currentUrl.equals(DatabaseSwitcher.getDbProperties().getProperty("dr.url"))) {
+            DatabaseSwitcher.scheduleSwitch("nr.url", 0, TimeUnit.SECONDS);
+        } else {
+            DatabaseSwitcher.scheduleSwitch("pr.url", 0, TimeUnit.SECONDS);
+        }
+    }
+}
