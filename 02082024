@@ -106,3 +106,62 @@ The architecture of a core banking system merged with microservices focuses on l
    - Requires efficient and reliable communication mechanisms.
 
 By merging core banking systems with microservices architecture, banks can achieve a more agile, scalable, and resilient system that meets modern banking needs while maintaining high standards of security and compliance.
+
+
+
+-----------
+
+Here is the content based on the provided flow chart:
+
+---
+
+## Transaction Flow Overview
+
+The provided diagram illustrates the flow of transactions within the CBS (Core Banking System) architecture. It showcases the path a transaction takes from the input stage in JSON format through various layers until the final output, also in JSON format.
+
+### Flow Breakdown
+
+1. **Input in JSON Format**: 
+   - The transaction data is initially provided in JSON format, making it easy to parse and manipulate.
+
+2. **Java Layer**:
+   - The input JSON is processed by the Java layer, where initial validations and transformations are performed as needed.
+
+3. **JVM Layer**:
+   - After the Java layer, the data passes through the JVM layer, which handles the execution of Java bytecode and manages resources.
+
+4. **CBS**:
+   - The CBS layer is where core banking operations are carried out. This could involve various business logic, transaction processing, and integration with other banking services.
+
+5. **Database**:
+   - The processed transaction data is then stored in the database, ensuring that all transactions are logged and can be retrieved or analyzed later.
+
+6. **CBS**:
+   - Post database operations, the transaction may undergo additional processing or validation within the CBS layer to ensure completeness and accuracy.
+
+7. **JVM Layer**:
+   - The data is once again handled by the JVM layer for any necessary final executions or resource management.
+
+8. **Java Layer**:
+   - Finally, the Java layer formats the processed transaction data into the output JSON format.
+
+9. **Output in JSON Format**:
+   - The completed transaction data is outputted in JSON format, making it easy to consume by other systems or services.
+
+### Benefits of the Transaction Flow
+
+- **Tracking and Debugging**:
+  - The architecture allows for detailed tracking of transaction flow, making it easier to identify and debug issues at any stage of the process.
+  
+- **Code Flow Identification**:
+  - By printing the names of the parameters involved in each code segment, developers can easily identify the structure and flow of the code. This is particularly useful in complex systems with multiple components and end-of-day (EOD) processing.
+
+- **Real-Time Transaction Monitoring**:
+  - The structured flow helps in real-time monitoring of transactions, ensuring that any issues can be promptly identified and addressed.
+
+- **Enhanced Transparency**:
+  - With clear delineation of each layer and the operations performed, stakeholders can have a better understanding of the system's inner workings and the journey of each transaction.
+
+---
+
+This structured explanation of the flow chart will aid in understanding the CBS transaction processing and highlight the key stages and benefits of the system.
