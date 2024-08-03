@@ -555,3 +555,136 @@ void print_smcb_address(int i)
         fprintf(stderr, "smcb_addr[%d].sem_name = [%d]\n", i, smcb_addr[i].sem_name);
     }
 }
+----------------
+
+WORKING-STORAGE SECTION.
+       01  SMCB-ADDR.
+           05  SYSTEM-ID           PIC X.
+           05  ADDRESS             POINTER.
+           05  SHM-NAME            PIC S9(9) COMP.
+           05  SEM-NAME            PIC S9(9) COMP.
+
+       01  SHARE-DATA.
+           05  APPL-NAME           PIC X(2).
+           05  ADDRESS             POINTER.
+           05  SEM-NAME            PIC S9(9) COMP.
+           05  SHM-NAME            PIC S9(9) COMP.
+
+       01  SMCB.
+           05  SYS-INFO.
+               10  VERSION          PIC X(10).
+               10  NUM-PROCS        PIC S9(9) COMP.
+           05  APPL-INFO OCCURS 4 TIMES.
+               10  AREA-COUNT      PIC S9(9) COMP.
+               10  AREA-PTR        PIC S9(9) COMP.
+           05  AREA-INFO OCCURS 10 TIMES.
+               10  AREA-ID         PIC S9(9) COMP.
+               10  NEXT-AREA       PIC S9(9) COMP.
+
+
+
+-----------
+
+IDENTIFICATION DIVISION.
+       PROGRAM-ID. SHAREMEM.
+
+       ENVIRONMENT DIVISION.
+       DATA DIVISION.
+
+       WORKING-STORAGE SECTION.
+       01  FUNC                      PIC X.
+       01  SHARE-DATA-REC            PIC X(100). *> Define according to actual structure
+       01  STATUS                    PIC X.
+       01  DEBUG                     PIC 9 VALUE 0.
+       01  ENV-VAR                   PIC X(100).
+       01  SMCB-ADDR-ARRAY OCCURS 4 TIMES.
+           05  SMCB-ADDR             PIC X(100).
+       01  SMCB-RECORD               PIC X(100).
+
+       PROCEDURE DIVISION USING FUNC SHARE-DATA-REC STATUS.
+
+       MAIN-LOGIC.
+           CALL 'GETENV' USING 'BANCS_TRACE_STATE'
+                              RETURNING ENV-VAR.
+           IF ENV-VAR = 'ON'
+               MOVE 1 TO DEBUG.
+
+           *> Branch to correct handler
+           EVALUATE FUNC
+               WHEN 'I' *> INITIALISE
+                   PERFORM INITIALISE-SECTION
+               WHEN 'A' *> ACCESS
+                   PERFORM ACCESS-SECTION
+               WHEN 'D' *> DEACCESS
+                   PERFORM DEACCESS-SECTION
+               WHEN 'R' *> READ_LOCK
+                   PERFORM READ-LOCK-SECTION
+               WHEN 'U' *> UPDATE_LOCK
+                   PERFORM UPDATE-LOCK-SECTION
+               WHEN 'L' *> READ_UNLOCK
+                   PERFORM READ-UNLOCK-SECTION
+               WHEN 'K' *> UPDATE_UNLOCK
+                   PERFORM UPDATE-UNLOCK-SECTION
+               WHEN 'C' *> CHK_SMCB_EXIST
+                   PERFORM CHK-SMCB-EXIST-SECTION
+               WHEN OTHER
+                   MOVE 1 TO RETURN-CODE
+                   DISPLAY 'SHAREMEM - invalid function: ' FUNC
+           END-EVALUATE.
+           STOP RUN.
+
+       INITIALISE-SECTION.
+           *> Initialisation code here
+           DISPLAY 'Initialising...'.
+           MOVE 'OK' TO STATUS.
+           .
+
+       ACCESS-SECTION.
+           *> Access code here
+           DISPLAY 'Accessing...'.
+           MOVE 'OK' TO STATUS.
+           .
+
+       DEACCESS-SECTION.
+           *> Deaccess code here
+           DISPLAY 'Deaccessing...'.
+           MOVE 'OK' TO STATUS.
+           .
+
+       READ-LOCK-SECTION.
+           *> Read lock code here
+           DISPLAY 'Read Lock...'.
+           MOVE 'OK' TO STATUS.
+           .
+
+       UPDATE-LOCK-SECTION.
+           *> Update lock code here
+           DISPLAY 'Update Lock...'.
+           MOVE 'OK' TO STATUS.
+           .
+
+       READ-UNLOCK-SECTION.
+           *> Read unlock code here
+           DISPLAY 'Read Unlock...'.
+           MOVE 'OK' TO STATUS.
+           .
+
+       UPDATE-UNLOCK-SECTION.
+           *> Update unlock code here
+           DISPLAY 'Update Unlock...'.
+           MOVE 'OK' TO STATUS.
+           .
+
+       CHK-SMCB-EXIST-SECTION.
+           *> Check SMCB existence code here
+           DISPLAY 'Check SMCB Exist...'.
+           MOVE 'SMCB_EXIST' TO STATUS.
+           .
+
+       CLEANUP-SECTION.
+           *> Cleanup code here
+           DISPLAY 'Cleanup...'.
+           MOVE 'OK' TO STATUS.
+           .
+
+       END PROGRAM SHAREMEM.
