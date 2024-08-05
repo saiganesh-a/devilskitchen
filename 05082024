@@ -1,0 +1,23 @@
+The image shows a microservice architecture diagram, illustrating the flow of data and interactions between various components. Here's a brief description of each part:
+
+1. **Database**:
+   - **NR, DR, PR**: These likely represent different types of databases or database tables (possibly for various environments like Non-Relational, Development, and Production).
+   - **DB**: The main database where data is stored.
+
+2. **Business Logic Processing Layer**:
+   - **JVM/COBOL**: This indicates that the business logic is handled using a combination of Java Virtual Machine (JVM) and COBOL. COBOL programs are executed within the JVM.
+   - **Logs**: This component is responsible for logging activities within the business logic layer.
+
+3. **Integration Layer**:
+   - **Java/Spring**: This part handles integration and is built using Java and the Spring framework, indicating the use of Spring Boot for microservices.
+
+4. **API Gateway**:
+   - Acts as an entry point for clients (channels) to interact with the microservices. It routes requests to the appropriate microservices and handles concerns like security, load balancing, and rate limiting.
+
+5. **Channels**:
+   - Represents various user interfaces or systems that interact with the microservices through the API Gateway.
+
+6. **Banklink/NBC**:
+   - This component likely represents an external banking system or service that the microservice architecture interacts with.
+
+Overall, the diagram outlines a microservice-based approach to handling business logic and data processing, utilizing a mix of legacy and modern technologies (COBOL and Java/Spring) and ensuring smooth integration through an API Gateway.
