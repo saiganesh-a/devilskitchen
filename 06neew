@@ -156,3 +156,176 @@ public class MigenqDetailsRepositoryImpl {
         return true;
     }
 }
+
+
+
+--------------
+
+
+@Service
+public class MigenqDetailsRepositoryImpl {
+
+    private final Migenq_t1DetailRefRepo dayRepo1;
+    private final Migenq_t2DetailRefRepo dayRepo2;
+    private final Migenq_t3DetailRefRepo dayRepo3;
+
+    @Autowired
+    public MigenqDetailsRepositoryImpl(Migenq_t1DetailRefRepo dayRepo1, Migenq_t2DetailRefRepo dayRepo2, Migenq_t3DetailRefRepo dayRepo3) {
+        this.dayRepo1 = dayRepo1;
+        this.dayRepo2 = dayRepo2;
+        this.dayRepo3 = dayRepo3;
+    }
+
+    @Transactional(isolation = Isolation.SERIALIZABLE)
+    public boolean processRequest(
+            boolean isUpdate,
+            String REQ_STR, 
+            String CLIENT_IP, 
+            String TELLER_ID, 
+            String PK_REQ_REF_NO, 
+            String SRC_ID, 
+            String RECD_TIME, 
+            String IP_ADDRESS, 
+            String RESPONSE_STATUS, 
+            String RESPONSE_STRING, 
+            String ERROR_CODE, 
+            String ERROR_DESCRIPTION) throws SerialException, SQLException, IOException, RrnException, SrcException {
+
+        DateTimeFormatter entryDate = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss:SSS");
+        DateTimeFormatter entryDate1 = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        LocalDateTime time = LocalDateTime.now();
+        Clob clob = new javax.sql.rowset.serial.SerialClob(RESPONSE_STRING.toCharArray());
+        int Logsaver = LocalDate.now().getDayOfMonth() % 3;
+
+        if (PK_REQ_REF_NO == null || PK_REQ_REF_NO.isEmpty() || PK_REQ_REF_NO.length() >= 26) {
+            PK_REQ_REF_NO = " ";
+        }
+        if (SRC_ID == null || SRC_ID.isEmpty() || SRC_ID.length() > 6) {
+            SRC_ID = " ";
+        }
+
+        if (!isUpdate) {
+            if (Logsaver == 1) {
+                Migenq_t1 mig = new Migenq_t1();
+                Migenqpk_t1 pk = new Migenqpk_t1();
+
+                pk.setPK_REQ_REF_NO(PK_REQ_REF_NO);
+                pk.setSRC_ID(SRC_ID);
+                mig.setCLIENT_IP(IP_ADDRESS == null || IP_ADDRESS.isEmpty() || IP_ADDRESS.length() > 20 ? " " : IP_ADDRESS);
+                mig.setTELLER_ID(TELLER_ID == null || TELLER_ID.isEmpty() || TELLER_ID.length() < 1 ? " " : TELLER_ID.length() > 10 ? TELLER_ID.substring(TELLER_ID.length() - 10) : TELLER_ID);
+                pk.setENTRY_DATE(entryDate1.format(time));
+                mig.setTXN_NO("070805");
+                mig.setTXN_NAME("accountChannelEnq");
+                mig.setREQ_STR(REQ_STR);
+                mig.setRESP_STR("");
+                pk.setRECD_TIME(RECD_TIME);
+                mig.setRESP_TIME(entryDate.format(time));
+                mig.setMigpk(pk);
+                dayRepo1.save(mig);
+
+            } else if (Logsaver == 2) {
+                Migenq_t2 mig2 = new Migenq_t2();
+                Migenqpk_t2 pk2 = new Migenqpk_t2();
+
+                pk2.setPK_REQ_REF_NO(PK_REQ_REF_NO);
+                pk2.setSRC_ID(SRC_ID);
+                mig2.setCLIENT_IP(IP_ADDRESS == null || IP_ADDRESS.isEmpty() || IP_ADDRESS.length() > 20 ? " " : IP_ADDRESS);
+                mig2.setTELLER_ID(TELLER_ID == null || TELLER_ID.isEmpty() || TELLER_ID.length() < 1 ? " " : TELLER_ID.length() > 10 ? TELLER_ID.substring(TELLER_ID.length() - 10) : TELLER_ID);
+                mig2.setENTRY_DATE(entryDate1.format(time));
+                mig2.setTXN_NO("070805");
+                mig2.setTXN_NAME("accountChannelEnq");
+                mig2.setREQ_STR(REQ_STR);
+                mig2.setRESP_STR("Success");
+                mig2.setRECD_TIME(RECD_TIME);
+                mig2.setRESP_TIME(entryDate.format(time));
+                mig2.setMigpk(pk2);
+                dayRepo2.save(mig2);
+
+            } else if (Logsaver == 0) {
+                Migenq_t3 mig3 = new Migenq_t3();
+                Migenqpk_t3 pk3 = new Migenqpk_t3();
+
+                pk3.setPK_REQ_REF_NO(PK_REQ_REF_NO);
+                pk3.setSRC_ID(SRC_ID);
+                mig3.setCLIENT_IP(IP_ADDRESS == null || IP_ADDRESS.isEmpty() || IP_ADDRESS.length() > 20 ? " " : IP_ADDRESS);
+                mig3.setTELLER_ID(TELLER_ID == null || TELLER_ID.isEmpty() || TELLER_ID.length() < 1 ? " " : TELLER_ID.length() > 10 ? TELLER_ID.substring(TELLER_ID.length() - 10) : TELLER_ID);
+                mig3.setENTRY_DATE(entryDate1.format(time));
+                mig3.setTXN_NO("070805");
+                mig3.setTXN_NAME("accountChannelEnq");
+                mig3.setRESPONSE_STATUS(" ");
+                mig3.setERROR_CODE(" ");
+                mig3.setERROR_DESCRIPTION(" ");
+                mig3.setREQ_STR(REQ_STR);
+                mig3.setRESP_STR(" ");
+                mig3.setRECD_TIME(RECD_TIME);
+                mig3.setRESP_TIME(entryDate.format(time));
+                mig3.setMigpk(pk3);
+                mig3.setRESPONSE_STRING(clob);
+                dayRepo3.save(mig3);
+            }
+        } else {
+            try {
+                if (Logsaver == 1) {
+                    Migenqpk_t1 pk = new Migenqpk_t1();
+                    pk.setPK_REQ_REF_NO(PK_REQ_REF_NO);
+                    pk.setSRC_ID(SRC_ID);
+                    pk.setRECD_TIME(RECD_TIME);
+                    pk.setENTRY_DATE(entryDate1.format(time));
+
+                    Migenq_t1 mig = dayRepo1.findById(pk).orElseThrow(() -> new RuntimeException("Record not found"));
+                    mig.setRESPONSE_STATUS(RESPONSE_STATUS);
+                    mig.setERROR_CODE(ERROR_CODE);
+                    mig.setERROR_DESCRIPTION(ERROR_DESCRIPTION);
+                    mig.setRESPONSE_STRING(clob);
+                    mig.setRESP_TIME(entryDate.format(time));
+                    dayRepo1.save(mig);
+
+                } else if (Logsaver == 2) {
+                    Migenqpk_t2 pk = new Migenqpk_t2();
+                    pk.setPK_REQ_REF_NO(PK_REQ_REF_NO);
+                    pk.setSRC_ID(SRC_ID);
+
+                    Migenq_t2 mig2 = dayRepo2.findById(pk).orElseThrow(() -> new RuntimeException("Record not found"));
+                    mig2.setRESPONSE_STATUS(RESPONSE_STATUS);
+                    mig2.setERROR_CODE(ERROR_CODE);
+                    mig2.setERROR_DESCRIPTION(ERROR_DESCRIPTION);
+                    mig2.setRESPONSE_STRING(clob);
+                    mig2.setRESP_TIME(entryDate.format(time));
+                    dayRepo2.save(mig2);
+
+                } else if (Logsaver == 0) {
+                    Migenqpk_t3 pk = new Migenqpk_t3();
+                    pk.setPK_REQ_REF_NO(PK_REQ_REF_NO);
+                    pk.setSRC_ID(SRC_ID);
+
+                    Migenq_t3 mig3 = dayRepo3.findById(pk).orElseThrow(() -> new RuntimeException("Record not found"));
+                    mig3.setRESPONSE_STATUS(RESPONSE_STATUS);
+                    mig3.setERROR_CODE(ERROR_CODE);
+                    mig3.setERROR_DESCRIPTION(ERROR_DESCRIPTION);
+                    mig3.setRESPONSE_STRING(clob);
+                    mig3.setRESP_TIME(entryDate.format(time));
+
+                    // Manually update the version field
+                    updateVersionField(pk, mig3.getVersion() + 1);
+
+                    dayRepo3.save(mig3);
+                }
+            } catch (OptimisticLockingFailureException e) {
+                System.err.println("Optimistic lock failed: " + e.getMessage());
+                TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+                return false;
+            } catch (Exception e) {
+                System.err.println("Error occurred: " + e.getMessage());
+                TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private void updateVersionField(Migenqpk_t3 pk, Long newVersion) {
+        // Use JdbcTemplate to manually update the version field
+        String sql = "UPDATE migenq_t3 SET version = ? WHERE pk_req_ref_no = ? AND src_id = ?";
+        JdbcTemplate jdbcTemplate = new JdbcTemplate(); // Initialize JdbcTemplate appropriately
+        jdbcTemplate.update(sql, newVersion,
