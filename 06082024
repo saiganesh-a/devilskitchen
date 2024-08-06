@@ -1,0 +1,55 @@
+import org.springframework.dao.OptimisticLockingFailureException;
+import org.springframework.transaction.annotation.Transactional;
+import java.time.format.DateTimeFormatter;
+import java.time.LocalDateTime;
+
+@Transactional
+public Boolean updateResponse(String PK_REQ_REF_NO, String SRC_ID, String RESPONSE_STRING, String RESPONSE_STATUS, String ERROR_CODE, String ERROR_DESCRIPTION, int Logsaver) {
+    DateTimeFormatter time = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSSSSS");
+    LocalDateTime entryDate = LocalDateTime.now();
+
+    try {
+        if (Logsaver == 1) {
+            Migenq_t1 mig = dayRepo1.findById(new Migenqpk_t1(PK_REQ_REF_NO, SRC_ID))
+                    .orElseThrow(() -> new RuntimeException("Record not found in Migenq_t1"));
+
+            mig.setRESP_STR(RESPONSE_STRING);
+            mig.setRESP_TIME(entryDate.format(time));
+            mig.setRESP_STATUS(RESPONSE_STATUS);
+            mig.setERROR_CODE(ERROR_CODE);
+            mig.setERROR_DESCRIPTION(ERROR_DESCRIPTION);
+
+            dayRepo1.save(mig);
+
+        } else if (Logsaver == 2) {
+            Migenq_t2 mig2 = dayRepo2.findById(new Migenqpk_t2(PK_REQ_REF_NO, SRC_ID))
+                    .orElseThrow(() -> new RuntimeException("Record not found in Migenq_t2"));
+
+            mig2.setRESP_STR(RESPONSE_STRING);
+            mig2.setRESP_TIME(entryDate.format(time));
+            mig2.setRESP_STATUS(RESPONSE_STATUS);
+            mig2.setERROR_CODE(ERROR_CODE);
+            mig2.setERROR_DESCRIPTION(ERROR_DESCRIPTION);
+
+            dayRepo2.save(mig2);
+
+        } else if (Logsaver == 0) {
+            Migenq_t3 mig3 = dayRepo3.findById(new Migenqpk_t3(PK_REQ_REF_NO, SRC_ID))
+                    .orElseThrow(() -> new RuntimeException("Record not found in Migenq_t3"));
+
+            mig3.setRESP_STR(RESPONSE_STRING);
+            mig3.setRESP_TIME(entryDate.format(time));
+            mig3.setRESP_STATUS(RESPONSE_STATUS);
+            mig3.setERROR_CODE(ERROR_CODE);
+            mig3.setERROR_DESCRIPTION(ERROR_DESCRIPTION);
+
+            dayRepo3.save(mig3);
+        }
+    } catch (OptimisticLockingFailureException e) {
+        // Handle the optimistic locking failure, for example, by logging it
+        System.err.println("Optimistic lock failed: " + e.getMessage());
+        return false;
+    }
+
+    return true;
+}
