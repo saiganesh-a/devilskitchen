@@ -119,3 +119,306 @@ public Boolean updateResponse(String PK_REQ_REF_NO, String SRC_ID, String RESPON
 
     return true;
 }
+
+--------------------------------
+
+
+|||2024-08-06 13:48:07,954 INFO org.apache.juli.logging.DirectJDKLog [http-nio-10.243.6.71-1003-exec-1] Initializing Spring DispatcherServlet 'dispatcherServlet'
+|||2024-08-06 13:48:07,954 INFO org.springframework.web.servlet.FrameworkServlet [http-nio-10.243.6.71-1003-exec-1] Initializing Servlet 'dispatcherServlet'
+|||2024-08-06 13:48:07,958 DEBUG org.springframework.web.servlet.DispatcherServlet [http-nio-10.243.6.71-1003-exec-1] Detected StandardServletMultipartResolver
+|||2024-08-06 13:48:07,962 DEBUG org.springframework.web.servlet.FrameworkServlet [http-nio-10.243.6.71-1003-exec-1] enableLoggingRequestDetails='false': request parameters and headers will be masked to prevent unsafe logging of potentially sensitive data
+|||2024-08-06 13:48:07,962 INFO org.springframework.web.servlet.FrameworkServlet [http-nio-10.243.6.71-1003-exec-1] Completed initialization in 8 ms
+|||2024-08-06 13:48:07,972 DEBUG org.springframework.core.log.LogFormatUtils [http-nio-10.243.6.71-1003-exec-1] POST "/CSRC", parameters={}
+|||2024-08-06 13:48:07,972 DEBUG org.springframework.web.servlet.handler.AbstractHandlerMapping [http-nio-10.243.6.71-1003-exec-1] Mapped to com.tcs.bancs.microservices.services.CSRCService#getCustomerDetails(RequestBean, HttpServletRequest, HttpHeaders, HttpServletResponse)
+|||2024-08-06 13:48:07,972 INFO com.tcs.bancs.microservices.interceptor.BancsLoggingInterceptor [http-nio-10.243.6.71-1003-exec-1] [PreHandle] [Request : /CSRC ] [Method : POST][RequestTime : 1722932287972]
+||getCustomerDetails|2024-08-06 13:48:07,972 DEBUG org.springframework.orm.jpa.support.OpenEntityManagerInViewInterceptor [http-nio-10.243.6.71-1003-exec-1] Opening JPA EntityManager in OpenEntityManagerInViewInterceptor
+||getCustomerDetails|2024-08-06 13:48:08,023 DEBUG org.springframework.core.log.LogFormatUtils [http-nio-10.243.6.71-1003-exec-1] Read "application/json;charset=UTF-8" to [{Reference Number : 543210,Teller Number : 164,Branch Number : 04234,option : 02,first_name : null,l (truncated)...]
+||getCustomerDetails|{Reference Number : 543210,Teller Number : 164,Branch Number : 04234,option : 02,first_name : null,last_name : null,date_of_birth : null,pf_number : 00000172,mobile_number : null}
+2024-08-06 13:48:08,175 DEBUG org.springframework.orm.jpa.JpaTransactionManager [http-nio-10.243.6.71-1003-exec-1] Found thread-bound EntityManager [SessionImpl(1907213472<open>)] for JPA transaction
+||getCustomerDetails|2024-08-06 13:48:08,175 DEBUG org.springframework.transaction.support.AbstractPlatformTransactionManager [http-nio-10.243.6.71-1003-exec-1] Creating new transaction with name [org.springframework.data.jpa.repository.support.SimpleJpaRepository.save]: PROPAGATION_REQUIRED,ISOLATION_DEFAULT
+||getCustomerDetails|2024-08-06 13:48:08,175 DEBUG org.springframework.orm.jpa.JpaTransactionManager [http-nio-10.243.6.71-1003-exec-1] Exposing JPA transaction as JDBC [org.springframework.orm.jpa.vendor.HibernateJpaDialect$HibernateConnectionHandle@626db12f]
+||getCustomerDetails|2024-08-06 13:48:08,216 DEBUG org.hibernate.engine.jdbc.spi.SqlStatementLogger [http-nio-10.243.6.71-1003-exec-1] select migenq_t3x0_.PK_REQ_REF_NO as pk_req_ref_no1_2_0_, migenq_t3x0_.SRC_ID as src_id2_2_0_, migenq_t3x0_.CLIENT_IP as client_ip3_2_0_, migenq_t3x0_.ENTRY_DATE as entry_date4_2_0_, migenq_t3x0_.ERROR_CODE as error_code5_2_0_, migenq_t3x0_.ERROR_DESCRIPTION as error_description6_2_0_, migenq_t3x0_.RECD_TIME as recd_time7_2_0_, migenq_t3x0_.REQ_STR as req_str8_2_0_, migenq_t3x0_.RESPONSE_STATUS as response_status9_2_0_, migenq_t3x0_.RESPONSE_STRING as response_string10_2_0_, migenq_t3x0_.RESP_STR as resp_str11_2_0_, migenq_t3x0_.RESP_TIME as resp_time12_2_0_, migenq_t3x0_.TELLER_ID as teller_id13_2_0_, migenq_t3x0_.TXN_NAME as txn_name14_2_0_, migenq_t3x0_.TXN_NO as txn_no15_2_0_, migenq_t3x0_.version as version16_2_0_ from Migenq_t3 migenq_t3x0_ where migenq_t3x0_.PK_REQ_REF_NO=? and migenq_t3x0_.SRC_ID=?
+||getCustomerDetails|Hibernate: select migenq_t3x0_.PK_REQ_REF_NO as pk_req_ref_no1_2_0_, migenq_t3x0_.SRC_ID as src_id2_2_0_, migenq_t3x0_.CLIENT_IP as client_ip3_2_0_, migenq_t3x0_.ENTRY_DATE as entry_date4_2_0_, migenq_t3x0_.ERROR_CODE as error_code5_2_0_, migenq_t3x0_.ERROR_DESCRIPTION as error_description6_2_0_, migenq_t3x0_.RECD_TIME as recd_time7_2_0_, migenq_t3x0_.REQ_STR as req_str8_2_0_, migenq_t3x0_.RESPONSE_STATUS as response_status9_2_0_, migenq_t3x0_.RESPONSE_STRING as response_string10_2_0_, migenq_t3x0_.RESP_STR as resp_str11_2_0_, migenq_t3x0_.RESP_TIME as resp_time12_2_0_, migenq_t3x0_.TELLER_ID as teller_id13_2_0_, migenq_t3x0_.TXN_NAME as txn_name14_2_0_, migenq_t3x0_.TXN_NO as txn_no15_2_0_, migenq_t3x0_.version as version16_2_0_ from Migenq_t3 migenq_t3x0_ where migenq_t3x0_.PK_REQ_REF_NO=? and migenq_t3x0_.SRC_ID=?
+2024-08-06 13:48:08,256 TRACE org.hibernate.type.descriptor.sql.BasicBinder [http-nio-10.243.6.71-1003-exec-1] binding parameter [1] as [VARCHAR] - [543210]
+||getCustomerDetails|2024-08-06 13:48:08,256 TRACE org.hibernate.type.descriptor.sql.BasicBinder [http-nio-10.243.6.71-1003-exec-1] binding parameter [2] as [VARCHAR] - [000001]
+||getCustomerDetails|2024-08-06 13:48:08,289 DEBUG org.springframework.transaction.support.AbstractPlatformTransactionManager [http-nio-10.243.6.71-1003-exec-1] Initiating transaction commit
+||getCustomerDetails|2024-08-06 13:48:08,289 DEBUG org.springframework.orm.jpa.JpaTransactionManager [http-nio-10.243.6.71-1003-exec-1] Committing JPA transaction on EntityManager [SessionImpl(1907213472<open>)]
+||getCustomerDetails|2024-08-06 13:48:08,302 DEBUG org.hibernate.engine.jdbc.spi.SqlStatementLogger [http-nio-10.243.6.71-1003-exec-1] insert into Migenq_t3 (CLIENT_IP, ENTRY_DATE, ERROR_CODE, ERROR_DESCRIPTION, RECD_TIME, REQ_STR, RESPONSE_STATUS, RESPONSE_STRING, RESP_STR, RESP_TIME, TELLER_ID, TXN_NAME, TXN_NO, version, PK_REQ_REF_NO, SRC_ID) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+||getCustomerDetails|Hibernate: insert into Migenq_t3 (CLIENT_IP, ENTRY_DATE, ERROR_CODE, ERROR_DESCRIPTION, RECD_TIME, REQ_STR, RESPONSE_STATUS, RESPONSE_STRING, RESP_STR, RESP_TIME, TELLER_ID, TXN_NAME, TXN_NO, version, PK_REQ_REF_NO, SRC_ID) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+2024-08-06 13:48:08,302 TRACE org.hibernate.type.descriptor.sql.BasicBinder [http-nio-10.243.6.71-1003-exec-1] binding parameter [1] as [VARCHAR] - [10.243.6.71]
+||getCustomerDetails|2024-08-06 13:48:08,302 TRACE org.hibernate.type.descriptor.sql.BasicBinder [http-nio-10.243.6.71-1003-exec-1] binding parameter [2] as [VARCHAR] - [2024-08-06]
+||getCustomerDetails|2024-08-06 13:48:08,302 TRACE org.hibernate.type.descriptor.sql.BasicBinder [http-nio-10.243.6.71-1003-exec-1] binding parameter [3] as [VARCHAR] - [ ]
+||getCustomerDetails|2024-08-06 13:48:08,302 TRACE org.hibernate.type.descriptor.sql.BasicBinder [http-nio-10.243.6.71-1003-exec-1] binding parameter [4] as [VARCHAR] - [ ]
+||getCustomerDetails|2024-08-06 13:48:08,302 TRACE org.hibernate.type.descriptor.sql.BasicBinder [http-nio-10.243.6.71-1003-exec-1] binding parameter [5] as [VARCHAR] - [2024-08-06 13:48:08:104]
+||getCustomerDetails|2024-08-06 13:48:08,302 TRACE org.hibernate.type.descriptor.sql.BasicBinder [http-nio-10.243.6.71-1003-exec-1] binding parameter [6] as [VARCHAR] - [{Reference Number : 543210,Teller Number : 164,Branch Number : 04234,option : 02,first_name : null,last_name : null,date_of_birth : null,pf_number : 00000172,mobile_number : null}]
+||getCustomerDetails|2024-08-06 13:48:08,302 TRACE org.hibernate.type.descriptor.sql.BasicBinder [http-nio-10.243.6.71-1003-exec-1] binding parameter [7] as [VARCHAR] - [ ]
+||getCustomerDetails|2024-08-06 13:48:08,302 TRACE org.hibernate.type.descriptor.sql.BasicBinder [http-nio-10.243.6.71-1003-exec-1] binding parameter [8] as [CLOB] - [{clob}]
+||getCustomerDetails|2024-08-06 13:48:08,304 TRACE org.hibernate.type.descriptor.sql.BasicBinder [http-nio-10.243.6.71-1003-exec-1] binding parameter [9] as [VARCHAR] - [ ]
+||getCustomerDetails|2024-08-06 13:48:08,304 TRACE org.hibernate.type.descriptor.sql.BasicBinder [http-nio-10.243.6.71-1003-exec-1] binding parameter [10] as [VARCHAR] - [2024-08-06 13:48:08:171]
+||getCustomerDetails|2024-08-06 13:48:08,304 TRACE org.hibernate.type.descriptor.sql.BasicBinder [http-nio-10.243.6.71-1003-exec-1] binding parameter [11] as [VARCHAR] - [164]
+||getCustomerDetails|2024-08-06 13:48:08,304 TRACE org.hibernate.type.descriptor.sql.BasicBinder [http-nio-10.243.6.71-1003-exec-1] binding parameter [12] as [VARCHAR] - [accountChannelEnq]
+||getCustomerDetails|2024-08-06 13:48:08,304 TRACE org.hibernate.type.descriptor.sql.BasicBinder [http-nio-10.243.6.71-1003-exec-1] binding parameter [13] as [VARCHAR] - [070805]
+||getCustomerDetails|2024-08-06 13:48:08,304 TRACE org.hibernate.type.descriptor.sql.BasicBinder [http-nio-10.243.6.71-1003-exec-1] binding parameter [14] as [INTEGER] - [0]
+||getCustomerDetails|2024-08-06 13:48:08,304 TRACE org.hibernate.type.descriptor.sql.BasicBinder [http-nio-10.243.6.71-1003-exec-1] binding parameter [15] as [VARCHAR] - [543210]
+||getCustomerDetails|2024-08-06 13:48:08,304 TRACE org.hibernate.type.descriptor.sql.BasicBinder [http-nio-10.243.6.71-1003-exec-1] binding parameter [16] as [VARCHAR] - [000001]
+||getCustomerDetails|2024-08-06 13:48:08,307 DEBUG org.springframework.orm.jpa.JpaTransactionManager [http-nio-10.243.6.71-1003-exec-1] Not closing pre-bound JPA EntityManager after transaction
+||getCustomerDetails|2024-08-06 13:48:08,307 DEBUG org.springframework.orm.jpa.JpaTransactionManager [http-nio-10.243.6.71-1003-exec-1] Found thread-bound EntityManager [SessionImpl(1907213472<open>)] for JPA transaction
+||getCustomerDetails|2024-08-06 13:48:08,307 DEBUG org.springframework.transaction.support.AbstractPlatformTransactionManager [http-nio-10.243.6.71-1003-exec-1] Creating new transaction with name [com.tcs.bancs.microservices.services.DBConnectionService.establishTwoconnections]: PROPAGATION_REQUIRED,ISOLATION_DEFAULT
+||getCustomerDetails|2024-08-06 13:48:08,307 DEBUG org.springframework.orm.jpa.JpaTransactionManager [http-nio-10.243.6.71-1003-exec-1] Exposing JPA transaction as JDBC [org.springframework.orm.jpa.vendor.HibernateJpaDialect$HibernateConnectionHandle@f3c6bcb]
+||getCustomerDetails|
+LOG DB is connected!
+ CBS DB IS CONNECTED.
+2024-08-06 13:48:08,662 DEBUG org.springframework.transaction.support.AbstractPlatformTransactionManager [http-nio-10.243.6.71-1003-exec-1] Initiating transaction commit
+||getCustomerDetails|2024-08-06 13:48:08,662 DEBUG org.springframework.orm.jpa.JpaTransactionManager [http-nio-10.243.6.71-1003-exec-1] Committing JPA transaction on EntityManager [SessionImpl(1907213472<open>)]
+||getCustomerDetails|2024-08-06 13:48:08,662 DEBUG org.springframework.orm.jpa.JpaTransactionManager [http-nio-10.243.6.71-1003-exec-1] Not closing pre-bound JPA EntityManager after transaction
+||getCustomerDetails|16404234000001
+13:48:08.       | DBIO:(A100) FILE-INDEX, FILE-NUM, NO-DATA-SETS: 0433 0432 0430                                                          
+13:48:08.       | DBIO:(A100) FIRST ENTRY = AACH                                                                                          
+THE W-RECLN 0400 W-MAX-DBIO-RECLN2560
+IOTELM: ERROR OPENING REDOFLAG.card
+13:48:08.       | UT9004: (A000) INITIAL SET TO BE DONE                                                                                   
+UT0008CA-TARGET-KEY = 02Y0000  000 UT0008CA-RETURN-CODE =    
+13:48:08.       | UT9004:(A100) BAD RETURN FROM UT0008, STATUS:                                                                           
+THE W-RECLN 1458 W-MAX-DBIO-RECLN2560
+[Y, 0000]hello rohith
+Branchres :[Y, 0000]
+THE PF NUMBER IS 00000172
+LS-PF-DATA-OUT0000008500004500subbu                                   k                                                                                       ITAX-50                                                                 VT-51                                                                                                                                    0000009500123699san                                     wdkf                                    l;kasd;                                 416517                                                                                                                                                                                                                   0000009500123757cgv                                     bh                                      bhb                                     4444                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  
+LS-PF-NO-OF-RECORDS03
+before update
+2024-08-06 13:48:08,988 DEBUG org.springframework.orm.jpa.JpaTransactionManager [http-nio-10.243.6.71-1003-exec-1] Found thread-bound EntityManager [SessionImpl(1907213472<open>)] for JPA transaction
+||getCustomerDetails|2024-08-06 13:48:08,988 DEBUG org.springframework.transaction.support.AbstractPlatformTransactionManager [http-nio-10.243.6.71-1003-exec-1] Creating new transaction with name [com.tcs.bancs.microservices.impl.MigenqDetailsRepositoryImpl.updateResponse]: PROPAGATION_REQUIRED,ISOLATION_SERIALIZABLE
+||getCustomerDetails|2024-08-06 13:48:08,988 DEBUG org.springframework.jdbc.datasource.DataSourceUtils [http-nio-10.243.6.71-1003-exec-1] Changing isolation level of JDBC Connection [HikariProxyConnection@135807916 wrapping oracle.jdbc.driver.T4CConnection@56b65100] to 8
+||getCustomerDetails|2024-08-06 13:48:08,988 DEBUG org.springframework.orm.jpa.JpaTransactionManager [http-nio-10.243.6.71-1003-exec-1] Exposing JPA transaction as JDBC [org.springframework.orm.jpa.vendor.HibernateJpaDialect$HibernateConnectionHandle@61279996]
+||getCustomerDetails|2024-08-06 13:48:08,988 DEBUG org.springframework.orm.jpa.JpaTransactionManager [http-nio-10.243.6.71-1003-exec-1] Found thread-bound EntityManager [SessionImpl(1907213472<open>)] for JPA transaction
+||getCustomerDetails|2024-08-06 13:48:08,988 DEBUG org.springframework.transaction.support.AbstractPlatformTransactionManager [http-nio-10.243.6.71-1003-exec-1] Participating in existing transaction
+||getCustomerDetails|before update---------------------------------------------------------------
+2024-08-06 13:48:08,988 DEBUG org.springframework.orm.jpa.JpaTransactionManager [http-nio-10.243.6.71-1003-exec-1] Found thread-bound EntityManager [SessionImpl(1907213472<open>)] for JPA transaction
+||getCustomerDetails|2024-08-06 13:48:08,988 DEBUG org.springframework.transaction.support.AbstractPlatformTransactionManager [http-nio-10.243.6.71-1003-exec-1] Participating in existing transaction
+||getCustomerDetails|after update@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+2024-08-06 13:48:08,998 DEBUG org.springframework.transaction.support.AbstractPlatformTransactionManager [http-nio-10.243.6.71-1003-exec-1] Initiating transaction commit
+||getCustomerDetails|2024-08-06 13:48:08,998 DEBUG org.springframework.orm.jpa.JpaTransactionManager [http-nio-10.243.6.71-1003-exec-1] Committing JPA transaction on EntityManager [SessionImpl(1907213472<open>)]
+||getCustomerDetails|2024-08-06 13:48:08,998 DEBUG org.hibernate.engine.jdbc.spi.SqlStatementLogger [http-nio-10.243.6.71-1003-exec-1] update Migenq_t3 set CLIENT_IP=?, ENTRY_DATE=?, ERROR_CODE=?, ERROR_DESCRIPTION=?, RECD_TIME=?, REQ_STR=?, RESPONSE_STATUS=?, RESPONSE_STRING=?, RESP_STR=?, RESP_TIME=?, TELLER_ID=?, TXN_NAME=?, TXN_NO=?, version=? where PK_REQ_REF_NO=? and SRC_ID=?
+||getCustomerDetails|Hibernate: update Migenq_t3 set CLIENT_IP=?, ENTRY_DATE=?, ERROR_CODE=?, ERROR_DESCRIPTION=?, RECD_TIME=?, REQ_STR=?, RESPONSE_STATUS=?, RESPONSE_STRING=?, RESP_STR=?, RESP_TIME=?, TELLER_ID=?, TXN_NAME=?, TXN_NO=?, version=? where PK_REQ_REF_NO=? and SRC_ID=?
+2024-08-06 13:48:08,998 TRACE org.hibernate.type.descriptor.sql.BasicBinder [http-nio-10.243.6.71-1003-exec-1] binding parameter [1] as [VARCHAR] - [10.243.6.71]
+||getCustomerDetails|2024-08-06 13:48:08,998 TRACE org.hibernate.type.descriptor.sql.BasicBinder [http-nio-10.243.6.71-1003-exec-1] binding parameter [2] as [VARCHAR] - [2024-08-06]
+||getCustomerDetails|2024-08-06 13:48:08,998 TRACE org.hibernate.type.descriptor.sql.BasicBinder [http-nio-10.243.6.71-1003-exec-1] binding parameter [3] as [VARCHAR] - [0000]
+||getCustomerDetails|2024-08-06 13:48:08,998 TRACE org.hibernate.type.descriptor.sql.BasicBinder [http-nio-10.243.6.71-1003-exec-1] binding parameter [4] as [VARCHAR] - [Ok! Success]
+||getCustomerDetails|2024-08-06 13:48:08,998 TRACE org.hibernate.type.descriptor.sql.BasicBinder [http-nio-10.243.6.71-1003-exec-1] binding parameter [5] as [VARCHAR] - [2024-08-06 13:48:08:104]
+||getCustomerDetails|2024-08-06 13:48:08,998 TRACE org.hibernate.type.descriptor.sql.BasicBinder [http-nio-10.243.6.71-1003-exec-1] binding parameter [6] as [VARCHAR] - [{Reference Number : 543210,Teller Number : 164,Branch Number : 04234,option : 02,first_name : null,last_name : null,date_of_birth : null,pf_number : 00000172,mobile_number : null}]
+||getCustomerDetails|2024-08-06 13:48:08,998 TRACE org.hibernate.type.descriptor.sql.BasicBinder [http-nio-10.243.6.71-1003-exec-1] binding parameter [7] as [VARCHAR] - [Y]
+||getCustomerDetails|2024-08-06 13:48:08,998 TRACE org.hibernate.type.descriptor.sql.BasicBinder [http-nio-10.243.6.71-1003-exec-1] binding parameter [8] as [CLOB] - [{clob}]
+||getCustomerDetails|2024-08-06 13:48:08,998 TRACE org.hibernate.type.descriptor.sql.BasicBinder [http-nio-10.243.6.71-1003-exec-1] binding parameter [9] as [VARCHAR] - [ ]
+||getCustomerDetails|2024-08-06 13:48:08,998 TRACE org.hibernate.type.descriptor.sql.BasicBinder [http-nio-10.243.6.71-1003-exec-1] binding parameter [10] as [VARCHAR] - [2024-08-06 13:48:08:988]
+||getCustomerDetails|2024-08-06 13:48:08,998 TRACE org.hibernate.type.descriptor.sql.BasicBinder [http-nio-10.243.6.71-1003-exec-1] binding parameter [11] as [VARCHAR] - [164]
+||getCustomerDetails|2024-08-06 13:48:08,998 TRACE org.hibernate.type.descriptor.sql.BasicBinder [http-nio-10.243.6.71-1003-exec-1] binding parameter [12] as [VARCHAR] - [accountChannelEnq]
+||getCustomerDetails|2024-08-06 13:48:08,998 TRACE org.hibernate.type.descriptor.sql.BasicBinder [http-nio-10.243.6.71-1003-exec-1] binding parameter [13] as [VARCHAR] - [070805]
+||getCustomerDetails|2024-08-06 13:48:08,998 TRACE org.hibernate.type.descriptor.sql.BasicBinder [http-nio-10.243.6.71-1003-exec-1] binding parameter [14] as [INTEGER] - [0]
+||getCustomerDetails|2024-08-06 13:48:08,998 TRACE org.hibernate.type.descriptor.sql.BasicBinder [http-nio-10.243.6.71-1003-exec-1] binding parameter [15] as [VARCHAR] - [543210]
+||getCustomerDetails|2024-08-06 13:48:08,998 TRACE org.hibernate.type.descriptor.sql.BasicBinder [http-nio-10.243.6.71-1003-exec-1] binding parameter [16] as [VARCHAR] - [000001]
+||getCustomerDetails|2024-08-06 13:48:09,008 DEBUG org.hibernate.engine.jdbc.spi.SqlStatementLogger [http-nio-10.243.6.71-1003-exec-1] select migenq_t3x0_.PK_REQ_REF_NO as pk_req_ref_no1_2_0_, migenq_t3x0_.SRC_ID as src_id2_2_0_, migenq_t3x0_.CLIENT_IP as client_ip3_2_0_, migenq_t3x0_.ENTRY_DATE as entry_date4_2_0_, migenq_t3x0_.ERROR_CODE as error_code5_2_0_, migenq_t3x0_.ERROR_DESCRIPTION as error_description6_2_0_, migenq_t3x0_.RECD_TIME as recd_time7_2_0_, migenq_t3x0_.REQ_STR as req_str8_2_0_, migenq_t3x0_.RESPONSE_STATUS as response_status9_2_0_, migenq_t3x0_.RESPONSE_STRING as response_string10_2_0_, migenq_t3x0_.RESP_STR as resp_str11_2_0_, migenq_t3x0_.RESP_TIME as resp_time12_2_0_, migenq_t3x0_.TELLER_ID as teller_id13_2_0_, migenq_t3x0_.TXN_NAME as txn_name14_2_0_, migenq_t3x0_.TXN_NO as txn_no15_2_0_, migenq_t3x0_.version as version16_2_0_ from Migenq_t3 migenq_t3x0_ where migenq_t3x0_.PK_REQ_REF_NO=? and migenq_t3x0_.SRC_ID=?
+||getCustomerDetails|Hibernate: select migenq_t3x0_.PK_REQ_REF_NO as pk_req_ref_no1_2_0_, migenq_t3x0_.SRC_ID as src_id2_2_0_, migenq_t3x0_.CLIENT_IP as client_ip3_2_0_, migenq_t3x0_.ENTRY_DATE as entry_date4_2_0_, migenq_t3x0_.ERROR_CODE as error_code5_2_0_, migenq_t3x0_.ERROR_DESCRIPTION as error_description6_2_0_, migenq_t3x0_.RECD_TIME as recd_time7_2_0_, migenq_t3x0_.REQ_STR as req_str8_2_0_, migenq_t3x0_.RESPONSE_STATUS as response_status9_2_0_, migenq_t3x0_.RESPONSE_STRING as response_string10_2_0_, migenq_t3x0_.RESP_STR as resp_str11_2_0_, migenq_t3x0_.RESP_TIME as resp_time12_2_0_, migenq_t3x0_.TELLER_ID as teller_id13_2_0_, migenq_t3x0_.TXN_NAME as txn_name14_2_0_, migenq_t3x0_.TXN_NO as txn_no15_2_0_, migenq_t3x0_.version as version16_2_0_ from Migenq_t3 migenq_t3x0_ where migenq_t3x0_.PK_REQ_REF_NO=? and migenq_t3x0_.SRC_ID=?
+2024-08-06 13:48:09,008 TRACE org.hibernate.type.descriptor.sql.BasicBinder [http-nio-10.243.6.71-1003-exec-1] binding parameter [1] as [VARCHAR] - [543210]
+||getCustomerDetails|2024-08-06 13:48:09,008 TRACE org.hibernate.type.descriptor.sql.BasicBinder [http-nio-10.243.6.71-1003-exec-1] binding parameter [2] as [VARCHAR] - [000001]
+||getCustomerDetails|2024-08-06 13:48:09,018 DEBUG org.springframework.transaction.support.AbstractPlatformTransactionManager [http-nio-10.243.6.71-1003-exec-1] Initiating transaction rollback after commit exception
+||getCustomerDetails|org.springframework.orm.ObjectOptimisticLockingFailureException: Object of class [com.tcs.bancs.microservices.db.model.Migenq_t3] with identifier [com.tcs.bancs.microservices.db.model.Migenqpk_t3@5d83077a]: optimistic locking failed; nested exception is org.hibernate.StaleObjectStateException: Row was updated or deleted by another transaction (or unsaved-value mapping was incorrect) : [com.tcs.bancs.microservices.db.model.Migenq_t3#com.tcs.bancs.microservices.db.model.Migenqpk_t3@5d83077a]
+	at org.springframework.orm.jpa.vendor.HibernateJpaDialect.convertHibernateAccessException(HibernateJpaDialect.java:337)
+	at org.springframework.orm.jpa.vendor.HibernateJpaDialect.translateExceptionIfPossible(HibernateJpaDialect.java:255)
+	at org.springframework.orm.jpa.JpaTransactionManager.doCommit(JpaTransactionManager.java:538)
+	at org.springframework.transaction.support.AbstractPlatformTransactionManager.processCommit(AbstractPlatformTransactionManager.java:743)
+	at org.springframework.transaction.support.AbstractPlatformTransactionManager.commit(AbstractPlatformTransactionManager.java:711)
+	at org.springframework.transaction.interceptor.TransactionAspectSupport.commitTransactionAfterReturning(TransactionAspectSupport.java:633)
+	at org.springframework.transaction.interceptor.TransactionAspectSupport.invokeWithinTransaction(TransactionAspectSupport.java:386)
+	at org.springframework.transaction.interceptor.TransactionInterceptor.invoke(TransactionInterceptor.java:118)
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:186)
+	at org.springframework.aop.framework.CglibAopProxy$CglibMethodInvocation.proceed(CglibAopProxy.java:749)
+	at org.springframework.aop.framework.CglibAopProxy$DynamicAdvisedInterceptor.intercept(CglibAopProxy.java:691)
+	at com.tcs.bancs.microservices.impl.MigenqDetailsRepositoryImpl$$EnhancerBySpringCGLIB$$44db7476.updateResponse(<generated>)
+	at com.tcs.bancs.microservices.services.CSRCService.getCustomerDetails(CSRCService.java:275)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:566)
+	at org.springframework.web.method.support.InvocableHandlerMethod.doInvoke(InvocableHandlerMethod.java:190)
+	at org.springframework.web.method.support.InvocableHandlerMethod.invokeForRequest(InvocableHandlerMethod.java:138)
+	at org.springframework.web.servlet.mvc.method.annotation.ServletInvocableHandlerMethod.invokeAndHandle(ServletInvocableHandlerMethod.java:105)
+	at org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter.invokeHandlerMethod(RequestMappingHandlerAdapter.java:878)
+	at org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter.handleInternal(RequestMappingHandlerAdapter.java:792)
+	at org.springframework.web.servlet.mvc.method.AbstractHandlerMethodAdapter.handle(AbstractHandlerMethodAdapter.java:87)
+	at org.springframework.web.servlet.DispatcherServlet.doDispatch(DispatcherServlet.java:1040)
+	at org.springframework.web.servlet.DispatcherServlet.doService(DispatcherServlet.java:943)
+	at org.springframework.web.servlet.FrameworkServlet.processRequest(FrameworkServlet.java:1006)
+	at org.springframework.web.servlet.FrameworkServlet.doPost(FrameworkServlet.java:909)
+	at javax.servlet.http.HttpServlet.service(HttpServlet.java:652)
+	at org.springframework.web.servlet.FrameworkServlet.service(FrameworkServlet.java:883)
+	at javax.servlet.http.HttpServlet.service(HttpServlet.java:733)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:231)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:166)
+	at org.apache.tomcat.websocket.server.WsFilter.doFilter(WsFilter.java:53)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:193)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:166)
+	at com.tcs.bancs.microservices.interceptor.ResponseHeaderFilter.doFilterInternal(ResponseHeaderFilter.java:25)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:119)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:193)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:166)
+	at org.springframework.web.filter.RequestContextFilter.doFilterInternal(RequestContextFilter.java:100)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:119)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:193)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:166)
+	at org.springframework.web.filter.FormContentFilter.doFilterInternal(FormContentFilter.java:93)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:119)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:193)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:166)
+	at org.springframework.boot.actuate.metrics.web.servlet.WebMvcMetricsFilter.doFilterInternal(WebMvcMetricsFilter.java:93)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:119)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:193)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:166)
+	at org.springframework.web.filter.CharacterEncodingFilter.doFilterInternal(CharacterEncodingFilter.java:201)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:119)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:193)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:166)
+	at org.apache.catalina.core.StandardWrapperValve.invoke(StandardWrapperValve.java:202)
+	at org.apache.catalina.core.StandardContextValve.invoke(StandardContextValve.java:97)
+	at org.apache.catalina.authenticator.AuthenticatorBase.invoke(AuthenticatorBase.java:542)
+	at org.apache.catalina.core.StandardHostValve.invoke(StandardHostValve.java:143)
+	at org.apache.catalina.valves.ErrorReportValve.invoke(ErrorReportValve.java:92)
+	at org.apache.catalina.core.StandardEngineValve.invoke(StandardEngineValve.java:78)
+	at org.apache.catalina.connector.CoyoteAdapter.service(CoyoteAdapter.java:343)
+	at org.apache.coyote.http11.Http11Processor.service(Http11Processor.java:374)
+	at org.apache.coyote.AbstractProcessorLight.process(AbstractProcessorLight.java:65)
+	at org.apache.coyote.AbstractProtocol$ConnectionHandler.process(AbstractProtocol.java:868)
+	at org.apache.tomcat.util.net.NioEndpoint$SocketProcessor.doRun(NioEndpoint.java:1590)
+	at org.apache.tomcat.util.net.SocketProcessorBase.run(SocketProcessorBase.java:49)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1128)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:628)
+	at org.apache.tomcat.util.threads.TaskThread$WrappingRunnable.run(TaskThread.java:61)
+	at java.base/java.lang.Thread.run(Thread.java:834)
+Caused by: org.hibernate.StaleObjectStateException: Row was updated or deleted by another transaction (or unsaved-value mapping was incorrect) : [com.tcs.bancs.microservices.db.model.Migenq_t3#com.tcs.bancs.microservices.db.model.Migenqpk_t3@5d83077a]
+	at org.hibernate.persister.entity.AbstractEntityPersister.check(AbstractEntityPersister.java:2604)
+	at org.hibernate.persister.entity.AbstractEntityPersister.update(AbstractEntityPersister.java:3448)
+	at org.hibernate.persister.entity.AbstractEntityPersister.updateOrInsert(AbstractEntityPersister.java:3311)
+	at org.hibernate.persister.entity.AbstractEntityPersister.update(AbstractEntityPersister.java:3725)
+	at org.hibernate.action.internal.EntityUpdateAction.execute(EntityUpdateAction.java:201)
+	at org.hibernate.engine.spi.ActionQueue.executeActions(ActionQueue.java:604)
+	at org.hibernate.engine.spi.ActionQueue.lambda$executeActions$1(ActionQueue.java:478)
+	at java.base/java.util.LinkedHashMap.forEach(LinkedHashMap.java:684)
+	at org.hibernate.engine.spi.ActionQueue.executeActions(ActionQueue.java:475)
+	at org.hibernate.event.internal.AbstractFlushingEventListener.performExecutions(AbstractFlushingEventListener.java:348)
+	at org.hibernate.event.internal.DefaultFlushEventListener.onFlush(DefaultFlushEventListener.java:40)
+	at org.hibernate.event.service.internal.EventListenerGroupImpl.fireEventOnEachListener(EventListenerGroupImpl.java:102)
+	at org.hibernate.internal.SessionImpl.doFlush(SessionImpl.java:1362)
+	at org.hibernate.internal.SessionImpl.managedFlush(SessionImpl.java:453)
+	at org.hibernate.internal.SessionImpl.flushBeforeTransactionCompletion(SessionImpl.java:3212)
+	at org.hibernate.internal.SessionImpl.beforeTransactionCompletion(SessionImpl.java:2380)
+	at org.hibernate.engine.jdbc.internal.JdbcCoordinatorImpl.beforeTransactionCompletion(JdbcCoordinatorImpl.java:447)
+	at org.hibernate.resource.transaction.backend.jdbc.internal.JdbcResourceLocalTransactionCoordinatorImpl.beforeCompletionCallback(JdbcResourceLocalTransactionCoordinatorImpl.java:183)
+	at org.hibernate.resource.transaction.backend.jdbc.internal.JdbcResourceLocalTransactionCoordinatorImpl.access$300(JdbcResourceLocalTransactionCoordinatorImpl.java:40)
+	at org.hibernate.resource.transaction.backend.jdbc.internal.JdbcResourceLocalTransactionCoordinatorImpl$TransactionDriverControlImpl.commit(JdbcResourceLocalTransactionCoordinatorImpl.java:281)
+	at org.hibernate.engine.transaction.internal.TransactionImpl.commit(TransactionImpl.java:101)
+	at org.springframework.orm.jpa.JpaTransactionManager.doCommit(JpaTransactionManager.java:534)
+	... 68 common frames omitted
+2024-08-06 13:48:09,018 DEBUG org.springframework.orm.jpa.JpaTransactionManager [http-nio-10.243.6.71-1003-exec-1] Rolling back JPA transaction on EntityManager [SessionImpl(1907213472<open>)]
+||getCustomerDetails|2024-08-06 13:48:09,018 DEBUG org.springframework.jdbc.datasource.DataSourceUtils [http-nio-10.243.6.71-1003-exec-1] Resetting isolation level of JDBC Connection [HikariProxyConnection@135807916 wrapping oracle.jdbc.driver.T4CConnection@56b65100] to 2
+||getCustomerDetails|2024-08-06 13:48:09,022 DEBUG org.springframework.orm.jpa.JpaTransactionManager [http-nio-10.243.6.71-1003-exec-1] Not closing pre-bound JPA EntityManager after transaction
+||getCustomerDetails|2024-08-06 13:48:09,022 DEBUG org.springframework.orm.jpa.support.OpenEntityManagerInViewInterceptor [http-nio-10.243.6.71-1003-exec-1] Closing JPA EntityManager in OpenEntityManagerInViewInterceptor
+||getCustomerDetails|2024-08-06 13:48:09,022 INFO com.tcs.bancs.microservices.interceptor.BancsLoggingInterceptor [http-nio-10.243.6.71-1003-exec-1] [afterCompletion] [Request : /CSRC ] [Method : POST] [ResponseTime : 1050 Milliseconds]
+||getCustomerDetails|2024-08-06 13:48:09,022 DEBUG org.springframework.web.servlet.FrameworkServlet [http-nio-10.243.6.71-1003-exec-1] Failed to complete request: org.springframework.orm.ObjectOptimisticLockingFailureException: Object of class [com.tcs.bancs.microservices.db.model.Migenq_t3] with identifier [com.tcs.bancs.microservices.db.model.Migenqpk_t3@5d83077a]: optimistic locking failed; nested exception is org.hibernate.StaleObjectStateException: Row was updated or deleted by another transaction (or unsaved-value mapping was incorrect) : [com.tcs.bancs.microservices.db.model.Migenq_t3#com.tcs.bancs.microservices.db.model.Migenqpk_t3@5d83077a]
+|||2024-08-06 13:48:09,022 ERROR org.apache.juli.logging.DirectJDKLog [http-nio-10.243.6.71-1003-exec-1] Servlet.service() for servlet [dispatcherServlet] in context with path [] threw exception [Request processing failed; nested exception is org.springframework.orm.ObjectOptimisticLockingFailureException: Object of class [com.tcs.bancs.microservices.db.model.Migenq_t3] with identifier [com.tcs.bancs.microservices.db.model.Migenqpk_t3@5d83077a]: optimistic locking failed; nested exception is org.hibernate.StaleObjectStateException: Row was updated or deleted by another transaction (or unsaved-value mapping was incorrect) : [com.tcs.bancs.microservices.db.model.Migenq_t3#com.tcs.bancs.microservices.db.model.Migenqpk_t3@5d83077a]] with root cause
+|||org.hibernate.StaleObjectStateException: Row was updated or deleted by another transaction (or unsaved-value mapping was incorrect) : [com.tcs.bancs.microservices.db.model.Migenq_t3#com.tcs.bancs.microservices.db.model.Migenqpk_t3@5d83077a]
+	at org.hibernate.persister.entity.AbstractEntityPersister.check(AbstractEntityPersister.java:2604)
+	at org.hibernate.persister.entity.AbstractEntityPersister.update(AbstractEntityPersister.java:3448)
+	at org.hibernate.persister.entity.AbstractEntityPersister.updateOrInsert(AbstractEntityPersister.java:3311)
+	at org.hibernate.persister.entity.AbstractEntityPersister.update(AbstractEntityPersister.java:3725)
+	at org.hibernate.action.internal.EntityUpdateAction.execute(EntityUpdateAction.java:201)
+	at org.hibernate.engine.spi.ActionQueue.executeActions(ActionQueue.java:604)
+	at org.hibernate.engine.spi.ActionQueue.lambda$executeActions$1(ActionQueue.java:478)
+	at java.base/java.util.LinkedHashMap.forEach(LinkedHashMap.java:684)
+	at org.hibernate.engine.spi.ActionQueue.executeActions(ActionQueue.java:475)
+	at org.hibernate.event.internal.AbstractFlushingEventListener.performExecutions(AbstractFlushingEventListener.java:348)
+	at org.hibernate.event.internal.DefaultFlushEventListener.onFlush(DefaultFlushEventListener.java:40)
+	at org.hibernate.event.service.internal.EventListenerGroupImpl.fireEventOnEachListener(EventListenerGroupImpl.java:102)
+	at org.hibernate.internal.SessionImpl.doFlush(SessionImpl.java:1362)
+	at org.hibernate.internal.SessionImpl.managedFlush(SessionImpl.java:453)
+	at org.hibernate.internal.SessionImpl.flushBeforeTransactionCompletion(SessionImpl.java:3212)
+	at org.hibernate.internal.SessionImpl.beforeTransactionCompletion(SessionImpl.java:2380)
+	at org.hibernate.engine.jdbc.internal.JdbcCoordinatorImpl.beforeTransactionCompletion(JdbcCoordinatorImpl.java:447)
+	at org.hibernate.resource.transaction.backend.jdbc.internal.JdbcResourceLocalTransactionCoordinatorImpl.beforeCompletionCallback(JdbcResourceLocalTransactionCoordinatorImpl.java:183)
+	at org.hibernate.resource.transaction.backend.jdbc.internal.JdbcResourceLocalTransactionCoordinatorImpl.access$300(JdbcResourceLocalTransactionCoordinatorImpl.java:40)
+	at org.hibernate.resource.transaction.backend.jdbc.internal.JdbcResourceLocalTransactionCoordinatorImpl$TransactionDriverControlImpl.commit(JdbcResourceLocalTransactionCoordinatorImpl.java:281)
+	at org.hibernate.engine.transaction.internal.TransactionImpl.commit(TransactionImpl.java:101)
+	at org.springframework.orm.jpa.JpaTransactionManager.doCommit(JpaTransactionManager.java:534)
+	at org.springframework.transaction.support.AbstractPlatformTransactionManager.processCommit(AbstractPlatformTransactionManager.java:743)
+	at org.springframework.transaction.support.AbstractPlatformTransactionManager.commit(AbstractPlatformTransactionManager.java:711)
+	at org.springframework.transaction.interceptor.TransactionAspectSupport.commitTransactionAfterReturning(TransactionAspectSupport.java:633)
+	at org.springframework.transaction.interceptor.TransactionAspectSupport.invokeWithinTransaction(TransactionAspectSupport.java:386)
+	at org.springframework.transaction.interceptor.TransactionInterceptor.invoke(TransactionInterceptor.java:118)
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:186)
+	at org.springframework.aop.framework.CglibAopProxy$CglibMethodInvocation.proceed(CglibAopProxy.java:749)
+	at org.springframework.aop.framework.CglibAopProxy$DynamicAdvisedInterceptor.intercept(CglibAopProxy.java:691)
+	at com.tcs.bancs.microservices.impl.MigenqDetailsRepositoryImpl$$EnhancerBySpringCGLIB$$44db7476.updateResponse(<generated>)
+	at com.tcs.bancs.microservices.services.CSRCService.getCustomerDetails(CSRCService.java:275)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:566)
+	at org.springframework.web.method.support.InvocableHandlerMethod.doInvoke(InvocableHandlerMethod.java:190)
+	at org.springframework.web.method.support.InvocableHandlerMethod.invokeForRequest(InvocableHandlerMethod.java:138)
+	at org.springframework.web.servlet.mvc.method.annotation.ServletInvocableHandlerMethod.invokeAndHandle(ServletInvocableHandlerMethod.java:105)
+	at org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter.invokeHandlerMethod(RequestMappingHandlerAdapter.java:878)
+	at org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter.handleInternal(RequestMappingHandlerAdapter.java:792)
+	at org.springframework.web.servlet.mvc.method.AbstractHandlerMethodAdapter.handle(AbstractHandlerMethodAdapter.java:87)
+	at org.springframework.web.servlet.DispatcherServlet.doDispatch(DispatcherServlet.java:1040)
+	at org.springframework.web.servlet.DispatcherServlet.doService(DispatcherServlet.java:943)
+	at org.springframework.web.servlet.FrameworkServlet.processRequest(FrameworkServlet.java:1006)
+	at org.springframework.web.servlet.FrameworkServlet.doPost(FrameworkServlet.java:909)
+	at javax.servlet.http.HttpServlet.service(HttpServlet.java:652)
+	at org.springframework.web.servlet.FrameworkServlet.service(FrameworkServlet.java:883)
+	at javax.servlet.http.HttpServlet.service(HttpServlet.java:733)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:231)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:166)
+	at org.apache.tomcat.websocket.server.WsFilter.doFilter(WsFilter.java:53)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:193)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:166)
+	at com.tcs.bancs.microservices.interceptor.ResponseHeaderFilter.doFilterInternal(ResponseHeaderFilter.java:25)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:119)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:193)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:166)
+	at org.springframework.web.filter.RequestContextFilter.doFilterInternal(RequestContextFilter.java:100)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:119)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:193)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:166)
+	at org.springframework.web.filter.FormContentFilter.doFilterInternal(FormContentFilter.java:93)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:119)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:193)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:166)
+	at org.springframework.boot.actuate.metrics.web.servlet.WebMvcMetricsFilter.doFilterInternal(WebMvcMetricsFilter.java:93)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:119)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:193)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:166)
+	at org.springframework.web.filter.CharacterEncodingFilter.doFilterInternal(CharacterEncodingFilter.java:201)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:119)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:193)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:166)
+	at org.apache.catalina.core.StandardWrapperValve.invoke(StandardWrapperValve.java:202)
+	at org.apache.catalina.core.StandardContextValve.invoke(StandardContextValve.java:97)
+	at org.apache.catalina.authenticator.AuthenticatorBase.invoke(AuthenticatorBase.java:542)
+	at org.apache.catalina.core.StandardHostValve.invoke(StandardHostValve.java:143)
+	at org.apache.catalina.valves.ErrorReportValve.invoke(ErrorReportValve.java:92)
+	at org.apache.catalina.core.StandardEngineValve.invoke(StandardEngineValve.java:78)
+	at org.apache.catalina.connector.CoyoteAdapter.service(CoyoteAdapter.java:343)
+	at org.apache.coyote.http11.Http11Processor.service(Http11Processor.java:374)
+	at org.apache.coyote.AbstractProcessorLight.process(AbstractProcessorLight.java:65)
+	at org.apache.coyote.AbstractProtocol$ConnectionHandler.process(AbstractProtocol.java:868)
+	at org.apache.tomcat.util.net.NioEndpoint$SocketProcessor.doRun(NioEndpoint.java:1590)
+	at org.apache.tomcat.util.net.SocketProcessorBase.run(SocketProcessorBase.java:49)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1128)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:628)
+	at org.apache.tomcat.util.threads.TaskThread$WrappingRunnable.run(TaskThread.java:61)
+	at java.base/java.lang.Thread.run(Thread.java:834)
+2024-08-06 13:48:09,028 DEBUG org.springframework.core.log.LogFormatUtils [http-nio-10.243.6.71-1003-exec-1] "ERROR" dispatch for POST "/error", parameters={}
+|||2024-08-06 13:48:09,033 DEBUG org.springframework.web.servlet.handler.AbstractHandlerMapping [http-nio-10.243.6.71-1003-exec-1] Mapped to org.springframework.boot.autoconfigure.web.servlet.error.BasicErrorController#error(HttpServletRequest)
+|||2024-08-06 13:48:09,033 DEBUG org.springframework.orm.jpa.support.OpenEntityManagerInViewInterceptor [http-nio-10.243.6.71-1003-exec-1] Opening JPA EntityManager in OpenEntityManagerInViewInterceptor
+|||2024-08-06 13:48:09,037 DEBUG org.springframework.web.servlet.mvc.method.annotation.AbstractMessageConverterMethodProcessor [http-nio-10.243.6.71-1003-exec-1] Using 'application/json', given [*/*] and supported [application/json, application/*+json, application/json, application/*+json]
+|||2024-08-06 13:48:09,038 DEBUG org.springframework.core.log.LogFormatUtils [http-nio-10.243.6.71-1003-exec-1] Writing [{timestamp=Tue Aug 06 13:48:09 IST 2024, status=500, error=Internal Server Error, message=, path=/CS (truncated)...]
+|||2024-08-06 13:48:09,049 DEBUG org.springframework.orm.jpa.support.OpenEntityManagerInViewInterceptor [http-nio-10.243.6.71-1003-exec-1] Closing JPA EntityManager in OpenEntityManagerInViewInterceptor
+|||2024-08-06 13:48:09,049 DEBUG org.springframework.web.servlet.FrameworkServlet [http-nio-10.243.6.71-1003-exec-1] Exiting from "ERROR" dispatch, status 500
