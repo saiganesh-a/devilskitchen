@@ -213,3 +213,134 @@ public class MigenqDetailsRepositoryImpl {
 		
 	}
 }
+
+
+--------------------+
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import javax.sql.rowset.serial.SerialClob;
+import javax.sql.rowset.serial.SerialException;
+import java.io.IOException;
+import java.sql.Clob;
+import java.sql.SQLException;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+
+@Service
+public class MigenqDetailsRepositoryImpl {
+
+    private final Migenq_t1DetailRefRepo dayRepo1;
+    private final Migenq_t2DetailRefRepo dayRepo2;
+    private final Migenq_t3DetailRefRepo dayRepo3;
+
+    @Autowired
+    public MigenqDetailsRepositoryImpl(Migenq_t1DetailRefRepo dayRepo1, Migenq_t2DetailRefRepo dayRepo2, Migenq_t3DetailRefRepo dayRepo3) {
+        this.dayRepo1 = dayRepo1;
+        this.dayRepo2 = dayRepo2;
+        this.dayRepo3 = dayRepo3;
+    }
+
+    public void initialSave(String PK_REQ_REF_NO, String SRC_ID, String CLIENT_IP, String TELLER_ID, String REQ_STR) {
+        DateTimeFormatter entryDate = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss:SSS");
+        DateTimeFormatter entryDate1 = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        LocalDateTime time = LocalDateTime.now();
+        LocalDate date = LocalDate.now();
+        int dayCount = date.getDayOfMonth();
+        int Logsaver = dayCount % 3;
+
+        if (PK_REQ_REF_NO == null || PK_REQ_REF_NO.length() >= 26 || PK_REQ_REF_NO.isEmpty()) {
+            PK_REQ_REF_NO = " ";
+        }
+        if (SRC_ID == null || SRC_ID.length() >= 6 || SRC_ID.isEmpty()) {
+            SRC_ID = " ";
+        }
+
+        if (Logsaver == 1) {
+            Migenq_t1 mig = new Migenq_t1();
+            Migenqpk_t1 pk = new Migenqpk_t1();
+            pk.setPK_REQ_REF_NO(PK_REQ_REF_NO);
+            pk.setSRC_ID(SRC_ID);
+            mig.setCLIENT_IP(CLIENT_IP != null && !CLIENT_IP.isEmpty() && CLIENT_IP.length() <= 20 ? CLIENT_IP : " ");
+            mig.setTELLER_ID(TELLER_ID != null && !TELLER_ID.isEmpty() && TELLER_ID.length() <= 10 ? TELLER_ID : " ");
+            pk.setENTRY_DATE(entryDate1.format(time));
+            mig.setREQ_STR(REQ_STR);
+            mig.setMigpk(pk);
+            dayRepo1.save(mig);
+
+        } else if (Logsaver == 2) {
+            Migenq_t2 mig2 = new Migenq_t2();
+            Migenqpk_t2 pk2 = new Migenqpk_t2();
+            pk2.setPK_REQ_REF_NO(PK_REQ_REF_NO);
+            pk2.setSRC_ID(SRC_ID);
+            mig2.setCLIENT_IP(CLIENT_IP != null && !CLIENT_IP.isEmpty() && CLIENT_IP.length() <= 20 ? CLIENT_IP : " ");
+            mig2.setTELLER_ID(TELLER_ID != null && !TELLER_ID.isEmpty() && TELLER_ID.length() <= 10 ? TELLER_ID : " ");
+            pk2.setENTRY_DATE(entryDate1.format(time));
+            mig2.setREQ_STR(REQ_STR);
+            mig2.setMigpk(pk2);
+            dayRepo2.save(mig2);
+
+        } else if (Logsaver == 0) {
+            Migenq_t3 mig3 = new Migenq_t3();
+            Migenqpk_t3 pk3 = new Migenqpk_t3();
+            pk3.setPK_REQ_REF_NO(PK_REQ_REF_NO);
+            pk3.setSRC_ID(SRC_ID);
+            mig3.setCLIENT_IP(CLIENT_IP != null && !CLIENT_IP.isEmpty() && CLIENT_IP.length() <= 20 ? CLIENT_IP : " ");
+            mig3.setTELLER_ID(TELLER_ID != null && !TELLER_ID.isEmpty() && TELLER_ID.length() <= 10 ? TELLER_ID : " ");
+            pk3.setENTRY_DATE(entryDate1.format(time));
+            mig3.setREQ_STR(REQ_STR);
+            mig3.setMigpk(pk3);
+            dayRepo3.save(mig3);
+        }
+    }
+
+    public void updateTransaction(String PK_REQ_REF_NO, String SRC_ID, String RESPONSE_STATUS, String RESP_STR, String ERROR_CODE, String ERROR_DESCRIPTION, String RESPONSE_STRING, String RECD_TIME) throws SerialException, SQLException, IOException, RrnException, SrcException {
+        DateTimeFormatter entryDate = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss:SSS");
+        LocalDateTime time = LocalDateTime.now();
+        int Logsaver = LocalDate.now().getDayOfMonth() % 3;
+
+        if (PK_REQ_REF_NO == null) {
+            throw new RrnException();
+        } else if (SRC_ID == null) {
+            throw new SrcException();
+        }
+
+        if (Logsaver == 1) {
+            Migenq_t1 mig = dayRepo1.findById(new Migenqpk_t1(PK_REQ_REF_NO, SRC_ID)).orElseThrow(() -> new RuntimeException("Transaction not found"));
+            mig.setRESPONSE_STATUS(RESPONSE_STATUS);
+            mig.setERROR_CODE(ERROR_CODE);
+            mig.setERROR_DESCRIPTION(ERROR_DESCRIPTION);
+            mig.setRESP_STR(RESPONSE_STRING);
+            mig.setRESP_TIME(entryDate.format(time));
+            Clob clob = new SerialClob(RESP_STR.toCharArray());
+            mig.setRESPONSE_STRING(clob);
+            mig.setRECD_TIME(RECD_TIME);
+            dayRepo1.save(mig);
+
+        } else if (Logsaver == 2) {
+            Migenq_t2 mig2 = dayRepo2.findById(new Migenqpk_t2(PK_REQ_REF_NO, SRC_ID)).orElseThrow(() -> new RuntimeException("Transaction not found"));
+            mig2.setRESPONSE_STATUS(RESPONSE_STATUS);
+            mig2.setERROR_CODE(ERROR_CODE);
+            mig2.setERROR_DESCRIPTION(ERROR_DESCRIPTION);
+            mig2.setRESP_STR(RESPONSE_STRING);
+            mig2.setRESP_TIME(entryDate.format(time));
+            Clob clob = new SerialClob(RESP_STR.toCharArray());
+            mig2.setRESPONSE_STRING(clob);
+            mig2.setRECD_TIME(RECD_TIME);
+            dayRepo2.save(mig2);
+
+        } else if (Logsaver == 0) {
+            Migenq_t3 mig3 = dayRepo3.findById(new Migenqpk_t3(PK_REQ_REF_NO, SRC_ID)).orElseThrow(() -> new RuntimeException("Transaction not found"));
+            mig3.setRESPONSE_STATUS(RESPONSE_STATUS);
+            mig3.setERROR_CODE(ERROR_CODE);
+            mig3.setERROR_DESCRIPTION(ERROR_DESCRIPTION);
+            mig3.setRESP_STR(RESPONSE_STRING);
+            mig3.setRESP_TIME(entryDate.format(time));
+            Clob clob = new SerialClob(RESP_STR.toCharArray());
+            mig3.setRESPONSE_STRING(clob);
+            mig3.setRECD_TIME(RECD_TIME);
+            dayRepo3.save(mig3);
+        }
+    }
+}
