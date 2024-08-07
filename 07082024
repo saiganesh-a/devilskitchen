@@ -1,0 +1,215 @@
+package com.tcs.bancs.microservices.impl;
+
+import java.io.IOException;
+import java.sql.Clob;
+import java.sql.SQLException;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Base64;
+
+import javax.sql.rowset.serial.SerialException;
+
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+//import com.tcs.bancs.microservices.RequestBean_CbsSix;
+import com.tcs.bancs.microservices.db.model.Migenq_t1;
+import com.tcs.bancs.microservices.db.model.Migenq_t2;
+import com.tcs.bancs.microservices.db.model.Migenq_t3;
+import com.tcs.bancs.microservices.db.model.Migenqpk_t1;
+import com.tcs.bancs.microservices.db.model.Migenqpk_t2;
+import com.tcs.bancs.microservices.db.model.Migenqpk_t3;
+import com.tcs.bancs.microservices.exception.RrnException;
+import com.tcs.bancs.microservices.exception.SrcException;
+
+import com.tcs.bancs.microservices.repository.day.Migenq_t1DetailDayRepo;
+import com.tcs.bancs.microservices.repository.ref.Migenq_t1DetailRefRepo;
+import com.tcs.bancs.microservices.repository.ref.Migenq_t2DetailRefRepo;
+//import com.tcs.log.utils.ClobToStringConverter;
+//import com.tcs.log.utils.encryptLog;
+import com.tcs.bancs.microservices.repository.ref.Migenq_t3DetailRefRepo;
+
+@Service
+public class MigenqDetailsRepositoryImpl {
+	
+	 
+	private final Migenq_t1DetailRefRepo dayRepo1;
+	private final Migenq_t2DetailRefRepo dayRepo2;
+	private final Migenq_t3DetailRefRepo dayRepo3;
+
+	public MigenqDetailsRepositoryImpl(Migenq_t1DetailRefRepo dayRepo1, Migenq_t2DetailRefRepo dayRepo2,
+			Migenq_t3DetailRefRepo dayRepo3) {
+		super();
+		this.dayRepo1 = dayRepo1;
+		this.dayRepo2 = dayRepo2;
+		this.dayRepo3 = dayRepo3;
+	}
+
+	public boolean LogData(String RESPONSE_STATUS,String REQ_STR,String RESP_STR, String CLIENT_IP, String TELLER_ID, String ERROR_CODE, String ERROR_DESCRIPTION,String PK_REQ_REF_NO, String SRC_ID,String RESPONSE_STRING,String RECD_TIME,String IP_ADDRESS) throws SerialException, SQLException, IOException, RrnException, SrcException {
+		
+		DateTimeFormatter entryDate = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss:SSS");
+		DateTimeFormatter entryDate1 = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+		LocalDateTime time = LocalDateTime.now();
+		//RequestBean_CbsSix req = new RequestBean_CbsSix();
+		LocalDate date = LocalDate.now();
+		int dayCount =date.getDayOfMonth();
+		int Logsaver=dayCount%3;
+		if (PK_REQ_REF_NO == null || PK_REQ_REF_NO.length()>=26 || PK_REQ_REF_NO.isEmpty() ) {
+			PK_REQ_REF_NO = " ";
+		}
+		if(SRC_ID == null || SRC_ID.length()>=6 || SRC_ID.isEmpty()){
+			SRC_ID=" ";
+		}
+		
+	 if(PK_REQ_REF_NO==null ) {
+			
+			 throw new RrnException();
+		 }else if(SRC_ID==null) {
+			 throw new SrcException();
+		 }
+	 
+		if(Logsaver==1) {
+		Migenq_t1 mig =new Migenq_t1(); 
+		Migenqpk_t1 pk=new Migenqpk_t1();
+		pk.setPK_REQ_REF_NO(PK_REQ_REF_NO);
+		pk.setSRC_ID(SRC_ID);
+		if(IP_ADDRESS==null||IP_ADDRESS.isEmpty()||IP_ADDRESS.length()>20){
+			mig.setCLIENT_IP(" ");
+		}else{
+		mig.setCLIENT_IP(IP_ADDRESS);
+		}
+		if(TELLER_ID == null||TELLER_ID.isEmpty()||TELLER_ID.length()<1 || TELLER_ID.matches(" ")) {
+		      
+			mig.setTELLER_ID(" ");
+			
+		}
+
+	else if (TELLER_ID.length()>10 ){
+
+			
+		mig.setTELLER_ID(TELLER_ID.substring(TELLER_ID.length()-10,TELLER_ID.length()));
+		}else
+		{
+		
+			mig.setTELLER_ID(TELLER_ID);
+
+		}
+		pk.setENTRY_DATE(entryDate1.format(time));
+		mig.setTXN_NO("070805");
+		mig.setTXN_NAME("accountChannelEnq");							
+		mig.setRESPONSE_STATUS(RESPONSE_STATUS);
+		mig.setERROR_CODE(ERROR_CODE);
+		mig.setERROR_DESCRIPTION(ERROR_DESCRIPTION);
+		mig.setREQ_STR(REQ_STR);
+		mig.setRESP_STR(RESPONSE_STRING);
+		pk.setRECD_TIME(RECD_TIME);
+		mig.setRESP_TIME(entryDate.format(time));
+		mig.setMigpk(pk);
+		Clob clob=new javax.sql.rowset.serial.SerialClob(RESP_STR.toCharArray());
+        mig.setRESPONSE_STRING(clob);
+        dayRepo1.save(mig);
+	
+		}else if(Logsaver==2) {
+			Migenq_t2 mig2 =new Migenq_t2();
+			Migenqpk_t2 pk2=new Migenqpk_t2();
+			pk2.setPK_REQ_REF_NO(PK_REQ_REF_NO);
+			pk2.setSRC_ID(SRC_ID);
+			if(IP_ADDRESS==null||IP_ADDRESS.isEmpty()||IP_ADDRESS.length()>20){
+				mig2.setCLIENT_IP(" ");
+			}else{
+			mig2.setCLIENT_IP(IP_ADDRESS);
+			}
+			if(TELLER_ID == null||TELLER_ID.isEmpty()||TELLER_ID.length()<1 || TELLER_ID.matches(" ")) {
+			      
+				mig2.setTELLER_ID(" ");
+				
+			}
+		
+			if(TELLER_ID == null||TELLER_ID.isEmpty()||TELLER_ID.length()<1 || TELLER_ID.matches(" ")) {
+			      
+				mig2.setTELLER_ID(" ");
+				
+			}
+		
+		else if (TELLER_ID.length()>10 ){
+			
+			
+				
+			mig2.setTELLER_ID(TELLER_ID.substring(TELLER_ID.length()-10,TELLER_ID.length()));
+			}else
+			{
+				
+				mig2.setTELLER_ID(TELLER_ID);
+
+			}
+			pk2.setENTRY_DATE(entryDate1.format(time));
+			mig2.setTXN_NO("070805");
+			mig2.setTXN_NAME("accountChannelEnq");							
+			mig2.setRESPONSE_STATUS(RESPONSE_STATUS);
+			mig2.setERROR_CODE(ERROR_CODE);
+			mig2.setERROR_DESCRIPTION(ERROR_DESCRIPTION);
+			mig2.setREQ_STR(REQ_STR);
+			mig2.setRESP_STR(RESPONSE_STRING);
+			pk2.setRECD_TIME(RECD_TIME);
+			mig2.setRESP_TIME(entryDate.format(time));
+			mig2.setMigpk(pk2);
+			Clob clob=new javax.sql.rowset.serial.SerialClob(RESP_STR.toCharArray());
+	        mig2.setRESPONSE_STRING(clob);
+	        dayRepo2.save(mig2);
+		
+			}
+		else if(Logsaver==0) {
+			Migenq_t3 mig3 =new Migenq_t3();
+			Migenqpk_t3 pk3=new Migenqpk_t3();
+			pk3.setPK_REQ_REF_NO(PK_REQ_REF_NO);
+			pk3.setSRC_ID(SRC_ID);
+			if(IP_ADDRESS==null||IP_ADDRESS.isEmpty()||IP_ADDRESS.length()>20){
+				mig3.setCLIENT_IP(" ");
+			}else{
+			mig3.setCLIENT_IP(IP_ADDRESS);
+			}
+			if(TELLER_ID == null||TELLER_ID.isEmpty()||TELLER_ID.length()<1 || TELLER_ID.matches(" ")) {
+			      
+				mig3.setTELLER_ID(" ");
+				
+			}
+			if(TELLER_ID == null||TELLER_ID.isEmpty()||TELLER_ID.length()<1 || TELLER_ID.matches(" ")) {
+	      
+					mig3.setTELLER_ID(" ");
+					
+				}
+		
+			else if (TELLER_ID.length()>10 ){
+				
+			
+					
+				mig3.setTELLER_ID(TELLER_ID.substring(TELLER_ID.length()-10,TELLER_ID.length()));
+				}else
+				{
+			
+					mig3.setTELLER_ID(TELLER_ID);
+
+				}
+			pk3.setENTRY_DATE(entryDate1.format(time));
+			mig3.setTXN_NO("070805");
+			mig3.setTXN_NAME("accountChannelEnq");							
+			mig3.setRESPONSE_STATUS(RESPONSE_STATUS);
+			mig3.setERROR_CODE(ERROR_CODE);
+			mig3.setERROR_DESCRIPTION(ERROR_DESCRIPTION);
+			mig3.setREQ_STR(REQ_STR);
+			mig3.setRESP_STR(RESPONSE_STRING);
+			pk3.setRECD_TIME(RECD_TIME);
+			mig3.setRESP_TIME(entryDate.format(time));
+			mig3.setMigpk(pk3);
+			Clob clob=new javax.sql.rowset.serial.SerialClob(RESP_STR.toCharArray());
+	        mig3.setRESPONSE_STRING(clob);
+	        dayRepo3.save(mig3);
+			
+			} 
+		
+	return false;
+		
+	}
+}
