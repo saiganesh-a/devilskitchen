@@ -84,3 +84,67 @@ public boolean updateResponse(String PK_REQ_REF_NO, String SRC_ID, String RESPON
         return false;
     }
 }
+
+
+
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.CrudRepository;
+import org.springframework.transaction.annotation.Transactional;
+
+public interface Migenq_t1DetailRefRepo extends CrudRepository<Migenq_t1, Migenqpk_t1> {
+    
+    @Transactional
+    @Modifying
+    @Query("UPDATE Migenq_t1 m SET m.RESPONSE_STATUS = :responseStatus, m.ERROR_CODE = :errorCode, m.ERROR_DESCRIPTION = :errorDescription, m.RESPONSE_STRING = :responseString, m.RESP_TIME = :respTime WHERE m.migpk.PK_REQ_REF_NO = :pkReqRefNo AND m.migpk.SRC_ID = :srcId AND m.version = :version")
+    int updateResponse(
+        String responseStatus, 
+        String errorCode, 
+        String errorDescription, 
+        Clob responseString, 
+        String respTime, 
+        String pkReqRefNo, 
+        String srcId, 
+        Long version
+    );
+}
+
+
+------
+
+@Transactional
+public boolean updateResponse(String PK_REQ_REF_NO, String SRC_ID, String RESPONSE_STATUS, String RESPONSE_STRING, String ERROR_CODE, String ERROR_DESCRIPTION, String RECD_TIME) throws SerialException, SQLException {
+    DateTimeFormatter entryDate = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss:SSS");
+    LocalDateTime time = LocalDateTime.now();
+    Clob clob = new javax.sql.rowset.serial.SerialClob(RESPONSE_STRING.toCharArray());
+    String formattedRespTime = entryDate.format(time);
+
+    int Logsaver = LocalDate.now().getDayOfMonth() % 3;
+
+    try {
+        return RetryUtils.retry(() -> {
+            if (Logsaver == 1) {
+                Migenqpk_t1 pk = new Migenqpk_t1();
+                pk.setPK_REQ_REF_NO(PK_REQ_REF_NO);
+                pk.setSRC_ID(SRC_ID);
+
+                Migenq_t1 mig = dayRepo1.findById(pk).orElseThrow(() -> new RuntimeException("Record not found"));
+                Long version = mig.getVersion();
+
+                int updatedRows = dayRepo1.updateResponse(RESPONSE_STATUS, ERROR_CODE, ERROR_DESCRIPTION, clob, formattedRespTime, PK_REQ_REF_NO, SRC_ID, version);
+                if (updatedRows == 0) {
+                    throw new OptimisticLockingFailureException("Optimistic lock failed");
+                }
+            } else if (Logsaver == 2) {
+                // Similar logic for Migenq_t2 and Migenq_t3 with their respective repositories
+            }
+            return true;
+        }, 5, 1000); // 5 attempts with initial 1 second delay
+    } catch (OptimisticLockingFailureException e) {
+        System.err.println("Optimistic lock failed after retries: " + e.getMessage());
+        return false;
+    } catch (Exception e) {
+        System.err.println("Error occurred: " + e.getMessage());
+        return false;
+    }
+}
