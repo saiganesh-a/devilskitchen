@@ -173,3 +173,71 @@ public interface Migenq_t1DetailRefRepo extends CrudRepository<Migenq_t1, Migenq
         @Param("version") Long version
     );
 }
+
+
+
+-----------
+
+import javax.transaction.Transactional;
+import java.sql.Clob;
+import java.sql.SQLException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import javax.sql.rowset.serial.SerialClob;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.OptimisticLockingFailureException;
+import org.springframework.stereotype.Service;
+
+@Service
+public class MigenqDetailsRepositoryImpl {
+
+    @Autowired
+    private Migenq_t1DetailRefRepo dayRepo1;
+
+    @Transactional
+    public boolean updateResponse(String PK_REQ_REF_NO, String SRC_ID, String RESPONSE_STATUS, String RESPONSE_STRING, String ERROR_CODE, String ERROR_DESCRIPTION, String RECD_TIME) throws SQLException {
+
+        DateTimeFormatter entryDate = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss:SSS");
+        LocalDateTime time = LocalDateTime.now();
+        Clob clob = new SerialClob(RESPONSE_STRING.toCharArray());
+        String formattedRespTime = entryDate.format(time);
+
+        int maxAttempts = 5;
+        int attempt = 0;
+        boolean success = false;
+
+        while (attempt < maxAttempts && !success) {
+            try {
+                attempt++;
+                Migenqpk_t1 pk = new Migenqpk_t1();
+                pk.setPK_REQ_REF_NO(PK_REQ_REF_NO);
+                pk.setSRC_ID(SRC_ID);
+
+                Migenq_t1 mig = dayRepo1.findById(pk).orElseThrow(() -> new RuntimeException("Record not found"));
+                Long version = mig.getVersion();
+
+                int updatedRows = dayRepo1.updateResponse(RESPONSE_STATUS, ERROR_CODE, ERROR_DESCRIPTION, clob, formattedRespTime, PK_REQ_REF_NO, SRC_ID, version);
+                if (updatedRows == 0) {
+                    throw new OptimisticLockingFailureException("Optimistic lock failed");
+                }
+                success = true;
+            } catch (OptimisticLockingFailureException e) {
+                if (attempt >= maxAttempts) {
+                    System.err.println("Optimistic lock failed after retries: " + e.getMessage());
+                    return false;
+                }
+                // Optionally: Add a delay before retrying
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                    throw new RuntimeException("Thread interrupted", ie);
+                }
+            } catch (Exception e) {
+                System.err.println("Error occurred: " + e.getMessage());
+                return false;
+            }
+        }
+        return success;
+    }
+}
