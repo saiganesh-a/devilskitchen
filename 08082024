@@ -148,3 +148,28 @@ public boolean updateResponse(String PK_REQ_REF_NO, String SRC_ID, String RESPON
         return false;
     }
 }
+
+
+
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.CrudRepository;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.repository.query.Param;
+
+public interface Migenq_t1DetailRefRepo extends CrudRepository<Migenq_t1, Migenqpk_t1> {
+    
+    @Transactional
+    @Modifying
+    @Query("UPDATE Migenq_t1 m SET m.RESPONSE_STATUS = :responseStatus, m.ERROR_CODE = :errorCode, m.ERROR_DESCRIPTION = :errorDescription, m.RESPONSE_STRING = :responseString, m.RESP_TIME = :respTime WHERE m.migpk.PK_REQ_REF_NO = :pkReqRefNo AND m.migpk.SRC_ID = :srcId AND m.version = :version")
+    int updateResponse(
+        @Param("responseStatus") String responseStatus, 
+        @Param("errorCode") String errorCode, 
+        @Param("errorDescription") String errorDescription, 
+        @Param("responseString") Clob responseString, 
+        @Param("respTime") String respTime, 
+        @Param("pkReqRefNo") String pkReqRefNo, 
+        @Param("srcId") String srcId, 
+        @Param("version") Long version
+    );
+}
