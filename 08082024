@@ -299,3 +299,98 @@ public boolean updateResponseWithRetry(String PK_REQ_REF_NO, String SRC_ID, Stri
 
     return success;
 }
+
+
+
+
+
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.orm.jpa.JpaOptimisticLockingFailureException;
+
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
+import javax.sql.rowset.serial.SerialClob;
+import java.sql.Clob;
+import java.sql.SQLException;
+
+@Service
+public class MigenqDetailsService {
+
+    @PersistenceContext
+    private EntityManager entityManager;
+
+    private static final int MAX_RETRIES = 3;
+
+    @Transactional
+    public boolean updateResponse(String PK_REQ_REF_NO, String SRC_ID, String RESPONSE_STATUS, 
+                                  String ERROR_CODE, String ERROR_DESCRIPTION, String RESPONSE_STRING) 
+                                  throws SQLException {
+        int attempt = 0;
+        boolean success = false;
+
+        Clob clob = new SerialClob(RESPONSE_STRING.toCharArray());
+
+        while (attempt < MAX_RETRIES && !success) {
+            try {
+                // Update Migenq_t1
+                Query query1 = entityManager.createQuery("UPDATE Migenq_t1 m SET m.responseStatus = :responseStatus, " +
+                        "m.errorCode = :errorCode, m.errorDescription = :errorDescription, " +
+                        "m.responseString = :responseString WHERE m.migpk.PK_REQ_REF_NO = :pkReqRefNo AND " +
+                        "m.migpk.SRC_ID = :srcId");
+                query1.setParameter("responseStatus", RESPONSE_STATUS);
+                query1.setParameter("errorCode", ERROR_CODE);
+                query1.setParameter("errorDescription", ERROR_DESCRIPTION);
+                query1.setParameter("responseString", clob);
+                query1.setParameter("pkReqRefNo", PK_REQ_REF_NO);
+                query1.setParameter("srcId", SRC_ID);
+                int updated1 = query1.executeUpdate();
+
+                // Update Migenq_t2
+                Query query2 = entityManager.createQuery("UPDATE Migenq_t2 m SET m.responseStatus = :responseStatus, " +
+                        "m.errorCode = :errorCode, m.errorDescription = :errorDescription, " +
+                        "m.responseString = :responseString WHERE m.migpk.PK_REQ_REF_NO = :pkReqRefNo AND " +
+                        "m.migpk.SRC_ID = :srcId");
+                query2.setParameter("responseStatus", RESPONSE_STATUS);
+                query2.setParameter("errorCode", ERROR_CODE);
+                query2.setParameter("errorDescription", ERROR_DESCRIPTION);
+                query2.setParameter("responseString", clob);
+                query2.setParameter("pkReqRefNo", PK_REQ_REF_NO);
+                query2.setParameter("srcId", SRC_ID);
+                int updated2 = query2.executeUpdate();
+
+                // Update Migenq_t3
+                Query query3 = entityManager.createQuery("UPDATE Migenq_t3 m SET m.responseStatus = :responseStatus, " +
+                        "m.errorCode = :errorCode, m.errorDescription = :errorDescription, " +
+                        "m.responseString = :responseString WHERE m.migpk.PK_REQ_REF_NO = :pkReqRefNo AND " +
+                        "m.migpk.SRC_ID = :srcId");
+                query3.setParameter("responseStatus", RESPONSE_STATUS);
+                query3.setParameter("errorCode", ERROR_CODE);
+                query3.setParameter("errorDescription", ERROR_DESCRIPTION);
+                query3.setParameter("responseString", clob);
+                query3.setParameter("pkReqRefNo", PK_REQ_REF_NO);
+                query3.setParameter("srcId", SRC_ID);
+                int updated3 = query3.executeUpdate();
+
+                if (updated1 > 0 || updated2 > 0 || updated3 > 0) {
+                    success = true;
+                } else {
+                    throw new RuntimeException("No records updated");
+                }
+
+            } catch (JpaOptimisticLockingFailureException e) {
+                attempt++;
+                if (attempt >= MAX_RETRIES) {
+                    throw e;  // Max retries reached, propagate the exception
+                }
+                try {
+                    Thread.sleep(100);  // Short delay before retrying
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+        }
+
+        return success;
+    }
+}
