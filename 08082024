@@ -1,0 +1,86 @@
+import java.util.function.Supplier;
+
+public class RetryUtils {
+    public static <T> T retry(Supplier<T> function, int maxAttempts, long delay) throws Exception {
+        int attempts = 0;
+        while (true) {
+            try {
+                return function.get();
+            } catch (OptimisticLockingFailureException e) {
+                attempts++;
+                if (attempts >= maxAttempts) {
+                    throw e;
+                }
+                Thread.sleep(delay);
+                delay *= 2; // Exponential backoff
+            }
+        }
+    }
+}
+
+@Transactional
+public boolean updateResponse(String PK_REQ_REF_NO, String SRC_ID, String RESPONSE_STATUS, String RESPONSE_STRING, String ERROR_CODE, String ERROR_DESCRIPTION, String RECD_TIME) throws SerialException, SQLException {
+    DateTimeFormatter entryDate = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss:SSS");
+    LocalDateTime time = LocalDateTime.now();
+    Clob clob = new javax.sql.rowset.serial.SerialClob(RESPONSE_STRING.toCharArray());
+
+    int Logsaver = LocalDate.now().getDayOfMonth() % 3;
+
+    try {
+        return RetryUtils.retry(() -> {
+            if (Logsaver == 1) {
+                Migenqpk_t1 pk = new Migenqpk_t1();
+                pk.setPK_REQ_REF_NO(PK_REQ_REF_NO);
+                pk.setSRC_ID(SRC_ID);
+
+                Migenq_t1 mig = dayRepo1.findById(pk).orElseThrow(() -> new RuntimeException("Record not found"));
+                System.out.println("Fetched Version (before): " + mig.getVersion());
+
+                mig.setRESPONSE_STATUS(RESPONSE_STATUS);
+                mig.setERROR_CODE(ERROR_CODE);
+                mig.setERROR_DESCRIPTION(ERROR_DESCRIPTION);
+                mig.setRESPONSE_STRING(clob);
+                mig.setRESP_TIME(entryDate.format(time));
+
+                System.out.println("Updating Version from: " + mig.getVersion());
+                dayRepo1.save(mig);
+                System.out.println("Updated Version to: " + mig.getVersion());
+            } else if (Logsaver == 2) {
+                Migenqpk_t2 pk = new Migenqpk_t2();
+                pk.setPK_REQ_REF_NO(PK_REQ_REF_NO);
+                pk.setSRC_ID(SRC_ID);
+
+                Migenq_t2 mig2 = dayRepo2.findById(pk).orElseThrow(() -> new RuntimeException("Record not found"));
+
+                mig2.setRESPONSE_STATUS(RESPONSE_STATUS);
+                mig2.setERROR_CODE(ERROR_CODE);
+                mig2.setERROR_DESCRIPTION(ERROR_DESCRIPTION);
+                mig2.setRESPONSE_STRING(clob);
+                mig2.setRESP_TIME(entryDate.format(time));
+
+                dayRepo2.save(mig2);
+            } else if (Logsaver == 0) {
+                Migenqpk_t3 pk = new Migenqpk_t3();
+                pk.setPK_REQ_REF_NO(PK_REQ_REF_NO);
+                pk.setSRC_ID(SRC_ID);
+
+                Migenq_t3 mig3 = dayRepo3.findById(pk).orElseThrow(() -> new RuntimeException("Record not found"));
+
+                mig3.setRESPONSE_STATUS(RESPONSE_STATUS);
+                mig3.setERROR_CODE(ERROR_CODE);
+                mig3.setERROR_DESCRIPTION(ERROR_DESCRIPTION);
+                mig3.setRESPONSE_STRING(clob);
+                mig3.setRESP_TIME(entryDate.format(time));
+
+                dayRepo3.save(mig3);
+            }
+            return true;
+        }, 5, 1000); // 5 attempts with initial 1 second delay
+    } catch (OptimisticLockingFailureException e) {
+        System.err.println("Optimistic lock failed after retries: " + e.getMessage());
+        return false;
+    } catch (Exception e) {
+        System.err.println("Error occurred: " + e.getMessage());
+        return false;
+    }
+}
