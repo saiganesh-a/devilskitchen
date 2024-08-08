@@ -1,3 +1,358 @@
+package com.tcs.bancs.microservices.impl;
+
+import java.io.IOException;
+import java.sql.Clob;
+import java.sql.Date;
+import java.sql.SQLException;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Base64;
+
+import javax.sql.rowset.serial.SerialException;
+import javax.transaction.Transactional;
+
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.OptimisticLockingFailureException;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.repository.query.Param;
+import org.springframework.orm.jpa.JpaOptimisticLockingFailureException;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.interceptor.TransactionAspectSupport;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
+
+//import com.tcs.bancs.microservices.RequestBean_CbsSix;
+import com.tcs.bancs.microservices.db.model.Migenq_t1;
+import com.tcs.bancs.microservices.db.model.Migenq_t2;
+import com.tcs.bancs.microservices.db.model.Migenq_t3;
+import com.tcs.bancs.microservices.db.model.Migenqpk_t1;
+//import com.tcs.bancs.microservices.db.model.Migenqpk_t2;
+import com.tcs.bancs.microservices.db.model.Migenqpk_t3;
+import com.tcs.bancs.microservices.exception.RrnException;
+import com.tcs.bancs.microservices.exception.SrcException;
+import com.tcs.bancs.microservices.impl.RetryUtils;
+
+import com.tcs.bancs.microservices.repository.day.Migenq_t1DetailDayRepo;
+import com.tcs.bancs.microservices.repository.ref.Migenq_t1DetailRefRepo;
+import com.tcs.bancs.microservices.repository.ref.Migenq_t2DetailRefRepo;
+//import com.tcs.bancs.microservices.repository.ref.Migenq_t2UpdateRefRepo;
+//import com.tcs.log.utils.ClobToStringConverter;
+//import com.tcs.log.utils.encryptLog;
+import com.tcs.bancs.microservices.repository.ref.Migenq_t3DetailRefRepo;
+
+@Service
+public class MigenqDetailsRepositoryImpl {
+	
+	 
+	private final Migenq_t1DetailRefRepo dayRepo1;
+	private final Migenq_t2DetailRefRepo dayRepo2;
+	private final Migenq_t3DetailRefRepo dayRepo3;
+
+	public MigenqDetailsRepositoryImpl(Migenq_t1DetailRefRepo dayRepo1, Migenq_t2DetailRefRepo dayRepo2,
+			Migenq_t3DetailRefRepo dayRepo3) {
+		super();
+		this.dayRepo1 = dayRepo1;
+		this.dayRepo2 = dayRepo2;
+		this.dayRepo3 = dayRepo3;
+	}
+    @PersistenceContext
+    private EntityManager entityManager;
+
+    private static final int MAX_RETRIES = 3;
+
+	   @Transactional
+	//   public boolean processRequest(String RESPONSE_STATUS,String REQ_STR,String RESP_STR, String CLIENT_IP, String TELLER_ID, String ERROR_CODE, String ERROR_DESCRIPTION,String PK_REQ_REF_NO, String SRC_ID,String RESPONSE_STRING,String RECD_TIME,String IP_ADDRESS) throws SerialException, SQLException, IOException, RrnException, SrcException {
+//		   saveInitialRequest(REQ_STR, CLIENT_IP, TELLER_ID, PK_REQ_REF_NO, SRC_ID, RECD_TIME, IP_ADDRESS);
+//		   updateResponse(PK_REQ_REF_NO, SRC_ID, RESPONSE_STATUS, RESPONSE_STRING, ERROR_CODE, ERROR_DESCRIPTION, RECD_TIME);
+//		   return true;
+	//   }
+	////    
+	 //   @Transactional
+
+	    public boolean saveInitialRequest(String REQ_STR, String CLIENT_IP, String TELLER_ID, String PK_REQ_REF_NO, String SRC_ID, String RECD_TIME, String IP_ADDRESS) throws SerialException, SQLException, IOException, RrnException, SrcException {
+
+	        DateTimeFormatter entryDate = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss:SSS");
+	        DateTimeFormatter entryDate1 = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+	        LocalDateTime time = LocalDateTime.now();
+	        LocalDate date = LocalDate.now();
+	        int dayCount = date.getDayOfMonth();
+	        int Logsaver = dayCount % 3;
+
+	        if (PK_REQ_REF_NO == null || PK_REQ_REF_NO.length() >= 26 || PK_REQ_REF_NO.isEmpty()) {
+	            PK_REQ_REF_NO = " ";
+	        }
+	        if (SRC_ID == null || SRC_ID.length() > 6 || SRC_ID.isEmpty()) {
+	            SRC_ID = " ";
+	        }
+
+	        if (PK_REQ_REF_NO == null) {
+	            throw new RrnException();
+	        } else if (SRC_ID == null) {
+	            throw new SrcException();
+	        }
+	try {
+	        if (Logsaver == 1) {
+	            Migenq_t1 mig = new Migenq_t1();
+	            Migenqpk_t1 pk = new Migenqpk_t1();
+
+	            pk.setPK_REQ_REF_NO(PK_REQ_REF_NO);
+	            mig.setSRC_ID(SRC_ID);
+	            if (IP_ADDRESS == null || IP_ADDRESS.isEmpty() || IP_ADDRESS.length() > 20) {
+	                mig.setCLIENT_IP(" ");
+	            } else {
+	                mig.setCLIENT_IP(IP_ADDRESS);
+	            }
+	            if (TELLER_ID == null || TELLER_ID.isEmpty() || TELLER_ID.length() < 1 || TELLER_ID.matches(" ")) {
+	                mig.setTELLER_ID(" ");
+	            } else if (TELLER_ID.length() > 10) {
+	                mig.setTELLER_ID(TELLER_ID.substring(TELLER_ID.length() - 10, TELLER_ID.length()));
+	            } else {
+	                mig.setTELLER_ID(TELLER_ID);
+	            }
+
+	            mig.setENTRY_DATE(entryDate1.format(time));
+	            mig.setTXN_NO("070805");
+	            mig.setTXN_NAME("accountChannelEnq");
+	            mig.setREQ_STR(REQ_STR);
+				mig.setRESPONSE_STATUS(" ");
+				mig.setERROR_CODE(" ");
+				mig.setERROR_DESCRIPTION(" ");
+				mig.setREQ_STR(REQ_STR);
+				mig.setRESP_STR(" ");
+	            mig.setRECD_TIME(RECD_TIME);
+	            mig.setRESP_TIME(entryDate.format(time));
+				Clob clob=new javax.sql.rowset.serial.SerialClob(" ".toCharArray());
+		        mig.setRESPONSE_STRING(clob);
+	            mig.setMigpk(pk);
+	            Integer version = mig.getVersion(); 
+	            System.out.println("Intial Version:----------------------------------------"+ version);
+	            System.out.println("Intial Version:"+ mig.getVersion());
+	            
+	            dayRepo1.save(mig);
+	            dayRepo1.flush();
+	            System.out.println("Saved Version:" + mig.getVersion());
+//	            mig.setVersion();
+	            //mig.setERROR_CODE("155");
+//	            dayRepo1.save(mig);
+//	            System.out.println("Version After update ka update$$$$$$$$$$" + mig.getVersion());
+	        } else if (Logsaver == 2) {
+	            Migenq_t2 mig2 = new Migenq_t2();
+//	            Migenqpk_t2 pk2 = new Migenqpk_t2();
+
+	            mig2.setPK_REQ_REF_NO(PK_REQ_REF_NO);
+	            mig2.setSRC_ID(SRC_ID);
+	            if (IP_ADDRESS == null || IP_ADDRESS.isEmpty() || IP_ADDRESS.length() > 20) {
+	                mig2.setCLIENT_IP(" ");
+	            } else {
+	                mig2.setCLIENT_IP(IP_ADDRESS);
+	            }
+	            if (TELLER_ID == null || TELLER_ID.isEmpty() || TELLER_ID.length() < 1 || TELLER_ID.matches(" ")) {
+	                mig2.setTELLER_ID(" ");
+	            } else if (TELLER_ID.length() > 10) {
+	                mig2.setTELLER_ID(TELLER_ID.substring(TELLER_ID.length() - 10, TELLER_ID.length()));
+	            } else {
+	                mig2.setTELLER_ID(TELLER_ID);
+	            }
+
+	            mig2.setENTRY_DATE(entryDate1.format(time));
+	            mig2.setTXN_NO("070805");
+	            mig2.setTXN_NAME("accountChannelEnq");
+	            mig2.setREQ_STR(REQ_STR);
+				mig2.setRESPONSE_STATUS(" ");
+				mig2.setERROR_CODE(" ");
+				mig2.setERROR_DESCRIPTION(" ");
+				mig2.setREQ_STR(REQ_STR);
+				mig2.setRESP_STR(" ");
+	            mig2.setRECD_TIME(RECD_TIME);
+	            mig2.setRESP_TIME(entryDate.format(time));
+				Clob clob=new javax.sql.rowset.serial.SerialClob(" ".toCharArray());
+		        mig2.setRESPONSE_STRING(clob);
+//	            mig2.setMigpk(pk2);
+	            Integer version = mig2.getVersion(); 
+	            System.out.println("Intial Version:----------------------------------------"+ version);
+	            System.out.println("Intial Version:"+ mig2.getVersion());
+	            
+	            dayRepo2.save(mig2);
+	            System.out.println("Saved Version:" + mig2.getVersion());
+
+	        } else if (Logsaver == 0) {
+	            Migenq_t3 mig3 = new Migenq_t3();
+	            Migenqpk_t3 pk3 = new Migenqpk_t3();
+
+	            pk3.setPK_REQ_REF_NO(PK_REQ_REF_NO);
+	            pk3.setSRC_ID(SRC_ID);
+	            if (IP_ADDRESS == null || IP_ADDRESS.isEmpty() || IP_ADDRESS.length() > 20) {
+	                mig3.setCLIENT_IP(" ");
+	            } else {
+	                mig3.setCLIENT_IP(IP_ADDRESS);
+	            }
+	            if (TELLER_ID == null || TELLER_ID.isEmpty() || TELLER_ID.length() < 1 || TELLER_ID.matches(" ")) {
+	                mig3.setTELLER_ID(" ");
+	            } else if (TELLER_ID.length() > 10) {
+	                mig3.setTELLER_ID(TELLER_ID.substring(TELLER_ID.length() - 10, TELLER_ID.length()));
+	            } else {
+	                mig3.setTELLER_ID(TELLER_ID);
+	            }
+	            
+	            pk3.setENTRY_DATE(entryDate1.format(time));
+				mig3.setTXN_NO("070805");
+				mig3.setTXN_NAME("accountChannelEnq");							
+				mig3.setRESPONSE_STATUS(" ");
+				mig3.setERROR_CODE(" ");
+				mig3.setERROR_DESCRIPTION(" ");
+				mig3.setREQ_STR(REQ_STR);
+				mig3.setRESP_STR(" ");
+				pk3.setRECD_TIME(RECD_TIME);
+				mig3.setRESP_TIME(entryDate.format(time));
+				mig3.setMigpk(pk3);
+				Clob clob=new javax.sql.rowset.serial.SerialClob(" ".toCharArray());
+		        mig3.setRESPONSE_STRING(clob);
+		        dayRepo3.save(mig3);
+	        }
+	}
+	        catch (JpaOptimisticLockingFailureException e) {
+	            // Handle the optimistic locking failure, trigger rollback and log the error
+	            System.err.println("Optimistic lock failed####################################################: " + e.getMessage());
+	            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+	            return false;
+	        } catch (Exception e) {
+	            // Catch other exceptions, trigger rollback and log the error
+	            System.err.println("Error occurred%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%: " + e.getMessage());
+	            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+	            return false;
+	        }
+	        
+
+	        return true;
+	    }
+	   @Transactional
+	   @Modifying
+	    public boolean updateResponse(String ERROR_CODE, String RESPONSE_STATUS, String ERROR_DESCRIPTION, String RESPONSE_STRING, String RECD_TIME, String PK_REQ_REF_NO, String SRC_ID) 
+	                                  throws SQLException {
+	        int attempt = 0;
+	        boolean success = false;
+
+	        //Clob clob = new SerialClob(RESPONSE_STRING.toCharArray());
+
+	        while (attempt < MAX_RETRIES && !success) {
+	            try {
+	                // Update Migenq_t2
+	                Query query2 = entityManager.createQuery("UPDATE Migenq_t2 m SET m.RESPONSE_STATUS = :responseStatus, m.ERROR_CODE = :errorCode, m.ERROR_DESCRIPTION = :errorDescription WHERE m.PK_REQ_REF_NO = :pkReqRefNo AND m.SRC_ID = :srcId");
+	                query2.setParameter("responseStatus", RESPONSE_STATUS);
+	                query2.setParameter("errorCode", ERROR_CODE);
+	                query2.setParameter("errorDescription", ERROR_DESCRIPTION);
+	               // query2.setParameter("responseString", clob);
+	                query2.setParameter("pkReqRefNo", PK_REQ_REF_NO);
+	                System.out.println("Intialllllllllllllllllllllllllllllllllllllllll"+ PK_REQ_REF_NO );
+	                query2.setParameter("srcId", SRC_ID);
+	                int updated2 = query2.executeUpdate();
+                System.out.println("Updated----------------------------"+ updated2 );
+
+
+	                if (updated2 >= 0) {
+	                    success = true;
+	                } else {
+	                    throw new RuntimeException("No records updated");
+	                }
+
+	            } catch (JpaOptimisticLockingFailureException e) {
+	                attempt++;
+	                if (attempt >= MAX_RETRIES) {
+	                    throw e;  // Max retries reached, propagate the exception
+	                }
+	                try {
+	                    Thread.sleep(100);  // Short delay before retrying
+	                } catch (InterruptedException ie) {
+	                    Thread.currentThread().interrupt();
+	                }
+	            }
+	        }
+
+	        return success;
+	    }   
+}
+-----------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 import java.util.function.Supplier;
 
 public class RetryUtils {
