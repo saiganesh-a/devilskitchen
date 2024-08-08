@@ -241,3 +241,61 @@ public class MigenqDetailsRepositoryImpl {
         return success;
     }
 }
+
+-------
+
+@Transactional
+public boolean updateResponseWithRetry(String PK_REQ_REF_NO, String SRC_ID, String RESPONSE_STATUS, String ERROR_CODE, String ERROR_DESCRIPTION, String RESPONSE_STRING, int maxRetries) {
+    int attempt = 0;
+    boolean success = false;
+    Clob clob = new javax.sql.rowset.serial.SerialClob(RESPONSE_STRING.toCharArray());
+
+    while (attempt < maxRetries && !success) {
+        try {
+            Migenqpk_t1 pk = new Migenqpk_t1();
+            pk.setPK_REQ_REF_NO(PK_REQ_REF_NO);
+            pk.setSRC_ID(SRC_ID);
+            
+            Migenq_t1 mig = dayRepo1.findById(pk).orElseThrow(() -> new RuntimeException("Record not found"));
+            
+            // Update each field sequentially
+            mig.setRESPONSE_STATUS(RESPONSE_STATUS);
+            dayRepo1.save(mig);
+            dayRepo1.flush();
+
+            mig.setERROR_CODE(ERROR_CODE);
+            dayRepo1.save(mig);
+            dayRepo1.flush();
+
+            mig.setERROR_DESCRIPTION(ERROR_DESCRIPTION);
+            dayRepo1.save(mig);
+            dayRepo1.flush();
+
+            mig.setRESPONSE_STRING(clob);
+            dayRepo1.save(mig);
+            dayRepo1.flush();
+
+            success = true; // Mark success after all updates
+
+        } catch (OptimisticLockingFailureException e) {
+            attempt++;
+            System.err.println("Optimistic lock failed, retrying... Attempt: " + attempt);
+            if (attempt >= maxRetries) {
+                System.err.println("Max retries reached. Failing the operation.");
+                return false;
+            }
+            // Optionally, add a small delay before retrying
+            try {
+                Thread.sleep(100); // 100ms delay
+            } catch (InterruptedException ie) {
+                Thread.currentThread().interrupt();
+            }
+        } catch (Exception e) {
+            System.err.println("Error occurred: " + e.getMessage());
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            return false;
+        }
+    }
+
+    return success;
+}
