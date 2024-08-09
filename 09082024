@@ -1,0 +1,28 @@
+import java.time.LocalDate;
+
+public class LogDistributor {
+
+    private static int lastTable = -1; // Initialize with an invalid table index
+
+    public static void main(String[] args) {
+        // Example usage
+        for (int day = 30; day <= 32; day++) {
+            LocalDate date = LocalDate.of(2024, 7, day);
+            int table = getLogTable(date);
+            System.out.println("Date: " + date + " logs to table " + table);
+        }
+    }
+
+    public static int getLogTable(LocalDate date) {
+        int day = date.getDayOfMonth();
+        int nextTable = (day % 3) + 1; // Tables are 1-based: 1, 2, 3
+        
+        // Ensure we don't use the same table as the last day
+        if (nextTable == lastTable) {
+            nextTable = (nextTable % 3) + 1;
+        }
+        
+        lastTable = nextTable;
+        return nextTable;
+    }
+}
