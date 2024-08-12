@@ -1,0 +1,129 @@
+package com.tcs.bancs.microservices.bean.request;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonIgnoreType;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+@JsonIgnoreType
+@JsonInclude
+@JsonIgnoreProperties
+public class RequestBean {
+	
+	@JsonProperty("Reference Number")
+	private String refno;
+	
+	@JsonProperty("Teller Number")
+	private String tellno;
+	
+	@JsonProperty("Branch Number")
+	private String branchno;
+	
+	@JsonProperty("option")
+	private String opt;
+	
+	@JsonProperty("first_name")
+	private String first_name;
+	
+	@JsonProperty("last_name")
+	private String last_name;
+	
+	@JsonProperty("date_of_birth")
+	private String dob;
+	
+	@JsonProperty("pf_number")
+	private String pfno;
+	
+	@JsonProperty("mobile_number")
+	private String mobno;
+	
+	
+	public void setrefno(String refno) {
+		this.refno = refno;
+		System.out.println("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
+	}
+	
+	public String getrefno() {
+		return refno;
+	}
+	
+	public void settellno(String tellno) {
+		this.tellno = tellno;
+	}
+	
+	public String gettellno() {
+		return tellno;
+	}
+	
+	public void setbranchno(String branchno) {
+		this.branchno = branchno;
+	}
+	
+	public String getbranchno() {
+		return branchno;
+	}
+	
+	public void setOpt(String opt) {
+		this.opt = opt;
+	}
+	
+	public String getOpt() {
+		return opt;
+	}
+	
+	public void setfirstname(String first_name) {
+		this.first_name = first_name;
+	}
+	
+	public String getfirstname() {
+		if(!first_name.isEmpty())
+		{ return first_name; }
+		else {
+			throw new RuntimeException("error in fname");
+		}
+	}
+
+	public void setlastname(String last_name) {
+		this.last_name = last_name;
+	}
+	
+	public String getlastname() {
+		return last_name;
+	}
+	
+	public void setdob(String dob) {
+		this.dob = dob;
+	}
+	
+	public String getdob() {
+		return dob;
+	}
+
+	public void setpfno(String pfno) {
+		this.pfno = pfno;
+		
+	}
+	
+	public String getpfno() {
+		if(!pfno.isEmpty())
+		{ return pfno; }
+		else {
+			throw new RuntimeException("error in pfno");
+		}
+	}
+	
+	public void setmobno(String mobno) {
+		this.mobno = mobno;
+	}
+	
+	public String getmobno() {
+		System.out.println( "{Reference Number : " + refno + "," + "Teller Number : " + tellno + "," + "Branch Number : " + branchno + "," + "option : " + opt + "," + "first_name : " + first_name + "," + "last_name : " + last_name + "," + "date_of_birth : " + dob + "," + "pf_number : "  + pfno + "," + "mobile_number : " + mobno + "}");
+		return mobno;
+	}
+
+	
+	@Override
+	public String toString() {
+		
+		return "{Reference Number : " + refno + "," + "Teller Number : " + tellno + "," + "Branch Number : " + branchno + "," + "option : " + opt + "," + "first_name : " + first_name + "," + "last_name : " + last_name + "," + "date_of_birth : " + dob + "," + "pf_number : "  + pfno + "," + "mobile_number : " + mobno + "}";
+	}
+}
