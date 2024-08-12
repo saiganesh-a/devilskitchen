@@ -127,3 +127,131 @@ public class RequestBean {
 		return "{Reference Number : " + refno + "," + "Teller Number : " + tellno + "," + "Branch Number : " + branchno + "," + "option : " + opt + "," + "first_name : " + first_name + "," + "last_name : " + last_name + "," + "date_of_birth : " + dob + "," + "pf_number : "  + pfno + "," + "mobile_number : " + mobno + "}";
 	}
 }
+
+
+
+
+-------------------
+
+import java.util.regex.Pattern;
+
+public class RequestBean {
+
+    @JsonProperty("Reference Number")
+    private String refno;
+
+    @JsonProperty("Teller Number")
+    private String tellno;
+
+    @JsonProperty("Branch Number")
+    private String branchno;
+
+    @JsonProperty("option")
+    private String opt;
+
+    @JsonProperty("first_name")
+    private String first_name;
+
+    @JsonProperty("last_name")
+    private String last_name;
+
+    @JsonProperty("date_of_birth")
+    private String dob;
+
+    @JsonProperty("pf_number")
+    private String pfno;
+
+    @JsonProperty("mobile_number")
+    private String mobno;
+
+    // Getters with validations
+    public String getrefno() {
+        validateRefNo(refno);
+        return refno;
+    }
+
+    public String gettellno() {
+        validateNotNullAndLength(tellno, "Teller Number", 10);  // Assuming teller number should have 10 characters
+        return tellno;
+    }
+
+    public String getbranchno() {
+        validateNotNullAndLength(branchno, "Branch Number", 6);  // Assuming branch number should have 6 characters
+        return branchno;
+    }
+
+    public String getOpt() {
+        validateNotNull(opt, "Option");
+        return opt;
+    }
+
+    public String getfirstname() {
+        validateName(first_name, "First Name");
+        return first_name;
+    }
+
+    public String getlastname() {
+        validateName(last_name, "Last Name");
+        return last_name;
+    }
+
+    public String getdob() {
+        validateNotNull(dob, "Date of Birth");
+        return dob;
+    }
+
+    public String getpfno() {
+        validateNotNullAndLength(pfno, "PF Number", 8);  // Assuming PF number should have 8 characters
+        return pfno;
+    }
+
+    public String getmobno() {
+        validateNotNullAndLength(mobno, "Mobile Number", 10);  // Assuming mobile number should have 10 digits
+        return mobno;
+    }
+
+    // Validation methods
+    private void validateRefNo(String refno) {
+        if (refno == null) {
+            throw new IllegalArgumentException("Reference Number cannot be null");
+        }
+        if (refno.length() != 25) {
+            throw new IllegalArgumentException("Reference Number must be exactly 25 characters long");
+        }
+        if (!Pattern.matches("^[a-zA-Z0-9]*$", refno)) {
+            throw new IllegalArgumentException("Reference Number must not contain special characters");
+        }
+    }
+
+    private void validateNotNullAndLength(String value, String fieldName, int length) {
+        if (value == null) {
+            throw new IllegalArgumentException(fieldName + " cannot be null");
+        }
+        if (value.length() != length) {
+            throw new IllegalArgumentException(fieldName + " must be exactly " + length + " characters long");
+        }
+    }
+
+    private void validateNotNull(String value, String fieldName) {
+        if (value == null) {
+            throw new IllegalArgumentException(fieldName + " cannot be null");
+        }
+    }
+
+    private void validateName(String name, String fieldName) {
+        if (name == null) {
+            throw new IllegalArgumentException(fieldName + " cannot be null");
+        }
+        if (!Pattern.matches("^[a-zA-Z]*$", name)) {
+            throw new IllegalArgumentException(fieldName + " must contain only alphabetic characters");
+        }
+    }
+
+    // Setters...
+    // You can keep the setters as they are, or apply validation in setters too if needed.
+
+    @Override
+    public String toString() {
+        return "{Reference Number : " + refno + "," + "Teller Number : " + tellno + "," + "Branch Number : " + branchno + "," + "option : " + opt + "," + "first_name : " + first_name + "," + "last_name : " + last_name + "," + "date_of_birth : " + dob + "," + "pf_number : "  + pfno + "," + "mobile_number : " + mobno + "}";
+    }
+}
