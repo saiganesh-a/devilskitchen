@@ -162,3 +162,144 @@ private void validateName(String name, String fieldName) {
 		return "{Reference Number : " + refno + "," + "Teller Number : " + tellno + "," + "Branch Number : " + branchno + "," + "option : " + opt + "," + "first_name : " + first_name + "," + "last_name : " + last_name + "," + "date_of_birth : " + dob + "," + "pf_number : "  + pfno + "," + "mobile_number : " + mobno + "}";
 	}
 }
+----------------------------
+
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.Scanner;
+
+public class RequestBeanGenerator {
+
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+
+        System.out.println("Enter the class name:");
+        String className = scanner.nextLine();
+
+        System.out.println("Enter the package name:");
+        String packageName = scanner.nextLine();
+
+        System.out.println("Enter the number of fields:");
+        int fieldCount = scanner.nextInt();
+        scanner.nextLine(); // consume the newline
+
+        String[] fieldNames = new String[fieldCount];
+        String[] fieldTypes = new String[fieldCount];
+
+        for (int i = 0; i < fieldCount; i++) {
+            System.out.println("Enter the type for field " + (i + 1) + " (e.g., String):");
+            fieldTypes[i] = scanner.nextLine();
+
+            System.out.println("Enter the name for field " + (i + 1) + ":");
+            fieldNames[i] = scanner.nextLine();
+        }
+
+        StringBuilder classContent = new StringBuilder();
+        
+        classContent.append("package ").append(packageName).append(";\n\n")
+                    .append("import java.util.regex.Pattern;\n")
+                    .append("import com.fasterxml.jackson.annotation.JsonIgnoreProperties;\n")
+                    .append("import com.fasterxml.jackson.annotation.JsonIgnoreType;\n")
+                    .append("import com.fasterxml.jackson.annotation.JsonInclude;\n")
+                    .append("import com.fasterxml.jackson.annotation.JsonProperty;\n\n")
+                    .append("@JsonIgnoreType\n")
+                    .append("@JsonInclude\n")
+                    .append("@JsonIgnoreProperties\n")
+                    .append("public class ").append(className).append(" {\n\n");
+
+        // Add fields and methods
+        for (int i = 0; i < fieldCount; i++) {
+            classContent.append("    @JsonProperty(\"").append(fieldNames[i]).append("\")\n")
+                        .append("    private ").append(fieldTypes[i]).append(" ").append(fieldNames[i]).append(";\n\n");
+            
+            // Setter
+            classContent.append("    public void set").append(capitalize(fieldNames[i])).append("(")
+                        .append(fieldTypes[i]).append(" ").append(fieldNames[i]).append(") {\n")
+                        .append("        this.").append(fieldNames[i]).append(" = ").append(fieldNames[i]).append(";\n")
+                        .append("    }\n\n");
+            
+            // Getter with validation
+            classContent.append("    public ").append(fieldTypes[i]).append(" get").append(capitalize(fieldNames[i])).append("() {\n");
+            
+            if ("String".equalsIgnoreCase(fieldTypes[i])) {
+                classContent.append("        validate").append(validationMethodName(fieldNames[i])).append("(").append(fieldNames[i])
+                            .append(", \"").append(capitalize(fieldNames[i])).append("\");\n");
+            }
+            classContent.append("        return ").append(fieldNames[i]).append(";\n")
+                        .append("    }\n\n");
+        }
+
+        // Validation methods
+        classContent.append(createValidationMethods());
+
+        // toString method
+        classContent.append("    @Override\n")
+                    .append("    public String toString() {\n")
+                    .append("        return \"{");
+
+        for (int i = 0; i < fieldCount; i++) {
+            classContent.append(capitalize(fieldNames[i])).append(" : \" + ").append(fieldNames[i]);
+            if (i < fieldCount - 1) {
+                classContent.append(" + \", ");
+            }
+        }
+        classContent.append(" + \"}\";\n")
+                    .append("    }\n")
+                    .append("}");
+
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(className + ".java"))) {
+            writer.write(classContent.toString());
+            System.out.println(className + ".java has been generated successfully!");
+        } catch (IOException e) {
+            System.out.println("An error occurred while writing the file.");
+            e.printStackTrace();
+        }
+
+        scanner.close();
+    }
+
+    private static String capitalize(String str) {
+        return str.substring(0, 1).toUpperCase() + str.substring(1);
+    }
+
+    private static String validationMethodName(String fieldName) {
+        if (fieldName.toLowerCase().contains("name")) {
+            return "Name";
+        } else if (fieldName.toLowerCase().contains("number") || fieldName.toLowerCase().contains("no")) {
+            return "OnlyNum";
+        } else {
+            return "";
+        }
+    }
+
+    private static String createValidationMethods() {
+        return "    private void validate(String value, String fieldName, int length) {\n"
+             + "        if (value == null || value.isEmpty()) {\n"
+             + "            throw new IllegalArgumentException(fieldName + \" cannot be null or empty\");\n"
+             + "        }\n"
+             + "        if (value.length() != length) {\n"
+             + "            throw new IllegalArgumentException(fieldName + \" must be exactly \" + length + \" characters long\");\n"
+             + "        }\n"
+             + "        if (!Pattern.matches(\"^[a-zA-Z0-9]*$\", value)) {\n"
+             + "            throw new IllegalArgumentException(fieldName + \" must contain only alphanumeric characters\");\n"
+             + "        }\n"
+             + "    }\n\n"
+             + "    private void validateOnlyNum(String value, String fieldName) {\n"
+             + "        if (value == null || value.isEmpty()) {\n"
+             + "            throw new IllegalArgumentException(fieldName + \" cannot be null or empty\");\n"
+             + "        }\n"
+             + "        if (!Pattern.matches(\"^[0-9]*$\", value)) {\n"
+             + "            throw new IllegalArgumentException(fieldName + \" must contain only numeric characters\");\n"
+             + "        }\n"
+             + "    }\n\n"
+             + "    private void validateName(String name, String fieldName) {\n"
+             + "        if (name == null || name.isEmpty()) {\n"
+             + "            throw new IllegalArgumentException(fieldName + \" cannot be null or empty\");\n"
+             + "        }\n"
+             + "        if (!Pattern.matches(\"^[a-zA-Z]*$\", name)) {\n"
+             + "            throw new IllegalArgumentException(fieldName + \" must contain only alphabetic characters\");\n"
+             + "        }\n"
+             + "    }\n";
+    }
+}
