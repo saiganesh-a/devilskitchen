@@ -1,167 +1,50 @@
-### Scope for Architecture of Core Banking System Merged with Microservices
+### Flowchart Redesign and Explanation
 
-#### 1. **Overview**
-The architecture of a core banking system merged with microservices focuses on leveraging the modular, scalable, and flexible nature of microservices to enhance the functionalities of a traditional core banking system. The goal is to break down the monolithic architecture of core banking into smaller, independent services that can be developed, deployed, and scaled independently.
+Below is a redesigned flowchart with detailed explanations for each step, along with an explanation of what JSON is and why it is used in this project.
 
-#### 2. **Core Components**
+#### **Flowchart Explanation:**
 
-1. **Customer Management Service**:
-   - Handles customer onboarding, profile management, KYC (Know Your Customer) processes.
-   - Manages customer data and provides APIs for other services to access customer information.
+1. **JSON Input:**
+   - **What It Is:** JSON (JavaScript Object Notation) is a lightweight data interchange format that is easy for humans to read and write and easy for machines to parse and generate.
+   - **Why It Is Used:** JSON is used in this project to transfer data between the client and the server in a structured way. It is widely supported by various programming languages and is the preferred format for web services due to its simplicity and flexibility.
 
-2. **Account Management Service**:
-   - Manages various types of accounts (savings, checking, loans).
-   - Provides APIs for account creation, balance inquiries, and transaction history.
+2. **TCSBANCS SERVICES:**
+   - **What It Is:** This represents a service layer in the application, likely part of a larger banking system (TCS Bancs). The services here are responsible for handling business logic and interactions with other system components.
+   - **Why It Is Used:** The TCSBANCS services are essential for processing the JSON input and interacting with backend systems or databases to perform the necessary operations, such as fetching or updating data.
 
-3. **Transaction Management Service**:
-   - Processes and records financial transactions.
-   - Ensures real-time transaction processing and integrates with payment gateways and other financial systems.
+3. **Wrapper Class:**
+   - **What It Is:** A wrapper class in Java is used to encapsulate multiple objects or data types into a single object. It acts as a bridge between the input (JSON) and the application logic.
+   - **Why It Is Used:** The wrapper class is used to simplify and standardize the input data, ensuring it is in a consistent format before processing it further. This also helps in easier data validation and error handling.
 
-4. **Loan Management Service**:
-   - Handles loan applications, approvals, disbursements, and repayments.
-   - Provides APIs for loan products and customer loan information.
+4. **Spring Validations:**
+   - **What It Is:** Spring Framework provides a validation mechanism that ensures the correctness of the data before further processing. It typically involves checking for null values, data formats, and other constraints.
+   - **Why It Is Used:** Validation is crucial to ensure that the data coming from the user or external systems meets the expected format and constraints, preventing errors or security issues later in the process.
 
-5. **Payment Processing Service**:
-   - Manages payment processing for various channels (online banking, mobile banking, ATMs).
-   - Integrates with external payment networks and services.
+   - **End User Impact:** If validation fails, the user will receive an error indicating a problem with the web service, as the data does not meet the expected criteria.
 
-6. **Notification Service**:
-   - Sends alerts and notifications to customers via email, SMS, and push notifications.
-   - Manages communication preferences and history.
+5. **Application Properties Read:**
+   - **What It Is:** This step involves reading configuration settings from the `application.properties` file. This file usually contains settings like database connections, API keys, or other configurable parameters.
+   - **Why It Is Used:** Reading the application properties ensures that the system is configured correctly before proceeding. This step is vital for enabling flexible and environment-specific configurations.
 
-7. **Reporting and Analytics Service**:
-   - Generates reports for regulatory compliance, audit, and business insights.
-   - Utilizes data analytics for customer insights and fraud detection.
+   - **End User Impact:** If the application properties cannot be read (e.g., due to missing or incorrect settings), the user will receive an error related to fetching data.
 
-8. **Security and Authentication Service**:
-   - Manages user authentication, authorization, and identity management.
-   - Ensures secure access to services and protects against fraud.
+6. **Validation of Input:**
+   - **What It Is:** This step involves validating the input data after it has passed through the earlier stages. It ensures that the data meets all business rules and is ready for further processing.
+   - **Why It Is Used:** Final validation is critical to ensure that the data is complete, accurate, and in a format that the business logic can process without issues.
 
-#### 3. **Supporting Components**
+#### **Flowchart Design:**
 
-1. **API Gateway**:
-   - Acts as a single entry point for all client requests.
-   - Handles request routing, authentication, rate limiting, and monitoring.
+- **Shape Usage:**
+  - **Rectangles:** Represent processes or steps in the flow.
+  - **Diamonds:** Indicate decision points where the process can branch based on conditions.
+  - **Arrows:** Show the flow of the process from one step to another.
 
-2. **Service Discovery**:
-   - Automatically detects and registers microservices.
-   - Provides service location and health check information.
-
-3. **Configuration Management**:
-   - Centralizes configuration management for all microservices.
-   - Supports dynamic configuration updates without redeploying services.
-
-4. **Monitoring and Logging**:
-   - Provides real-time monitoring and logging for all microservices.
-   - Ensures system health and helps in debugging and troubleshooting.
-
-5. **Database Management**:
-   - Manages multiple databases for different services.
-   - Ensures data consistency, integrity, and security.
-
-#### 4. **Integration**
-
-1. **Internal Integration**:
-   - Microservices communicate with each other using lightweight protocols (HTTP/REST, gRPC).
-   - Event-driven architecture using message queues (Kafka, RabbitMQ) for asynchronous communication.
-
-2. **External Integration**:
-   - Integrates with third-party systems (credit bureaus, payment gateways, regulatory bodies).
-   - Uses APIs and secure communication protocols for data exchange.
-
-#### 5. **Benefits**
-
-1. **Scalability**:
-   - Each service can be scaled independently based on demand.
-   - Improves overall system performance and resource utilization.
-
-2. **Flexibility**:
-   - Allows for the adoption of new technologies and frameworks.
-   - Facilitates faster development and deployment cycles.
-
-3. **Resilience**:
-   - Failure in one service does not impact the entire system.
-   - Enhanced fault tolerance and recovery mechanisms.
-
-4. **Maintainability**:
-   - Smaller codebases are easier to manage and update.
-   - Promotes continuous integration and continuous delivery (CI/CD).
-
-#### 6. **Challenges**
-
-1. **Complexity**:
-   - Increased complexity in managing distributed services.
-   - Requires robust infrastructure and tooling.
-
-2. **Data Consistency**:
-   - Ensuring data consistency across multiple services can be challenging.
-   - Requires careful design and implementation of data synchronization mechanisms.
-
-3. **Security**:
-   - Each service needs to be secured individually.
-   - Ensuring consistent security policies across services.
-
-4. **Inter-Service Communication**:
-   - Managing communication and data flow between services.
-   - Requires efficient and reliable communication mechanisms.
-
-By merging core banking systems with microservices architecture, banks can achieve a more agile, scalable, and resilient system that meets modern banking needs while maintaining high standards of security and compliance.
-
-
-
------------
-
-Here is the content based on the provided flow chart:
+- **Color Scheme:**
+  - **Input Steps:** Use a different color (e.g., light blue) to indicate initial data input.
+  - **Processing Steps:** Use a consistent color (e.g., light green) for processing-related steps.
+  - **Validation Steps:** Use a color like yellow to indicate validation checks.
+  - **Error Handling:** Use red to represent error conditions leading to end-user errors.
 
 ---
 
-## Transaction Flow Overview
-
-The provided diagram illustrates the flow of transactions within the CBS (Core Banking System) architecture. It showcases the path a transaction takes from the input stage in JSON format through various layers until the final output, also in JSON format.
-
-### Flow Breakdown
-
-1. **Input in JSON Format**: 
-   - The transaction data is initially provided in JSON format, making it easy to parse and manipulate.
-
-2. **Java Layer**:
-   - The input JSON is processed by the Java layer, where initial validations and transformations are performed as needed.
-
-3. **JVM Layer**:
-   - After the Java layer, the data passes through the JVM layer, which handles the execution of Java bytecode and manages resources.
-
-4. **CBS**:
-   - The CBS layer is where core banking operations are carried out. This could involve various business logic, transaction processing, and integration with other banking services.
-
-5. **Database**:
-   - The processed transaction data is then stored in the database, ensuring that all transactions are logged and can be retrieved or analyzed later.
-
-6. **CBS**:
-   - Post database operations, the transaction may undergo additional processing or validation within the CBS layer to ensure completeness and accuracy.
-
-7. **JVM Layer**:
-   - The data is once again handled by the JVM layer for any necessary final executions or resource management.
-
-8. **Java Layer**:
-   - Finally, the Java layer formats the processed transaction data into the output JSON format.
-
-9. **Output in JSON Format**:
-   - The completed transaction data is outputted in JSON format, making it easy to consume by other systems or services.
-
-### Benefits of the Transaction Flow
-
-- **Tracking and Debugging**:
-  - The architecture allows for detailed tracking of transaction flow, making it easier to identify and debug issues at any stage of the process.
-  
-- **Code Flow Identification**:
-  - By printing the names of the parameters involved in each code segment, developers can easily identify the structure and flow of the code. This is particularly useful in complex systems with multiple components and end-of-day (EOD) processing.
-
-- **Real-Time Transaction Monitoring**:
-  - The structured flow helps in real-time monitoring of transactions, ensuring that any issues can be promptly identified and addressed.
-
-- **Enhanced Transparency**:
-  - With clear delineation of each layer and the operations performed, stakeholders can have a better understanding of the system's inner workings and the journey of each transaction.
-
----
-
-This structured explanation of the flow chart will aid in understanding the CBS transaction processing and highlight the key stages and benefits of the system.
+Would you like me to create a visual representation of this flowchart?
