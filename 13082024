@@ -1,0 +1,164 @@
+package com.tcs.bancs.microservices.bean.request;
+
+import java.util.regex.Pattern;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonIgnoreType;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+@JsonIgnoreType
+@JsonInclude
+@JsonIgnoreProperties
+public class RequestBean {
+	
+	@JsonProperty("Reference Number")
+	private String refno;
+	
+	@JsonProperty("Teller Number")
+	private String tellno;
+	
+	@JsonProperty("Branch Number")
+	private String branchno;
+	
+	@JsonProperty("option")
+	private String opt;
+	
+	@JsonProperty("first_name")
+	private String first_name;
+	
+	@JsonProperty("last_name")
+	private String last_name;
+	
+	@JsonProperty("date_of_birth")
+	private String dob;
+	
+	@JsonProperty("pf_number")
+	private String pfno;
+	
+	@JsonProperty("mobile_number")
+	private String mobno;
+	
+	
+	public void setrefno(String refno) {
+		this.refno = refno;
+	}
+	
+	public String getrefno() {
+		validate(refno, "Reference Number", 25);
+		return refno;
+	}
+	
+	public void settellno(String tellno) {
+		this.tellno = tellno;
+	}
+	
+	public String gettellno() {
+		validateonlynum(tellno, "Teller Number");
+		return tellno;
+	}
+	
+	public void setbranchno(String branchno) {
+		this.branchno = branchno;
+	}
+	
+	public String getbranchno() {
+		validateonlynum(branchno, "Branch Number");
+		return branchno;
+	}
+	
+	public void setOpt(String opt) {
+		this.opt = opt;
+	}
+	
+	public String getOpt() {
+		return opt;
+	}
+	
+	public void setfirstname(String first_name) {
+		this.first_name = first_name;
+	}
+	
+	public String getfirstname() {
+		validateName(first_name, "First Name");
+		return first_name;
+	}
+
+	public void setlastname(String last_name) {
+		this.last_name = last_name;
+	}
+	
+	public String getlastname() {
+		validateName(last_name, "First Name");
+		return last_name;
+	}
+	
+	public void setdob(String dob) {
+		this.dob = dob;
+	}
+	
+	public String getdob() {
+		validateonlynum(dob, "Date of Birth");
+		return dob;
+	}
+
+	public void setpfno(String pfno) {
+		this.pfno = pfno;
+		
+	}
+	
+	public String getpfno() {
+		validate(pfno, "PF Number", 8);
+		return pfno;
+	}
+	
+	public void setmobno(String mobno) {
+		this.mobno = mobno;
+	}
+	
+	public String getmobno() {
+		validateonlynum(mobno, "Mobile Number");
+		return mobno;
+	}
+
+
+private void validate(String value, String fieldName, int length) {
+    if (value == null || value == "") {
+        throw new IllegalArgumentException(fieldName + " cannot be null or Empty");
+    }
+    if (value.length() != length) {
+        throw new IllegalArgumentException(fieldName + " must be exactly " + length + " characters long");
+    }
+    if (!Pattern.matches("^[a-zA-Z0-9]*$", value)) {
+        throw new IllegalArgumentException(fieldName + " must contain only alphanumeric characters");
+    }
+}
+
+private void validateonlynum(String value, String fieldName) {
+    if (value == null || value == "") {
+        throw new IllegalArgumentException(fieldName + " cannot be null or Empty");
+    }
+
+    if (!Pattern.matches("^[0-9]*$", value)) {
+        throw new IllegalArgumentException(fieldName + " must contain only alphanumeric characters");
+    }
+}
+
+
+private void validateName(String name, String fieldName) {
+    if (name == null || name == "") {
+        throw new IllegalArgumentException(fieldName + " cannot be null or empty");
+    }
+    if (!Pattern.matches("^[a-zA-Z]*$", name)) {
+        throw new IllegalArgumentException(fieldName + " must contain only alphanumeric characters");
+    }
+}
+
+	
+	
+	
+	@Override
+	public String toString() {
+		
+		return "{Reference Number : " + refno + "," + "Teller Number : " + tellno + "," + "Branch Number : " + branchno + "," + "option : " + opt + "," + "first_name : " + first_name + "," + "last_name : " + last_name + "," + "date_of_birth : " + dob + "," + "pf_number : "  + pfno + "," + "mobile_number : " + mobno + "}";
+	}
+}
