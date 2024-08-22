@@ -1,3 +1,100 @@
+import java.awt.AWTException;
+import java.awt.Robot;
+import java.awt.event.KeyEvent;
+import java.awt.event.InputEvent;
+import java.io.File;
+import java.io.IOException;
+import java.util.Scanner;
+
+public class GuiAutomationWithRobot {
+
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+
+        // Input: Path to the source folder with .cbl files
+        System.out.println("Enter the source directory path where .cbl files are located:");
+        String sourceDir = scanner.nextLine();
+
+        // Input: Path to the JAR file
+        System.out.println("Enter the full path of the runnable JAR file:");
+        String jarPath = scanner.nextLine();
+
+        // Input: Path inside the JAR where files should be copied
+        System.out.println("Enter the destination path inside the JAR:");
+        String destinationPath = scanner.nextLine();
+
+        try {
+            // Open WinRAR with the JAR file
+            Runtime.getRuntime().exec("cmd /c start \"\" \"C:\\Program Files\\WinRAR\\WinRAR.exe\" \"" + jarPath + "\"");
+
+            // Give WinRAR some time to open
+            Thread.sleep(3000);
+
+            // Initialize Robot
+            Robot robot = new Robot();
+
+            // Simulate manual interaction in WinRAR
+            robot.keyPress(KeyEvent.VK_ALT);
+            robot.keyPress(KeyEvent.VK_N); // Open the Navigation menu in WinRAR
+            robot.keyRelease(KeyEvent.VK_N);
+            robot.keyRelease(KeyEvent.VK_ALT);
+            Thread.sleep(500);
+
+            // Navigate to the destination path
+            robot.keyPress(KeyEvent.VK_CONTROL);
+            robot.keyPress(KeyEvent.VK_G); // Open the "Go To" dialog
+            robot.keyRelease(KeyEvent.VK_G);
+            robot.keyRelease(KeyEvent.VK_CONTROL);
+            Thread.sleep(500);
+            robot.keyPress(KeyEvent.VK_BACK_SPACE);
+            robot.keyRelease(KeyEvent.VK_BACK_SPACE);
+            robot.keyRelease(KeyEvent.VK_ENTER);
+            Thread.sleep(500);
+
+            // Open the source directory in File Explorer
+            Runtime.getRuntime().exec("explorer.exe \"" + sourceDir + "\"");
+
+            // Give File Explorer some time to open
+            Thread.sleep(3000);
+
+            // Simulate copying files
+            robot.keyPress(KeyEvent.VK_CONTROL);
+            robot.keyPress(KeyEvent.VK_A); // Select all files
+            robot.keyRelease(KeyEvent.VK_A);
+            robot.keyRelease(KeyEvent.VK_CONTROL);
+            Thread.sleep(500);
+            robot.keyPress(KeyEvent.VK_CONTROL);
+            robot.keyPress(KeyEvent.VK_C); // Copy files
+            robot.keyRelease(KeyEvent.VK_C);
+            robot.keyRelease(KeyEvent.VK_CONTROL);
+
+            // Switch back to WinRAR
+            robot.keyPress(KeyEvent.VK_ALT);
+            robot.keyPress(KeyEvent.VK_TAB); // Switch to the WinRAR window
+            robot.keyRelease(KeyEvent.VK_TAB);
+            robot.keyRelease(KeyEvent.VK_ALT);
+            Thread.sleep(500);
+
+            // Paste files in WinRAR
+            robot.keyPress(KeyEvent.VK_CONTROL);
+            robot.keyPress(KeyEvent.VK_V); // Paste files
+            robot.keyRelease(KeyEvent.VK_V);
+            robot.keyRelease(KeyEvent.VK_CONTROL);
+
+            System.out.println("Files have been pasted. Automation complete.");
+
+        } catch (AWTException | IOException | InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        scanner.close();
+    }
+}
+
+
+
+
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
