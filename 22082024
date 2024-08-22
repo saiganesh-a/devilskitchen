@@ -1,0 +1,63 @@
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.util.Scanner;
+
+public class CblFileCopier {
+
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+
+        // Input: Path where .cbl files are generated
+        System.out.println("Enter the source directory path where .cbl files are located:");
+        String sourceDir = scanner.nextLine();
+
+        // Input: Path where the runnable JAR is located
+        System.out.println("Enter the destination directory path where the runnable JAR is located:");
+        String destinationDir = scanner.nextLine();
+
+        // Create File objects for source and destination directories
+        File sourceFolder = new File(sourceDir);
+        File destinationFolder = new File(destinationDir);
+
+        // Check if the source directory exists
+        if (!sourceFolder.exists() || !sourceFolder.isDirectory()) {
+            System.out.println("The source directory does not exist or is not a directory.");
+            scanner.close();
+            return;
+        }
+
+        // Check if the destination directory exists
+        if (!destinationFolder.exists() || !destinationFolder.isDirectory()) {
+            System.out.println("The destination directory does not exist or is not a directory.");
+            scanner.close();
+            return;
+        }
+
+        // Copy .cbl files from the source directory to the destination directory
+        File[] files = sourceFolder.listFiles((dir, name) -> name.endsWith(".cbl"));
+
+        if (files != null && files.length > 0) {
+            for (File file : files) {
+                try {
+                    Path sourcePath = Paths.get(file.getAbsolutePath());
+                    Path destinationPath = Paths.get(destinationFolder.getAbsolutePath(), file.getName());
+
+                    Files.copy(sourcePath, destinationPath, StandardCopyOption.REPLACE_EXISTING);
+                    System.out.println("Copied " + file.getName() + " to " + destinationFolder.getAbsolutePath());
+                } catch (IOException e) {
+                    System.out.println("Failed to copy " + file.getName() + ": " + e.getMessage());
+                    e.printStackTrace();
+                }
+            }
+            System.out.println("All .cbl files have been copied successfully.");
+        } else {
+            System.out.println("No .cbl files found in the source directory.");
+        }
+
+        scanner.close();
+    }
+}
