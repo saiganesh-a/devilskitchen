@@ -235,5 +235,38 @@ public class CblFileCopierToJar {
     }
 }
 
++-+-+-+-+-+-+--+--++--+++-:
 
+
+import java.io.IOException;
+import java.util.Scanner;
+
+public class OpenJarInWinRAR {
+
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+
+        // Input: Path to the JAR file
+        System.out.println("Enter the full path of the runnable JAR file:");
+        String jarPath = scanner.nextLine();
+
+        // Input: Path inside the JAR where files should be copied
+        System.out.println("Enter the destination path inside the JAR:");
+        String destinationPath = scanner.nextLine();
+
+        // Command to open the JAR file in WinRAR and navigate to the specified path
+        String winRarCommand = "cmd /c start \"\" \"C:\\Program Files\\WinRAR\\WinRAR.exe\" \"" + jarPath + "\"";
+
+        try {
+            // Launch WinRAR with the specified JAR file
+            Runtime.getRuntime().exec(winRarCommand);
+            System.out.println("Opened the JAR file in WinRAR. Please manually navigate to: " + destinationPath);
+        } catch (IOException e) {
+            System.out.println("Failed to open the JAR file in WinRAR.");
+            e.printStackTrace();
+        }
+
+        scanner.close();
+    }
+}
 
