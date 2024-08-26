@@ -62,3 +62,874 @@ public LocalContainerEntityManagerFactoryBean dayEntityManagerFactory(
 
   
 }
+-------------------------------------------------------------------------------------
+
+
+package com.tcs.bancs.microservices.util;
+
+import java.io.IOException;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.List;
+
+import javax.servlet.http.HttpServletRequest;
+
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+
+import com.tcs.bancs.microservices.config.CBSDayDbConfig;
+import com.tcs.bancs.microservices.config.CacheConfig;
+import com.tcs.bancs.microservices.db.model.Sysc;
+import com.tcs.bancs.microservices.domain.DBData;
+import com.tcs.bancs.microservices.exception.RuleAccessTechnicalException;
+import com.tcs.bancs.microservices.interceptor.AggregatorRequestHandlerInterceptor;
+import com.tcs.bancs.microservices.repository.night.SyscRepository;
+
+/**
+ *
+ * @author 1132749 / Tejaswini This class is generic class to invoke
+ *         repositories using reflection for 24*7
+ */
+
+@Service
+@Import(CacheConfig.class)
+public class DBProcess {
+	
+	@Autowired(required = true)
+	SyscRepository SyscRepository;
+
+	public static long dbStartTimeMillis;
+
+	@Autowired
+	ApplicationContext context;
+
+	@Autowired
+	HttpServletRequest HttpServletRequest;
+
+	@Autowired
+	DaoUtilities daoUtil;
+
+	public  Integer[] pageDetails = new Integer[2];
+	public static Integer[] recordNumParam =  new Integer[2];
+
+	Logger logger = LoggerFactory.getLogger(DBProcess.class);
+
+	/*
+	 * public static final int defaultRowNumber = Integer.parseInt(
+	 * CacheConfig.frameworkConfigProperties.getProperty(
+	 * "microservices.aggregator.framework.defaultRowNumber"));
+	 */
+	public static final int defaultRowNumber = 10;
+	
+	/**
+	 * CR-2 Changes for CUA-CDR project , default page parameters added in config.properties and DbProcess
+	 * microservices.aggregator.framework.defaultPage=1
+microservices.aggregator.framework.defaultPageSize=25
+	 */
+	static final Integer page = Integer.parseInt(CacheConfig.frameworkConfigProperties.getProperty("microservices.aggregator.framework.defaultPage"));
+	static final Integer pageSizeConst = Integer.parseInt(CacheConfig.frameworkConfigProperties.getProperty("microservices.aggregator.framework.defaultPageSize"));
+	/**
+	 * This method read sysctable
+	 * 
+	 * @return
+	 */
+
+	public DBData readSyscTable() {
+		DBData dbData = new DBData();
+		//boolean isReadSyscTable=Boolean.parseBoolean(AggregatorConfigLoader.syscProperties.getProperty("ReadSyscTable","true"));
+		/*if(!isReadSyscTable)
+		{
+			dbData.setAPP(AggregatorConfigLoader.syscProperties.getProperty("DbRegionMode"));			
+			dbData.setIN_USE(AggregatorConfigLoader.syscProperties.getProperty("DbRegionInUse"));
+
+		}
+		
+		else{*/
+		List<Sysc> oSysc = new ArrayList<Sysc>();
+
+		oSysc = SyscRepository.FetchSyscDetails(AggregatorConfigLoader.syscProperties.getProperty("TargetLevel"),
+				AggregatorConfigLoader.syscProperties.getProperty("RegionNo"),
+				AggregatorConfigLoader.syscProperties.getProperty("SystemNo"),
+				AggregatorConfigLoader.syscProperties.getProperty("NodeNo"),
+				AggregatorConfigLoader.syscProperties.getProperty("ReplicaTypeX"),
+				AggregatorConfigLoader.syscProperties.getProperty("ReplicaNo"));
+		
+		
+		
+		
+/*
+ * 31/03/2021 : SYSC parameterized position for db fields
+ */
+		dbData.setAPP(oSysc.get(0).getSyscVariable().substring(Integer.parseInt(AggregatorConfigLoader.syscProperties.getProperty("DbRegionMode_startPos","10")), Integer.parseInt(AggregatorConfigLoader.syscProperties.getProperty("DbRegionMode_endPos","11"))).trim());
+		// Region Mode
+		//dbData.setMASTER_1(oSysc.getSyscVariable().substring(Integer.parseInt(AggregatorConfigLoader.syscProperties.getProperty("Master1_startPos","37")), Integer.parseInt(AggregatorConfigLoader.syscProperties.getProperty("Master1_endPos","45"))).trim());
+		//dbData.setMASTER_2(oSysc.getSyscVariable().substring(Integer.parseInt(AggregatorConfigLoader.syscProperties.getProperty("Master2_startPos","52")), Integer.parseInt(AggregatorConfigLoader.syscProperties.getProperty("Master2_endPos","60"))).trim());
+		dbData.setIN_USE(oSysc.get(0).getSyscVariable().substring(Integer.parseInt(AggregatorConfigLoader.syscProperties.getProperty("DbRegionInUse_startPos","67")), Integer.parseInt(AggregatorConfigLoader.syscProperties.getProperty("DbRegionInUse_endPos","75"))).trim());
+		
+		/*
+		dbData.setAPP(oSysc.getSyscVariable().substring(10, 11));
+		// Region Mode
+		dbData.setMASTER_1(oSysc.getSyscVariable().substring(37, 45).trim());
+		dbData.setMASTER_2(oSysc.getSyscVariable().substring(52, 60).trim());
+		dbData.setIN_USE(oSysc.getSyscVariable().substring(67, 75).trim());*/
+		
+		//}
+		return dbData;
+	}
+
+	/**
+	 * This method returns DBData object containing DB indicator ( Day/Night/Ref)
+	 * along with Table access type details
+	 * 
+	 * @param beanName
+	 * @return
+	 * @throws Exception
+	 */
+
+	public DBData fetchDbRegionDetails(String beanName, DBData dbData) throws Exception {
+		String type = FrameworkConstants.accessType_zero;
+
+		if (dbData.getAPP().equals(FrameworkConstants.DBAPP_Day)) {
+
+			dbData.setDBINDICATOR(FrameworkConstants.DBIndicator_DD);
+			dbData.setACCESS_TYPE(type);
+		} else {
+			type = (String) AggregatorConfigLoader.propertiesConfiguration.getProperty(beanName.toUpperCase());
+
+			// System.out.println("type ****************" + type);
+
+			String DBIndicator = dbData.getIN_USE().equals(CBSDayDbConfig.connectionType.trim())
+					? FrameworkConstants.DBIndicator_DN
+					: FrameworkConstants.DBIndicator_RN;
+			dbData.setDBINDICATOR(DBIndicator);
+			dbData.setACCESS_TYPE(type);
+		}
+		return dbData;
+
+	}
+
+	/**
+	 * 
+	 * @param dbModelBean
+	 *            -- This input will be null if input for Repository method is blank
+	 * @param repoBeanName
+	 *            -- Table Name
+	 * @param repositoryImpl
+	 *            -- Impl Name
+	 * @param repoMethod
+	 *            -- method Name to be invoked
+	 * @param rowNum
+	 *            -- rownum value in case of union
+	 * @param isList
+	 *            -- if outputType is list then true else false
+	 * 
+	 * @param queryParams
+	 *            -- if any queryparameters present ( atleast will contains details
+	 *            for paging )
+	 * @return
+	 * @throws Exception
+	 * 
+	 *             01/07/2020: 1132749 : COMMENTED : CHANGE REF - REPOSITORYNAME
+	 */
+
+	public <T> T fetchRepositories(Object dbModelBean, String repoBeanName, String repositoryName, String repoMethod,
+			boolean pagination, boolean isList, ArrayList<Object> queryParams) throws Exception {
+		// T finalData=null;
+		T nightData = null;
+		// logger.info("[DBProcess][StartTime : " + dbStartTimeMillis + "]");
+		try {
+
+			// dbStartTimeMillis = System.currentTimeMillis();
+			DBData dbData = new DBData();
+			dbData.setDBINDICATOR(FrameworkConstants.DBIndicator_DD);
+			dbData.setACCESS_TYPE(FrameworkConstants.accessType_zero);
+
+			// RequestAttributes attribs = RequestContextHolder.getRequestAttributes();
+
+			/*
+			 * if(requestParamMap==null)
+			 * requestParamMap=HttpServletRequest.getParameterMap();
+			 */
+			if (pagination)
+				getPageDetails();
+			if (isList)
+				getRowNumber();
+
+			if (AggregatorConfigLoader.applicationDBRregionType.equals(FrameworkConstants.Region_24)) {
+
+				dbData = (DBData) HttpServletRequest.getAttribute("DBData");
+
+				dbData = fetchDbRegionDetails(repoBeanName, dbData);
+			}
+
+			String repositoryDDName = StringUtils
+					.uncapitalize(RepoImplMapping2RepositoryBean(FrameworkConstants.DBIndicator_DD, repositoryName));
+
+			// Night/Ref Repository output
+			if (!(FrameworkConstants.DBIndicator_DD).equals(dbData.getDBINDICATOR())) {
+
+				// Night repository call irrespective of region type since whichever region
+				// night should be read
+				String repositoryNight = StringUtils.uncapitalize(
+						RepoImplMapping2RepositoryBean(FrameworkConstants.DBIndicator_DN, repositoryName));
+/**
+ * @Date 16/02/2021
+ */
+				// nightData=invokeRepository(dbModelBean, repositoryNight,repoMethod,queryParams, null, null, null, pagination, isList);
+			/*	if (pagination) {
+					nightData = invokeRepository(dbModelBean, repositoryNight, repoMethod, queryParams, pageDetails[0],
+							pageDetails[1], null, pagination, isList);
+				} else
+					if (isList) {
+					nightData = invokeRepository(dbModelBean, repositoryNight, repoMethod, queryParams, null, null,
+							recordNumParam[0], pagination, isList);
+				} else {*/
+					nightData = invokeRepository(dbModelBean, repositoryNight, repoMethod, queryParams, pageDetails[0], pageDetails[1],
+							recordNumParam[0], pagination, isList);
+				//}
+
+				// if((dbData.getACCESS_TYPE().equalsIgnoreCase("1") ||
+				// dbData.getACCESS_TYPE().equalsIgnoreCase("3") ) && nightData!=null)
+				
+					//Case : Only Night Data
+					if ((nightData != null)
+						&& dbData.getACCESS_TYPE().equalsIgnoreCase(FrameworkConstants.accessType_three)) {
+					return nightData;
+				}
+
+					//Case : In case of Ref DB present , Ref first then night data
+				if ((FrameworkConstants.DBIndicator_RN).equals(dbData.getDBINDICATOR())) {
+
+					String repositoryRef = StringUtils.uncapitalize(
+							RepoImplMapping2RepositoryBean(FrameworkConstants.DBIndicator_RN, repositoryName));
+					if (isList || pagination)
+						return invokeListRepository(nightData, dbModelBean, repositoryRef, repoMethod, pagination,
+								queryParams);
+					else if (nightData == null) {
+						return invokeRepository(dbModelBean, repositoryRef, repoMethod, queryParams, pageDetails[0], pageDetails[1],
+								recordNumParam[0],
+								pagination, isList);
+					}
+
+				}
+
+				// Case : call Night+Day
+				if (isList || pagination)
+					return invokeListRepository(nightData, dbModelBean, repositoryDDName, repoMethod, pagination,
+							queryParams);
+
+			}
+
+			// Day repository output
+
+			// dayData=invokeRepository(dbModelBean, repositoryDDName,repoMethod,
+			// queryParams, null, null, null, pagination);
+
+			/*if (pagination) {
+				return invokeRepository(dbModelBean, repositoryDDName, repoMethod, queryParams, pageDetails[0],
+						pageDetails[1], null, pagination, isList);
+			}
+			if (isList) {
+				return invokeRepository(dbModelBean, repositoryDDName, repoMethod, queryParams, null, null,
+						recordNumParam[0], pagination, isList);
+			}*/
+			if (nightData == null)
+				return invokeRepository(dbModelBean, repositoryDDName, repoMethod, queryParams, pageDetails[0], pageDetails[1],
+						recordNumParam[0],
+						pagination, isList);
+
+		} catch (Exception e) {
+			throw e;
+		}
+		/*
+		 * logger.info("[DBProcess][CompletionTime : " + System.currentTimeMillis() +
+		 * "][TotalCompletionTime : " + (System.currentTimeMillis() - dbStartTimeMillis)
+		 * + "]"); return dayData;
+		 */
+		return nightData;
+	}
+
+	/*
+	 * public <T> T unionList(T data1,Object pagination) { List<T> returnObjList =
+	 * (List<T>) data1;
+	 * 
+	 * 
+	 * if(pagination.equals(true)) { Page<T> pagedResult=(Page<T>) data1; Page<T>
+	 * pagedResult2=(Page<T>) data2;
+	 * 
+	 * 
+	 * returnObjList = daoUtil.union(pagedResult.getContent(),
+	 * pagedResult.getContent());
+	 * 
+	 * return (T) returnObjList ; }
+	 * 
+	 * 
+	 * 
+	 * if (returnObjList!=null) {
+	 * 
+	 * Integer count = 0;
+	 * 
+	 * 
+	 * Object rowNum= HttpServletRequest.getParameter("RecordNum"); Integer
+	 * rowNumber=(Integer) rowNum;
+	 * 
+	 * 
+	 * 
+	 * if (returnObjList.size() != rowNumber) { count = (Integer)
+	 * daoUtil.calculatePageSize(returnObjList, rowNumber); if(count!=0) { List<T>
+	 * secondaryList = new ArrayList<T>(); Class[] cArg = new Class[1]; cArg[0] =
+	 * count.getClass(); secondaryRepoImplMethod =
+	 * secondaryRepoClass.getDeclaredMethod(repoMethod, cArg); secondaryList =
+	 * (List<T>) secondaryRepoImplMethod.invoke(context.getBean(secondaryRepoClass),
+	 * count);
+	 * 
+	 * returnObjList = daoUtil.union(returnObjList, secondaryList); } }
+	 * 
+	 * 
+	 * 
+	 * } return (T) returnObjList; }
+	 */
+
+	public <T> T invokeListRepository(T data, Object dbModelBean, String repositoryName, String repoMethod,
+			boolean pagination, ArrayList<Object> queryParams) throws Exception {
+		List<T> list1;
+		Integer count = null;
+		List<T> list2 = new ArrayList<>();
+		// TODO== less records
+		if (pagination) {
+			Page<T> pagedResult = (Page<T>) data;
+
+			list1 = pagedResult.getContent();
+
+			if (pageDetails[1] != null && list1.size() != pageDetails[1]) {
+
+				count = (Integer) daoUtil.calculatePageSize(list1, pageDetails[1]);
+				if (count != 0) {
+					queryParams.remove(queryParams.size() - 1);
+
+					Page<T> pagedResult2 = (Page<T>) invokeRepository(dbModelBean, repositoryName, repoMethod,
+							queryParams, pageDetails[0], count, null, pagination, false);
+
+					list2 = pagedResult2.getContent();
+				}
+
+			}
+			// @Date: 16/02/2021
+			List<T> returnObjList = daoUtil.union(list1, list2);
+			pagedResult = new PageImpl(returnObjList);
+			return (T) pagedResult;
+
+		} else {
+			list1 = (List<T>) data;
+			if(list1.size()==0)
+			{
+				return invokeRepository(dbModelBean, repositoryName, repoMethod, queryParams, pageDetails[0], pageDetails[1],
+						recordNumParam[0], pagination, true);
+				//list2 = (List<T>) data2;
+
+			}
+			else {
+			
+			
+			
+			int listSize = 0;
+			boolean isRange = false;
+			if (recordNumParam.length == 2 && recordNumParam[1]!=null) {
+				listSize = recordNumParam[1] - recordNumParam[0];
+				isRange = true;
+			}
+
+			if (list1.size() != listSize) {
+				count = (Integer) daoUtil.calculatePageSize(list1, listSize);
+				if (count != 0) {
+
+					queryParams.remove(queryParams.size() - 1);
+
+					T data2 = invokeRepository(dbModelBean, repositoryName, repoMethod, queryParams, null, null, count,
+							pagination, true);
+					list2 = (List<T>) data2;
+
+				}
+			}
+			}
+		}
+
+		List<T> returnObjList = daoUtil.union(list1, list2);
+		return (T) returnObjList;
+
+	}
+
+	public Integer[] getPageDetails() {
+		// if(pageDetails==null)
+		// {
+		//pageDetails = new Integer[2];
+		
+int pageNumber=0;
+		if (AggregatorRequestHandlerInterceptor.requestParamMap != null) {
+
+
+			
+			
+			if (AggregatorRequestHandlerInterceptor.requestParamMap.containsKey(FrameworkConstants.page)
+					&& (AggregatorRequestHandlerInterceptor.requestParamMap.containsKey(FrameworkConstants.pageSize)
+							|| AggregatorRequestHandlerInterceptor.requestParamMap
+									.containsKey(FrameworkConstants.page_Size))
+					|| (HttpServletRequest.getAttribute(FrameworkConstants.page) != null
+							&& (HttpServletRequest.getAttribute(FrameworkConstants.pageSize) != null || HttpServletRequest.getAttribute(FrameworkConstants.page_Size) != null))) 
+			{
+				if (HttpServletRequest.getParameter(FrameworkConstants.page) == null)
+					pageNumber = ((Integer) HttpServletRequest.getAttribute(FrameworkConstants.page) == null
+							? pageNumber
+							: (Integer) HttpServletRequest.getAttribute(FrameworkConstants.page));
+				else
+					pageNumber = Integer.valueOf(HttpServletRequest.getParameter(FrameworkConstants.page));
+
+				if (pageNumber != 0)
+					pageNumber = pageNumber - 1;
+				pageDetails[0] = pageNumber;
+				
+				
+				if ((HttpServletRequest.getParameter(FrameworkConstants.pageSize) == null
+						&& HttpServletRequest.getParameter(FrameworkConstants.page_Size) == null))
+					pageDetails[1] = ((Integer) HttpServletRequest.getAttribute(FrameworkConstants.pageSize) == null
+							? null
+							: (Integer) HttpServletRequest.getAttribute(FrameworkConstants.pageSize));
+				else {
+					if (HttpServletRequest.getParameter(FrameworkConstants.pageSize) != null)
+						pageDetails[1] = Integer.valueOf(HttpServletRequest.getParameter(FrameworkConstants.pageSize));
+					else if (HttpServletRequest.getParameter(FrameworkConstants.page_Size) != null)
+						pageDetails[1]= Integer.valueOf(HttpServletRequest.getParameter(FrameworkConstants.page_Size));
+
+				}
+				// pageDetails[0] = 1;
+
+				// pageDetails[1] = 10;
+
+			}
+		}
+		 if(pageDetails[0]==null)
+		{
+			 if (page != 0)
+				 pageDetails[0] = page - 1;
+		}
+		 if(pageDetails[1]==null)
+			{
+				 pageDetails[1]=pageSizeConst;
+			}
+		// }
+		// System.out.println("PageDetails ===========>"+Arrays.asList(pageDetails));
+		return pageDetails;
+
+	}
+
+	public Integer[] getRowNumber() {
+
+		//if (recordNumParam == null) {
+			//recordNumParam = new Integer[2];
+
+			if (AggregatorRequestHandlerInterceptor.requestParamMap.containsKey("recordNum")
+					|| HttpServletRequest.getAttribute("recordNum") != null) {
+				{
+					recordNumParam[0] = AggregatorRequestHandlerInterceptor.requestParamMap.get("recordNum") == null
+							? (HttpServletRequest.getAttribute("recordNum") == null ? 0 // or default value here
+									: (int) HttpServletRequest.getAttribute("recordNum"))
+							: (int) AggregatorRequestHandlerInterceptor.requestParamMap.get("recordNum");
+				}
+
+			} else if ((AggregatorRequestHandlerInterceptor.requestParamMap.containsKey("startRecordNum")
+					|| HttpServletRequest.getAttribute("startRecordNum") != null)
+					&& (AggregatorRequestHandlerInterceptor.requestParamMap.containsKey("endRecordNum")
+							|| HttpServletRequest.getAttribute("endRecordNum") != null)) {
+				{
+					recordNumParam[0] = AggregatorRequestHandlerInterceptor.requestParamMap
+							.get("startRecordNum") == null
+									? (HttpServletRequest.getAttribute("startRecordNum") == null ? 0 // or default value
+																										// here
+											: (int) HttpServletRequest.getAttribute("startRecordNum"))
+									: (int) AggregatorRequestHandlerInterceptor.requestParamMap.get("startRecordNum");
+					recordNumParam[1] = AggregatorRequestHandlerInterceptor.requestParamMap.get("endRecordNum") == null
+							? (HttpServletRequest.getAttribute("endRecordNum") == null ? 0 // or default value here
+									: (int) HttpServletRequest.getAttribute("endRecordNum"))
+							: (int) AggregatorRequestHandlerInterceptor.requestParamMap.get("endRecordNum");
+				}
+
+			} else
+				recordNumParam[0] = 0;
+
+		//}
+		return recordNumParam;
+	}
+
+	public <T> T invokeRepository(Object dbModelBean, String repositoryName, String repoMethod,
+			ArrayList<Object> queryParams, Integer page, Integer pageSize, Integer recordNum, boolean isPagination,
+			boolean isList) throws Exception {
+
+		//long startTimeMillis = System.currentTimeMillis();
+		// logger.info("[DBProcess-invokeRepository][StartTime : " + startTimeMillis +
+		// "]");
+		T t = null;
+		if (dbModelBean != null) {
+
+			Object inputData = null;
+			Class[] cArg = new Class[1];
+
+			if (dbModelBean != null) {
+				inputData = dbModelBean;
+			}
+			cArg[0] = inputData.getClass();
+			t = (T) context.getBean(repositoryName).getClass().getDeclaredMethod(repoMethod, cArg)
+					.invoke(context.getBean(repositoryName), inputData);
+			// return (T)
+			// context.getBean(repositoryName).getClass().getDeclaredMethod(repoMethod,cArg).invoke(context.getBean(repositoryName),inputData);
+
+		} else if (queryParams != null) {
+			// System.out.println("Inside Invokerepo"+page +" "+pageSize);
+			if (isPagination) {
+				if (page == null && pageSize == null) {
+					queryParams.add(null);
+
+				} else {
+					Pageable paging = PageRequest.of(page, pageSize);
+					queryParams.add(paging);
+
+				}
+			}
+
+			if (isList && recordNum != 0)
+				queryParams.add(recordNum);
+
+			Class[] cArg = new Class[queryParams.size()];
+			Object[] data = new Object[queryParams.size()];
+			Object[] inputData = new Object[queryParams.size()];
+			for (int i = 0; i < queryParams.size(); i++) {
+
+				// if(i==queryParams.size()-1 && isPagination)
+				if (isPagination && queryParams.get(i) != null && queryParams.get(i).getClass() == PageRequest.class)
+					cArg[cArg.length - 1] = Pageable.class;
+				else {
+
+					if (queryParams.get(i) == null)
+						cArg[i] = String.class;
+					else
+						cArg[i] = queryParams.get(i).getClass();
+				}
+				data[i] = queryParams.get(i);
+				// Single input Param handling
+				// inputData= queryParams.get(i);
+				inputData[i] = queryParams.get(i);
+
+			}
+			t = (T) context.getBean(repositoryName).getClass().getDeclaredMethod(repoMethod, cArg)
+					.invoke(context.getBean(repositoryName), inputData);
+			// return (T)
+			// context.getBean(repositoryName).getClass().getDeclaredMethod(repoMethod,cArg).invoke(context.getBean(repositoryName),inputData);
+		} else {
+			t = (T) context.getBean(repositoryName).getClass().getDeclaredMethod(repoMethod)
+					.invoke(context.getBean(repositoryName));
+			// return (T)
+			// context.getBean(repositoryName).getClass().getDeclaredMethod(repoMethod).invoke(context.getBean(repositoryName));
+
+		}
+		// logger.info("[DBProcess-invokeRepository][CompletionTime : " +
+		// System.currentTimeMillis() + "][TotalCompletionTime : "+
+		// (System.currentTimeMillis() - startTimeMillis) + "]");
+		return t;
+
+	}
+
+	public <T> T fetchRepository(Object dbModelBean, String repoBeanName, String repositoryName, String repoMethod,
+			Object rowNum, boolean isList, ArrayList<Object> queryParams) throws Exception {
+		try {
+
+			long dbStartTimeMillis = System.currentTimeMillis();
+			// logger.info("[DBProcess][StartTime : " + dbStartTimeMillis + "]");
+
+			Object returnObjData = null;
+
+			DBData dbData = new DBData();
+			dbData.setDBINDICATOR(FrameworkConstants.DBIndicator_DD);
+			dbData.setACCESS_TYPE("0");
+
+			if (AggregatorConfigLoader.applicationDBRregionType.equals(FrameworkConstants.Region_24)) {
+
+				dbData = (DBData) HttpServletRequest.getAttribute("DBData");
+
+				dbData = fetchDbRegionDetails(repoBeanName, dbData);
+			}
+
+			String DBIndicator = dbData.getDBINDICATOR();
+
+			String primaryRepositoryName = RepoImplMapping2RepositoryClass(DBIndicator, repositoryName);
+
+			String secondRepositoryName = "";
+			Class secondaryRepoClass = null;
+			Method primaryRepoImplMethod;
+			Method secondaryRepoImplMethod = null;
+			boolean isSecondaryRepo = false;
+			if (!(FrameworkConstants.DBIndicator_DD).equals(dbData.getDBINDICATOR())) {
+				isSecondaryRepo = true;
+
+				if ((FrameworkConstants.DBIndicator_DN).equals(dbData.getDBINDICATOR())) {
+					secondRepositoryName = RepoImplMapping2RepositoryClass(FrameworkConstants.DBIndicator_DD,
+							repositoryName);
+				} else {
+
+					secondRepositoryName = primaryRepositoryName;
+					primaryRepositoryName = RepoImplMapping2RepositoryClass(FrameworkConstants.DBIndicator_RN,
+							repositoryName);
+				}
+
+			}
+
+			Class primaryRepoClass = Class.forName(primaryRepositoryName);
+
+			if (isSecondaryRepo) {
+				secondaryRepoClass = Class.forName(secondRepositoryName);
+
+			}
+
+			// case 1 : e.g : findbyDeppk(Depp) || case 3: e.g : findbyDeppk(RowNum)
+			if (dbModelBean != null || rowNum != null) {
+				/*
+				 * long startTime=System.currentTimeMillis();
+				 * logger.info("[dbModelBean][StartTime : "+startTime+"]");
+				 */
+
+				Object inputData = rowNum;
+
+				Class[] cArg = new Class[1];
+
+				if (dbModelBean != null) {
+					inputData = dbModelBean;
+				}
+				cArg[0] = inputData.getClass();
+				primaryRepoImplMethod = primaryRepoClass.getDeclaredMethod(repoMethod, cArg);
+
+				if (isSecondaryRepo) {
+					secondaryRepoImplMethod = secondaryRepoClass.getDeclaredMethod(repoMethod, cArg);
+
+				}
+
+				// logger.info("[dbModelBean][CompletionTime :
+				// "+System.currentTimeMillis()+"][TotalCompletionTime :
+				// "+(System.currentTimeMillis()-startTime)+"]");
+				// context.getBean(repositoryName+FrameworkConstants.DayRepo).getClass().getMethod(repoMethod,
+				// cArg);
+
+				returnObjData = invokeRepositoryMethods(dbData, primaryRepoClass, secondaryRepoClass,
+						primaryRepoImplMethod, secondaryRepoImplMethod, repoMethod, isList, rowNum, inputData, null);
+			}
+
+			// case 2 : findByDeppInput(String productType,String intcat)
+			else if (queryParams != null) {
+				Class[] cArg = new Class[queryParams.size()];
+				Object[] data = new Object[queryParams.size()];
+				Object[] inputData = new Object[queryParams.size()];
+				for (int i = 0; i < queryParams.size(); i++) {
+
+					cArg[i] = queryParams.get(i).getClass();
+					data[i] = queryParams.get(i);
+
+					inputData[i] = queryParams.get(i);
+				}
+				primaryRepoImplMethod = primaryRepoClass.getDeclaredMethod(repoMethod, cArg);
+
+				if (isSecondaryRepo) {
+					secondaryRepoImplMethod = secondaryRepoClass.getDeclaredMethod(repoMethod, cArg);
+
+				}
+
+				returnObjData = invokeRepositoryMethods(dbData, primaryRepoClass, secondaryRepoClass,
+						primaryRepoImplMethod, secondaryRepoImplMethod, repoMethod, isList, rowNum, null, inputData);
+
+			}
+
+			else {
+
+				primaryRepoImplMethod = primaryRepoClass.getDeclaredMethod(repoMethod);
+				if (isSecondaryRepo) {
+					secondaryRepoImplMethod = secondaryRepoClass.getDeclaredMethod(repoMethod);
+
+				}
+
+				returnObjData = invokeRepositoryMethods(dbData, primaryRepoClass, secondaryRepoClass,
+						primaryRepoImplMethod, secondaryRepoImplMethod, repoMethod, isList, rowNum, null, null);
+
+			}
+			// logger.info("[DBProcess][CompletionTime : " + System.currentTimeMillis() +
+			// "][TotalCompletionTime : "+ (System.currentTimeMillis() - dbStartTimeMillis)
+			// + "]");
+
+			return (T) returnObjData;
+
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			// e.printStackTrace();
+			throw e;
+		}
+
+	}
+
+	/**
+	 * 
+	 * @param dbData
+	 *            -- Db related configurations
+	 * @param primaryRepoClass
+	 * @param secondaryRepoClass
+	 * @param primaryRepoImplMethod
+	 * @param secondaryRepoImplMethod
+	 * @param repoMethod
+	 * @param isList
+	 * @param rowNum
+	 * @param inputData
+	 * @return
+	 * 
+	 * 
+	 * 		This method invoke methods of following types
+	 * 
+	 *         case 1 : eg: findByDepp(Depp) case 2 : e.g findByDepp(int rownum)
+	 * @throws Exception
+	 */
+	public <T> T invokeRepositoryMethods(DBData dbData, Class primaryRepoClass, Class secondaryRepoClass,
+			Method primaryRepoImplMethod, Method secondaryRepoImplMethod, String repoMethod, boolean isList,
+			Object rowNum, Object inputData, Object[] inputDataArr) throws Exception {
+		Object returnObjData = null;
+		Object returnObj = new Object();
+		List<Object> returnObjList = new ArrayList<>();
+		long startTime = System.currentTimeMillis();
+		// logger.info("[invokeRepositoryMethods][StartTime : " + startTime + "]");
+		try {
+
+			if (isList) {
+				if (inputData != null)
+					returnObjList = (List<Object>) primaryRepoImplMethod.invoke(context.getBean(primaryRepoClass),
+							inputData);
+				else if (inputDataArr != null)
+
+					returnObjList = (List<Object>) primaryRepoImplMethod.invoke(context.getBean(primaryRepoClass),
+							(Object[]) inputDataArr);
+				else
+					returnObjList = (List<Object>) primaryRepoImplMethod.invoke(context.getBean(primaryRepoClass));
+
+				returnObjData = returnObjList;
+			} else {
+
+				if (inputData != null)
+					returnObjData = primaryRepoImplMethod.invoke(context.getBean(primaryRepoClass), inputData);
+				else if (inputDataArr != null)
+
+					returnObjData = primaryRepoImplMethod.invoke(context.getBean(primaryRepoClass),
+							(Object[]) inputDataArr);
+				else
+					returnObjData = primaryRepoImplMethod.invoke(context.getBean(primaryRepoClass));
+
+			}
+
+			if (dbData.getACCESS_TYPE().equals("1")) {
+
+				// To implement union : add equals and hashcode method in Model class
+				Integer count = 0;
+				int rowNumber = 0;
+
+				if (rowNum == null) {
+					rowNumber = defaultRowNumber;
+
+				} else
+					rowNumber = Integer.parseInt(rowNum.toString());
+
+				if (isList) {
+
+					if (returnObjList.size() != rowNumber) {
+						count = (Integer) daoUtil.calculatePageSize(returnObjList, rowNumber);
+						if (count != 0) {
+							List<Object> secondaryList = new ArrayList<Object>();
+							Class[] cArg = new Class[1];
+							cArg[0] = count.getClass();
+
+							if (inputData != null)
+								secondaryList = (List<Object>) secondaryRepoImplMethod
+										.invoke(context.getBean(secondaryRepoClass), count);
+							else if (inputDataArr != null) {
+								secondaryList = (List<Object>) secondaryRepoImplMethod
+										.invoke(context.getBean(secondaryRepoClass), (Object[]) inputDataArr);
+							} else
+								secondaryList = (List<Object>) secondaryRepoImplMethod
+										.invoke(context.getBean(secondaryRepoClass), count);
+
+							returnObjList = daoUtil.union(returnObjList, secondaryList);
+						}
+					}
+
+					returnObjData = returnObjList;
+
+				}
+
+				else if (returnObjData == null) {
+
+					if (inputData != null)
+						returnObjData = secondaryRepoImplMethod.invoke(context.getBean(secondaryRepoClass), inputData);
+					else if (inputDataArr != null)
+
+						returnObjData = secondaryRepoImplMethod.invoke(context.getBean(secondaryRepoClass),
+								(Object[]) inputDataArr);
+					else
+						returnObjData = secondaryRepoImplMethod.invoke(context.getBean(secondaryRepoClass));
+
+				}
+			}
+
+		} catch (Exception e) {
+			// e.printStackTrace();
+			logger.error("Error at LineNumber "+ e.getStackTrace()[0].getLineNumber(), e.getMessage());
+
+			throw new Exception();
+		}
+		// logger.info("[invokeRepositoryMethods][InterrimTime : " +
+		// System.currentTimeMillis()+ "][TotalCompletionTime : " +
+		// (System.currentTimeMillis() - startTime) + "]");
+
+		return (T) returnObjData;
+
+	}
+
+	public String RepoImplMapping2RepositoryClass(String dbIndicator, String repoName)
+			throws RuleAccessTechnicalException, IOException {
+		String className = "";
+		if (dbIndicator.equals(FrameworkConstants.DBIndicator_DD))
+			className = FrameworkConstants.DayRepoPackage + FrameworkConstants.PERIOD + repoName
+					+ FrameworkConstants.DayRepo;
+		else if (dbIndicator.equals(FrameworkConstants.DBIndicator_DN))
+			className = FrameworkConstants.NightRepoPackage + FrameworkConstants.PERIOD + repoName
+					+ FrameworkConstants.NightRepo;
+		else if (dbIndicator.equals(FrameworkConstants.DBIndicator_RN))
+			className = FrameworkConstants.RefRepoPackage + FrameworkConstants.PERIOD + repoName
+					+ FrameworkConstants.RefRepo;
+
+		return className;
+	}
+
+	public String RepoImplMapping2RepositoryBean(String dbIndicator, String repoName)
+			throws RuleAccessTechnicalException, IOException {
+		String className = "";
+		if (dbIndicator.equals(FrameworkConstants.DBIndicator_DD))
+			className = repoName + FrameworkConstants.DayRepo;
+		else if (dbIndicator.equals(FrameworkConstants.DBIndicator_DN))
+			className = repoName + FrameworkConstants.NightRepo;
+		else if (dbIndicator.equals(FrameworkConstants.DBIndicator_RN))
+			className = repoName + FrameworkConstants.RefRepo;
+
+		return className;
+	}
+
+}
+
