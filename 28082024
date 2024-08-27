@@ -38,3 +38,49 @@ Response.TrmnStDate:08
 Response.TrmnEnDate:08
 Response.AddSubvAccr:19
 Response.AddSubvAccr:18
+
+
+
+
+{
+  "Response": {
+    "AccountNumber": "07950000000000000",
+    "CustomerNumber": "00012003042340021",
+    "SocName": "394121032110016287799000070280600   ",
+    "DischName": "0000",
+    "AcsnName": "000000000000000000000000000000000000000000000000000000000000",
+    "Name": "000000000000000000000000000000000000000000000000000000000000",
+    "Add1": "ADDRESS 1                               ",
+    "Add2": "ADDRESS 2                               ",
+    "Add3": "LOCALITY                                ",
+    "Add4": "DISTRICT                                ",
+    "Postcode": "123499  ",
+    "EditedAmounts": {
+      "ClearedBalance": "11000.00            ",
+      "Rebate": "0.00                ",
+      "ShareRefund": "0.00                ",
+      "ShareIntRefund": "0.00                ",
+      "AccuredInt": "596.00              ",
+      "IRSubsidy": "0.00                ",
+      "AccuredFee": "0.00                ",
+      "ArrearPenalty": "1.00                ",
+      "MiscDebit": "0.00                ",
+      "DischFee": "0.00                ",
+      "AmountPayable": "11597.00            ",
+      "DischTax": "0.00                ",
+      "TomInflAmt": "0.00                ",
+      "RoundedAmount": "11597.00            ",
+      "DiffAmount": "0.00                ",
+      "YearEndFee": "0.00                ",
+      "ExpPenal": "11597.00            ",
+      "RoundedPenal": "0.00                ",
+      "DischDate": "11597.00            "
+    },
+    "Curr": "INR",
+    "TrmnFee": "0.00                ",
+    "TrmnStDate": "08062092",
+    "TrmnEnDate": "08062092",
+    "AddSubvAccr": "INR                                                 ",
+    "AddSubvAccr": "0.00                "
+  }
+}
