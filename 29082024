@@ -1,0 +1,41 @@
+IDENTIFICATION DIVISION.
+       PROGRAM-ID. REGION-SWITCH.
+
+       DATA DIVISION.
+       WORKING-STORAGE SECTION.
+
+       01 WS-CURRENT-REGION         PIC 9(02).
+       01 WS-LATEST-SWITCH-TIME     PIC X(08).
+       01 SQLCODE                   PIC S9(4) COMP.
+       01 WS-CONNECT-DB             PIC X(20).
+
+       EXEC SQL
+           INCLUDE SQLCA
+       END-EXEC.
+
+       PROCEDURE DIVISION.
+           DISPLAY "Checking current region...".
+
+           * Query to find the latest switch
+           EXEC SQL
+               SELECT RE, TO_CHAR(DATE_SWITC, 'HH24:MI:SS')
+               INTO :WS-CURRENT-REGION, :WS-LATEST-SWITCH-TIME
+               FROM cbs_rgn_sw
+               WHERE BUSINESS_D = TO_CHAR(SYSDATE, 'DD/MM/YYYY')
+               ORDER BY DATE_SWITC DESC
+               FETCH FIRST 1 ROWS ONLY
+           END-EXEC.
+
+           IF SQLCODE = 0
+               DISPLAY "Latest Switch Time: " WS-LATEST-SWITCH-TIME
+               IF WS-CURRENT-REGION = 01
+                   MOVE "Night Database" TO WS-CONNECT-DB
+               ELSE IF WS-CURRENT-REGION = 02
+                   MOVE "Day Database" TO WS-CONNECT-DB
+               END-IF
+               DISPLAY "Connecting to: " WS-CONNECT-DB
+           ELSE
+               DISPLAY "Error in retrieving region. SQLCODE: " SQLCODE
+           END-IF.
+
+           STOP RUN.
