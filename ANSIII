@@ -1,18 +1,26 @@
-Here’s the entire alphabet from A to Z, with each letter represented individually in the ANSI color format:A${AnsiColor.GREEN}**    /$$$$$  **
+Here’s the entire alphabet from A to Z, with each letter represented individually in the ANSI color format:
+
+A${AnsiColor.GREEN}**    /$$$$$  **
 ${AnsiColor.GREEN}**   /$$__  $$**
 ${AnsiColor.GREEN}**  | $$  \ $$**
 ${AnsiColor.GREEN}**  | $$$$$$$$**
 ${AnsiColor.GREEN}**  | $$__  $$**
 ${AnsiColor.GREEN}**  | $$  | $$**
 ${AnsiColor.GREEN}**  | $$  | $$**
-${AnsiColor.GREEN}**  |__/  |__/**B${AnsiColor.GREEN}**  /$$$$$$  **
+${AnsiColor.GREEN}**  |__/  |__/**
+B
+
+${AnsiColor.GREEN}**  /$$$$$$  **
 ${AnsiColor.GREEN}** /$$__  $$ **
 ${AnsiColor.GREEN}**| $$  \ $$ **
 ${AnsiColor.GREEN}**| $$$$$$$  **
 ${AnsiColor.GREEN}**| $$__  $$ **
 ${AnsiColor.GREEN}**| $$  \ $$ **
 ${AnsiColor.GREEN}**|  $$$$$$/ **
-${AnsiColor.GREEN}** \______/  **C${AnsiColor.GREEN}**   /$$$$$$  **
+${AnsiColor.GREEN}** \______/  **
+C
+
+${AnsiColor.GREEN}**   /$$$$$$  **
 ${AnsiColor.GREEN}**  /$$__  $$ **
 ${AnsiColor.GREEN}** | $$  \__/ **
 ${AnsiColor.GREEN}** | $$       **
