@@ -1,0 +1,192 @@
+Here’s the entire alphabet from A to Z, with each letter represented individually in the ANSI color format:A${AnsiColor.GREEN}**    /$$$$$  **
+${AnsiColor.GREEN}**   /$$__  $$**
+${AnsiColor.GREEN}**  | $$  \ $$**
+${AnsiColor.GREEN}**  | $$$$$$$$**
+${AnsiColor.GREEN}**  | $$__  $$**
+${AnsiColor.GREEN}**  | $$  | $$**
+${AnsiColor.GREEN}**  | $$  | $$**
+${AnsiColor.GREEN}**  |__/  |__/**B${AnsiColor.GREEN}**  /$$$$$$  **
+${AnsiColor.GREEN}** /$$__  $$ **
+${AnsiColor.GREEN}**| $$  \ $$ **
+${AnsiColor.GREEN}**| $$$$$$$  **
+${AnsiColor.GREEN}**| $$__  $$ **
+${AnsiColor.GREEN}**| $$  \ $$ **
+${AnsiColor.GREEN}**|  $$$$$$/ **
+${AnsiColor.GREEN}** \______/  **C${AnsiColor.GREEN}**   /$$$$$$  **
+${AnsiColor.GREEN}**  /$$__  $$ **
+${AnsiColor.GREEN}** | $$  \__/ **
+${AnsiColor.GREEN}** | $$       **
+${AnsiColor.GREEN}** | $$       **
+${AnsiColor.GREEN}** | $$  /$$$ **
+${AnsiColor.GREEN}** |  $$$$$$/ **
+${AnsiColor.GREEN}**  \______/  **D${AnsiColor.GREEN}**  /$$$$$$   **
+${AnsiColor.GREEN}** /$$__  $$  **
+${AnsiColor.GREEN}**| $$  \ $$  **
+${AnsiColor.GREEN}**| $$  | $$  **
+${AnsiColor.GREEN}**| $$  | $$  **
+${AnsiColor.GREEN}**| $$  | $$  **
+${AnsiColor.GREEN}**|  $$$$$$/  **
+${AnsiColor.GREEN}** \______/   **E${AnsiColor.GREEN}**  /$$$$$$$$**
+${AnsiColor.GREEN}** | $$_____/**
+${AnsiColor.GREEN}** | $$      **
+${AnsiColor.GREEN}** | $$$$$   **
+${AnsiColor.GREEN}** | $$__/   **
+${AnsiColor.GREEN}** | $$      **
+${AnsiColor.GREEN}** | $$$$$$$$**
+${AnsiColor.GREEN}** |________/**F${AnsiColor.GREEN}**  /$$$$$$$$**
+${AnsiColor.GREEN}** | $$_____/**
+${AnsiColor.GREEN}** | $$      **
+${AnsiColor.GREEN}** | $$$$$   **
+${AnsiColor.GREEN}** | $$__/   **
+${AnsiColor.GREEN}** | $$      **
+${AnsiColor.GREEN}** | $$      **
+${AnsiColor.GREEN}** |__/      **G${AnsiColor.GREEN}**   /$$$$$$ **
+${AnsiColor.GREEN}**  /$$__  $$**
+${AnsiColor.GREEN}** | $$  \__/**
+${AnsiColor.GREEN}** | $$ /$$$$**
+${AnsiColor.GREEN}** | $$|_  $$**
+${AnsiColor.GREEN}** | $$  \ $$**
+${AnsiColor.GREEN}** |  $$$$$$/**
+${AnsiColor.GREEN}**  \______/ **H${AnsiColor.GREEN}**  /$$   /$$ **
+${AnsiColor.GREEN}** | $$  | $$ **
+${AnsiColor.GREEN}** | $$  | $$ **
+${AnsiColor.GREEN}** | $$$$$$$$ **
+${AnsiColor.GREEN}** | $$__  $$ **
+${AnsiColor.GREEN}** | $$  | $$ **
+${AnsiColor.GREEN}** | $$  | $$ **
+${AnsiColor.GREEN}** |__/  |__/ **I${AnsiColor.GREEN}**  /$$$$$$ **
+${AnsiColor.GREEN}** |_  $$_/ **
+${AnsiColor.GREEN}**   | $$   **
+${AnsiColor.GREEN}**   | $$   **
+${AnsiColor.GREEN}**   | $$   **
+${AnsiColor.GREEN}**   | $$   **
+${AnsiColor.GREEN}**  /$$$$$$ **
+${AnsiColor.GREEN}** |______/ **J${AnsiColor.GREEN}**     /$$$$$$ **
+${AnsiColor.GREEN}**    |_  $$_/ **
+${AnsiColor.GREEN}**      | $$   **
+${AnsiColor.GREEN}**      | $$   **
+${AnsiColor.GREEN}**      | $$   **
+${AnsiColor.GREEN}**      | $$   **
+${AnsiColor.GREEN}**  /$$ | $$   **
+${AnsiColor.GREEN}** |__/ |__/   **K${AnsiColor.GREEN}**  /$$   /$$ **
+${AnsiColor.GREEN}** | $$  /$$/ **
+${AnsiColor.GREEN}** | $$ /$$/  **
+${AnsiColor.GREEN}** | $$$$$/   **
+${AnsiColor.GREEN}** | $$  $$   **
+${AnsiColor.GREEN}** | $$\  $$  **
+${AnsiColor.GREEN}** | $$ \  $$ **
+${AnsiColor.GREEN}** |__/  \__/ **L${AnsiColor.GREEN}**  /$$       **
+${AnsiColor.GREEN}** | $$       **
+${AnsiColor.GREEN}** | $$       **
+${AnsiColor.GREEN}** | $$       **
+${AnsiColor.GREEN}** | $$       **
+${AnsiColor.GREEN}** | $$       **
+${AnsiColor.GREEN}** | $$$$$$$$ **
+${AnsiColor.GREEN}** |________/ **M${AnsiColor.GREEN}**  /$$      /$$ **
+${AnsiColor.GREEN}** | $$$    /$$$ **
+${AnsiColor.GREEN}** | $$$$  /$$$$ **
+${AnsiColor.GREEN}** | $$ $$/$$ $$ **
+${AnsiColor.GREEN}** | $$  $$$| $$ **
+${AnsiColor.GREEN}** | $$\  $ | $$ **
+${AnsiColor.GREEN}** | $$ \/  | $$ **
+${AnsiColor.GREEN}** |__/     |__/ **N${AnsiColor.GREEN}**  /$$   /$$ **
+${AnsiColor.GREEN}** | $$$ | $$ **
+${AnsiColor.GREEN}** | $$$$| $$ **
+${AnsiColor.GREEN}** | $$ $$ $$ **
+${AnsiColor.GREEN}** | $$  $$$$ **
+${AnsiColor.GREEN}** | $$\  $$$ **
+${AnsiColor.GREEN}** | $$ \  $$ **
+${AnsiColor.GREEN}** |__/  \__/ **O${AnsiColor.GREEN}**   /$$$$$$  **
+${AnsiColor.GREEN}**  /$$__  $$ **
+${AnsiColor.GREEN}** | $$  \ $$ **
+${AnsiColor.GREEN}** | $$  | $$ **
+${AnsiColor.GREEN}** | $$  | $$ **
+${AnsiColor.GREEN}** | $$  | $$ **
+${AnsiColor.GREEN}** |  $$$$$$/ **
+${AnsiColor.GREEN}**  \______/  **P${AnsiColor.GREEN}**  /$$$$$$  **
+${AnsiColor.GREEN}** /$$__  $$ **
+${AnsiColor.GREEN}**| $$  \ $$ **
+${AnsiColor.GREEN}**| $$$$$$$  **
+${AnsiColor.GREEN}**| $$__  $$ **
+${AnsiColor.GREEN}**| $$  \ $$ **
+${AnsiColor.GREEN}**|  $$$$$$/ **
+${AnsiColor.GREEN}** \______/  **Q${AnsiColor.GREEN}**   /$$$$$$   **
+${AnsiColor.GREEN}**  /$$__  $$  **
+${AnsiColor.GREEN}** | $$  \ $$  **
+${AnsiColor.GREEN}** | $$  | $$  **
+${AnsiColor.GREEN}** | $$  | $$  **
+${AnsiColor.GREEN}** | $$  | $$  **
+${AnsiColor.GREEN}** |  $$$$$$/  **
+${AnsiColor.GREEN}**  \_____\_/  **R${AnsiColor.GREEN}**  /$$$$$$  **
+${AnsiColor.GREEN}** /$$__  $$ **
+${AnsiColor.GREEN}**| $$  \ $$ **
+${AnsiColor.GREEN}**| $$$$$$$  **
+${AnsiColor.GREEN}**| $$__  $$ **
+${AnsiColor.GREEN}**| $$  \ $$ **
+${AnsiColor.GREEN}**|  $$$$$$/ **
+${AnsiColor.GREEN}** \______/  **S${AnsiColor.GREEN}**   /$$$$$$  **
+${AnsiColor.GREEN}**  /$$__  $$ **
+${AnsiColor.GREEN}** | $$  \__/ **
+${AnsiColor.GREEN}** |  $$$$$$  **
+${AnsiColor.GREEN}**  \____  $$ **
+${AnsiColor.GREEN}**  /$$  \ $$ **
+${AnsiColor.GREEN}** |  $$$$$$/ **
+${AnsiColor.GREEN}**  \______/  **T${AnsiColor.GREEN}**  /$$$$$$$$ **
+${AnsiColor.GREEN}** | $$_____/ **
+${AnsiColor.GREEN}** | $$       **
+${AnsiColor.GREEN}** | $$       **
+${AnsiColor.GREEN}** | $$       **
+${AnsiColor.GREEN}** | $$       **
+${AnsiColor.GREEN}**
+
+
+T${AnsiColor.GREEN}**  /$$$$$$$$ **
+${AnsiColor.GREEN}** | $$_____/ **
+${AnsiColor.GREEN}** | $$       **
+${AnsiColor.GREEN}** | $$       **
+${AnsiColor.GREEN}** | $$       **
+${AnsiColor.GREEN}** | $$       **
+${AnsiColor.GREEN}** | $$$$$$$$ **
+${AnsiColor.GREEN}** |________/ **U${AnsiColor.GREEN}**  /$$   /$$ **
+${AnsiColor.GREEN}** | $$  | $$ **
+${AnsiColor.GREEN}** | $$  | $$ **
+${AnsiColor.GREEN}** | $$  | $$ **
+${AnsiColor.GREEN}** | $$  | $$ **
+${AnsiColor.GREEN}** | $$  | $$ **
+${AnsiColor.GREEN}** |  $$$$$$/ **
+${AnsiColor.GREEN}**  \______/  **V${AnsiColor.GREEN}**  /$$   /$$ **
+${AnsiColor.GREEN}** | $$  | $$ **
+${AnsiColor.GREEN}** | $$  | $$ **
+${AnsiColor.GREEN}** | $$  | $$ **
+${AnsiColor.GREEN}** | $$  | $$ **
+${AnsiColor.GREEN}** |  $$$$$$/ **
+${AnsiColor.GREEN}**  \______/  **
+${AnsiColor.GREEN}**            **W${AnsiColor.GREEN}**  /$$      /$$ **
+${AnsiColor.GREEN}** | $$     | $$ **
+${AnsiColor.GREEN}** | $$     | $$ **
+${AnsiColor.GREEN}** | $$     | $$ **
+${AnsiColor.GREEN}** |  $$   /$$/  **
+${AnsiColor.GREEN}**  \  $$$$$$/   **
+${AnsiColor.GREEN}**   \_____/    **
+${AnsiColor.GREEN}**              **X${AnsiColor.GREEN}**  /$$   /$$ **
+${AnsiColor.GREEN}** | $$  /$$/ **
+${AnsiColor.GREEN}** |  $$/$$/  **
+${AnsiColor.GREEN}**  \  $$$/   **
+${AnsiColor.GREEN}**   >$$  $$  **
+${AnsiColor.GREEN}**  /$$/\ $$  **
+${AnsiColor.GREEN}** | $$  | $$ **
+${AnsiColor.GREEN}** |__/  |__/ **Y${AnsiColor.GREEN}**  /$$   /$$ **
+${AnsiColor.GREEN}** | $$  /$$/ **
+${AnsiColor.GREEN}** |  $$/$$/  **
+${AnsiColor.GREEN}**  \  $$$/   **
+${AnsiColor.GREEN}**   \  $$/   **
+${AnsiColor.GREEN}**    | $$    **
+${AnsiColor.GREEN}**    | $$    **
+${AnsiColor.GREEN}**    |__/    **Z${AnsiColor.GREEN}**  /$$$$$$$$ **
+${AnsiColor.GREEN}** |____ /$$/ **
+${AnsiColor.GREEN}**     /$$/   **
+${AnsiColor.GREEN}**    /$$/    **
+${AnsiColor.GREEN}**   /$$/     **
+${AnsiColor.GREEN}**  /$$/      **
+${AnsiColor.GREEN}** | $$$$$$$$ **
+${AnsiColor.GREEN}** |________/ **
