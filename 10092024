@@ -1,0 +1,23 @@
+Sub ListFilesInFolder()
+    Dim folderPath As String
+    Dim fileName As String
+    Dim row As Integer
+
+    ' Specify the folder path here
+    folderPath = "C:\YourFolderPath\" ' Change to your folder path
+
+    ' Start at the first row
+    row = 1
+
+    ' Retrieve the first file from the folder
+    fileName = Dir(folderPath)
+
+    ' Loop through all the files in the folder
+    Do While fileName <> ""
+        ' Add the file name to the first column in Excel
+        Cells(row, 1).Value = fileName
+        row = row + 1
+        ' Get the next file name
+        fileName = Dir
+    Loop
+End Sub
