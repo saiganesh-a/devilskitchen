@@ -21,3 +21,46 @@ Sub ListFilesInFolder()
         fileName = Dir
     Loop
 End Sub
+
+
+
+
+
+
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+
+public class FetchFileNames {
+    public static void main(String[] args) {
+        // Specify the directory path
+        String directoryPath = "C:\\path\\to\\your\\folder"; // Replace with your directory path
+        
+        // Create a File object for the directory
+        File folder = new File(directoryPath);
+
+        // Check if the directory exists and is a directory
+        if (folder.exists() && folder.isDirectory()) {
+            // Get all files in the directory
+            File[] files = folder.listFiles();
+
+            try (FileWriter writer = new FileWriter("file_names.txt")) {
+                if (files != null) {
+                    // Write each file name to the text file
+                    for (File file : files) {
+                        if (file.isFile()) {
+                            writer.write(file.getName() + "\n");
+                        }
+                    }
+                    System.out.println("File names have been written to file_names.txt");
+                } else {
+                    System.out.println("No files found in the specified directory.");
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        } else {
+            System.out.println("The specified path is not a valid directory.");
+        }
+    }
+}
