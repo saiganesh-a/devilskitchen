@@ -515,5 +515,28 @@ public class PFMOBEnquiryService {
             return ResponseEntity.ok(finalResponse);
         } else {
             errDesc = errdesc.getErrDesc(errno, callcode, opt, lsRecArea);
-            finalResponse = responseObj.getErrorResponse(errno, errDesc,
+            finalResponse = responseObj.getErrorResponse(errno, errDesc,refno, tellerno, branchno);
+
+            // Update response with error details in case of failure
+            migDetails.updateResponse("N", errno, errDesc,
+                    Base64.getEncoder().encodeToString((finalResponse).getBytes()), refno, entryDate);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(finalResponse);
+        }
+    }
+
+    @CacheEvict(value = "customerDetailsCache", allEntries = true)
+    public void clearCache() {
+        logger.info("Customer Details Cache Cleared");
+    }
+
+    // Helper method to check if any of the configuration properties are null or empty
+    private void isNullorEmpty(String[] arr) throws IOException {
+        for (String param : arr) {
+            if (param == null || param.isEmpty()) {
+                throw new IOException("Configuration properties cannot be null or empty");
+            }
+        }
+    }
+
+}
 
