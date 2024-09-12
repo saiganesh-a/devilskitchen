@@ -1,0 +1,284 @@
+PFEnquiry_Service/TCSBaNCSQueryMicroservices/src/com/tcs/bancs/microservices/
+services/PFMOBEnquiryService.java, line 137 (Mass Assignment: Insecure Binder
+Configuration)
+High
+Issue Details
+Kingdom: API Abuse
+Scan Engine: SCA (Structural)
+Sink Details
+Sink: Function: getCustomerDetails
+Enclosing Method: getCustomerDetails()
+File: PFEnquiry_Service/TCSBaNCSQueryMicroservices/src/com/tcs/bancs/microservices/services/
+PFMOBEnquiryService.java:137
+134 @PostMapping(value = { "/PFMOBEnq" }, produces = { "application/json" })
+135 @CrossOrigin()
+136 @JsonIgnore
+137 public String getCustomerDetails(@RequestBody(required = false)RequestBean_PFMOB reqbean, HttpServletRequest request,
+@RequestHeader HttpHeaders headers, HttpServletResponse response) throws SerialException, SQLException, IOException, RrnException,
+SrcException
+Sep 12, 2024 12:14 PM
+© Copyright [2008-2024] Micro Focus or one of its affiliates.
+11
+Mass Assignment: Insecure Binder Configuration High
+Package: com.tcs.bancs.microservices.services
+PFEnquiry_Service/TCSBaNCSQueryMicroservices/src/com/tcs/bancs/microservices/
+services/PFMOBEnquiryService.java, line 137 (Mass Assignment: Insecure Binder
+Configuration)
+High
+138 {
+139 try {
+140 String[] arr = {bancsTraceState, masterDQType, bancsHost, fnsSysnum, ctrlSysnum, daySysnum, nightSysnum, non24hsum,
+defRMode, masterDB1, masterDB2, servicesFlag};
+
+
+
+
+=================================
+
+
+//    SBI Core Banking Project, CBD Belapur, Mumbai, India.       *
+//*****************************************************************
+//                                                                *
+//  	           PROGRAM - PFENquiryService.Java                *
+//                                                                *
+//*****************************************************************
+//                 P R O G R A M    H I S T O R Y                 *
+//                                                                *
+//   PROGRAMMER    :    DATE       :  SPR NO   :   COMMENTS       *
+//----------------------------------------------------------------*
+// Naga Sai Ganesh : 02/09/2024    : 24090001  :  MICROSERVICES   *
+//----------------------------------------------------------------*
+
+package com.tcs.bancs.microservices.services;
+
+import java.io.IOException;
+import java.sql.SQLException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.List;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.sql.rowset.serial.SerialException;
+
+import org.apache.commons.lang.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.http.HttpHeaders;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.tcs.bancs.microservices.RequestBean;
+import com.tcs.bancs.microservices.exception.InvalidInputFormatException;
+import com.tcs.bancs.microservices.exception.RrnException;
+import com.tcs.bancs.microservices.exception.SrcException;
+import com.tcs.bancs.microservices.impl.MigenqDetailsRepositoryImpl;
+import com.tcs.bancs.microservices.services.Response;
+import com.tcs.bancs.microservices.services.DBConnectionService;
+import com.tcs.bancs.microservices.java.Error_Description;
+import com.tcs.bancs.microservices.java.validate.Validate_Teller_Branch_Service;
+import com.tcs.bancs.microservices.jvm.pfenquiry.JVMUTENV;
+import com.tcs.bancs.microservices.jvm.pfenquiry.JvmLsCallCode;
+import com.tcs.bancs.microservices.jvm.pfenquiry.JvmLsEnvRecordArea;
+import com.tcs.bancs.microservices.jvm.pfenquiry.JvmLsOptCode;
+
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+
+@RestController
+@Api(value = "Aggregation_API", description = " ", tags = { "Aggregation API" })
+@RequestMapping("/")
+@Cacheable
+@CacheEvict
+public class PFMOBEnquiryService {
+	
+	@Autowired
+    MigenqDetailsRepositoryImpl migDetails;
+
+	@Autowired
+	HttpServletRequest HttpServletRequest;
+	
+    @Value("${UTENVCALS-BANCS-TRACE-STATE}")
+    private String bancsTraceState;
+    
+    @Value("${UTENVCALS-MASTER-DQPTYPE}")
+    private String masterDQType;
+    
+    @Value("${UTENVCALS-BANCS-HOST}")
+    private String bancsHost;
+    
+    @Value("${UTENVCALS-FNS-SYSNUM}")
+    private String fnsSysnum;
+    
+    @Value("${UTENVCALS-CTRL-SYSNUM}")
+    private String ctrlSysnum;
+    
+    @Value("${UTENVCALS-DAY-SYSNUM}")
+    private String daySysnum;
+    
+    @Value("${UTENVCALS-NIGHT-SYSNUM}")
+    private String nightSysnum;
+    
+    @Value("${UTENVCALS-NON24H-SYSNUM}")
+    private String non24hsum;
+    
+    @Value("${UTENVCALS-DEF-RMODE}")
+    private String defRMode;
+    
+    @Value("${UTENVCALS-MASTER-DB-1}")
+    private String masterDB1;
+    
+    @Value("${UTENVCALS-MASTER-DB-2}")
+    private String masterDB2;
+    
+    @Value("${UTENVCALS-SERVICES-FLAG}")
+    private String servicesFlag;
+
+	Logger logger = LoggerFactory.getLogger(PFMOBEnquiryService.class);
+
+	private final DBConnectionService dbconnection;
+	private final Response responseObj;
+	
+	@Autowired
+	public PFMOBEnquiryService(DBConnectionService dbconnection, Response responseObj) {
+		this.dbconnection = dbconnection;
+		this.responseObj = responseObj;
+	}
+	
+	  Error_Description errdesc = new Error_Description();
+	  Validate_Teller_Branch_Service  validate = new Validate_Teller_Branch_Service();
+	  
+	  JVMUTENV jvmutenv = new JVMUTENV();
+	  JvmLsCallCode callCode = new JvmLsCallCode();
+	  JvmLsOptCode optcode = new JvmLsOptCode();
+	  JvmLsEnvRecordArea commonarea = new JvmLsEnvRecordArea();
+	  
+	  PFEnquiryService_Child pfchild = new PFEnquiryService_Child();
+	  MOBEnquiryService_Child mobchild = new MOBEnquiryService_Child();
+
+	@SuppressWarnings({ "unchecked", "rawtypes", "static-access" })
+	@ApiOperation(value = "Call PFMOB", notes = "PFMOB Service:This API is used to fetch Customer Details.")
+	@PostMapping(value = { "/PFMOBEnq" }, produces = { "application/json" })
+	@CrossOrigin()
+	@JsonIgnore
+	public String getCustomerDetails(@RequestBody(required = true)RequestBean reqbean,HttpServletRequest request, @RequestHeader HttpHeaders headers, HttpServletResponse response) throws SerialException, SQLException, IOException, RrnException, SrcException 
+	{			
+		try {
+			String[] arr = {bancsTraceState, masterDQType, bancsHost, fnsSysnum, ctrlSysnum, daySysnum, nightSysnum, non24hsum, defRMode, masterDB1, masterDB2, servicesFlag};
+			isNullorEmpty(arr);
+		    } catch(IOException e)  {return e.toString();}
+			
+		String finalResponse;
+		
+		String IPAddress = request.getHeader("X-Forwarded-For");
+		String remoteAddress = request.getRemoteAddr();
+		DateTimeFormatter entryDate1 = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss:SSS");
+		LocalDateTime time = LocalDateTime.now();
+		String entryDate = entryDate1.format(time);
+	
+		String refno;	
+		String tellerno;
+		String branchno;
+		String inp_opt;		
+		String pfno = "";		
+		String mobno = "";
+	    String serviceno = "000001";
+	    
+	    try {
+			refno	    =  reqbean.getReferenceNumber();
+			tellerno    =  reqbean.getTellerNumber();
+			branchno	=  reqbean.getBranchNumber();
+			inp_opt     =  reqbean.getOption();
+			
+			if(inp_opt.equals("01")) {
+				pfno	=  reqbean.getPFNumber();
+			}
+			else if(inp_opt.equals("02")) {
+				mobno   =  reqbean.getMobileNumber();
+			}
+			else {
+				logger.error("Invalid Optcode");
+				throw new InvalidInputFormatException("Please enter valid optcode");
+			}
+	    } catch(InvalidInputFormatException e) {return e.toString();}
+	    
+		String out_response = "";
+		String errno		= "";
+		List<String> res = new ArrayList<String>();
+	    String noOfrecords	= "";
+	    String errDesc 		= "";
+	    String allowTellerBranchFlag = "";
+	    
+		String callcode = "S";
+		String opt  = "";
+		String formattedmasterDB1 = StringUtils.rightPad(masterDB1, 15);
+		String formattedmasterDB2 = StringUtils.rightPad(masterDB2, 15);
+		
+		String lsRecArea = bancsTraceState + masterDQType + bancsHost + fnsSysnum + ctrlSysnum + daySysnum + nightSysnum + non24hsum + defRMode + formattedmasterDB1 + formattedmasterDB2 + servicesFlag;
+			
+			//set environment variables
+			callCode.setJvmLsCallCode(callcode);
+			commonarea.setJvmLsEnvRecordArea(lsRecArea);
+            jvmutenv.JVMUTENV(callCode, optcode, commonarea); 
+	    
+	    migDetails.saveInitialRequest(Base64.getEncoder().encodeToString((reqbean.toString()).getBytes()), remoteAddress, tellerno, refno, serviceno, entryDate, IPAddress);
+		
+	    char dbConnection_flag = dbconnection.getCBSDBConnection("01");
+		if(dbConnection_flag == 'Y'){
+			List<String> TellerBranchRes = validate.validateTellerBranchService(tellerno, branchno, serviceno, callcode, inp_opt, lsRecArea);
+			allowTellerBranchFlag = TellerBranchRes.get(0);
+			errno = TellerBranchRes.get(1);
+			if(allowTellerBranchFlag.equals("Y")) {
+				if(inp_opt.equals("01")) {
+					res = pfchild.callPFEnquiryChild(pfno);
+					out_response = res.get(0);
+					noOfrecords = res.get(1);
+					errno = res.get(2);
+				}
+				else if(inp_opt.equals("02")) {
+					res = mobchild.callMOBEnquiryChild(mobno);
+					out_response = res.get(0);
+					noOfrecords = res.get(1);
+					errno = res.get(2);
+				}
+			}
+		}
+		else { errno = "155"; }
+
+			if(errno.equals("0000")) 
+			{
+				finalResponse = responseObj.getResponse(out_response, refno, tellerno, branchno);
+				migDetails.updateResponse("Y", errno,  "Ok! Success", Base64.getEncoder().encodeToString((finalResponse).getBytes()), refno, entryDate);
+			}
+			else 
+			{
+				errDesc = errdesc.getErrDesc(errno, callcode, opt, lsRecArea);
+				finalResponse = responseObj.getErrorResponse(errno, errDesc, refno, tellerno, branchno);
+				migDetails.updateResponse("N", errno, errDesc, Base64.getEncoder().encodeToString((finalResponse).getBytes()), refno, entryDate);
+			}			
+			
+		return finalResponse;
+		
+	} 
+	
+	public void isNullorEmpty(String[] arr) throws IOException {
+		for(int i = 0; i < arr.length; i++) {
+			if(arr[i] == null || arr[i].trim().isEmpty()) {
+				logger.error("Error in reading application.properties");
+				throw new IOException("Error in reading application.properties");
+			}
+		}
+	}
+}
+
