@@ -1,0 +1,1 @@
+public ResponseEntity<String> getCustomerDetails(@RequestBody(required = false)RequestBean_PFMOB reqbean,HttpServletRequest request, @RequestHeader HttpHeaders headers, HttpServletResponse response) throws SerialException, SQLException, IOException, RrnException, SrcException 
