@@ -1,0 +1,30 @@
+package com.tcs.bancs.microservices.configuration;
+
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.util.Properties;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.tcs.bancs.microservices.services.CleanPath;
+
+public class PropertyLoader {
+
+    static Logger logger = LoggerFactory.getLogger(PropertyLoader.class);
+
+    public static Properties readPropertyFile(String fileName) {
+        Properties prop = new Properties();
+
+        try (FileInputStream fis = new FileInputStream(CleanPath.cleanString(fileName))) {
+            prop.load(fis);
+        } catch (FileNotFoundException fnfe) {
+            logger.error("No such file found: " + fileName, fnfe);
+        } catch (IOException e) {
+            logger.error("Exception in file input", e);
+        }
+
+        return prop;
+    }
+}
