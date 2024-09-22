@@ -330,3 +330,76 @@ public class PuttyConnectorApp {
         }
     }
 }
+
+
+
+
+
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.File;
+import java.io.IOException;
+
+public class PuttyConnectorApp {
+
+    public static void main(String[] args) {
+        // Create the frame
+        JFrame frame = new JFrame("Putty Connector Hyderabad Dev");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setSize(600, 400);
+        frame.setLayout(new GridLayout(2, 2)); // Layout for the buttons
+
+        // Create buttons for regions
+        String[] regions = {"D1 Dev", "D4 Dev"};
+
+        for (String region : regions) {
+            JButton button = new JButton(region);
+            button.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    connectToPutty(region); // Call PuTTY when button is clicked
+                }
+            });
+            frame.add(button);
+        }
+
+        // Show the frame
+        frame.setVisible(true);
+    }
+
+    // Method to connect to PuTTY
+    public static void connectToPutty(String region) {
+        try {
+            String puttyPath = new File("putty.exe").getAbsolutePath(); // Full path to putty.exe
+
+            String[] command = null;
+
+            // Customize command based on the region selected
+            switch (region) {
+                case "D1 Dev":
+                    command = new String[]{puttyPath, "-ssh", "fnsonld1@<D1-IP>", "-P", "<D1-Port>", "-pw", "<D1-Password>"};
+                    break;
+                case "D4 Dev":
+                    command = new String[]{puttyPath, "-ssh", "fnsonld4@10.176.15.51", "-P", "2321", "-pw", "Jun@2024"};
+                    break;
+                default:
+                    System.out.println("Region not configured: " + region);
+                    return;
+            }
+
+            // Print the command for debugging purposes
+            System.out.println("Command: " + String.join(" ", command));
+
+            // Use ProcessBuilder to run PuTTY with the command arguments
+            ProcessBuilder processBuilder = new ProcessBuilder(command);
+            processBuilder.directory(new File(".")); // Set current directory for execution
+            processBuilder.start(); // Execute the process
+
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
+    }
+}
