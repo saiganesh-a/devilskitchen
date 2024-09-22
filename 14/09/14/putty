@@ -176,3 +176,74 @@ public class PuttyConnectorApp {
         }
     }
 }
+
+
+
+..................
+
+package com.tcs.bancs.microservices.services;
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.File;
+import java.io.IOException;
+
+public class PuttyConnectorApp {
+
+    public static void main(String[] args) {
+        // Create the frame
+        JFrame frame = new JFrame("Putty Connector Hyderabad Dev");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setSize(600, 400);
+        frame.setLayout(new GridLayout(4, 4)); // Layout for the buttons
+
+        // Create buttons for regions
+        String[] regions = {"D1 Dev", "D4 Dev"};
+
+        for (String region : regions) {
+            JButton button = new JButton(region);
+            button.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    connectToPutty(region); // Call PuTTY when button is clicked
+                }
+            });
+            frame.add(button);
+        }
+
+        // Show the frame
+        frame.setVisible(true);
+    }
+
+    // Method to connect to PuTTY
+    public static void connectToPutty(String region) {
+        try {
+            String command = "";
+
+            // Customize command based on the region selected
+            switch (region) {
+                case "D1 Dev":
+                    // Replace with actual command for D1 Dev
+                    command = " -ssh fnsonld1@<D1-IP> -P <D1-Port> -pw <D1-Password>";
+                    break;
+                case "D4 Dev":
+                    // Command for D4 Dev
+                    command = " -ssh fnsonld4@10.176.15.51 -P 2321 -pw Jun@2024";
+                    break;
+                default:
+                    System.out.println("Region not configured: " + region);
+                    return;
+            }
+
+            // Get the path to putty.exe in the project directory
+            String puttyPath = new File("putty.exe").getAbsolutePath();
+
+            // Start the process to open PuTTY
+            Runtime.getRuntime().exec(puttyPath + command);
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
+    }
+}
