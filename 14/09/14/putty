@@ -1,0 +1,49 @@
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+
+public class PuttyConnectorApp {
+
+    public static void main(String[] args) {
+        // Create the frame
+        JFrame frame = new JFrame("Putty Connector VX - ST Regions Version 1.4.9");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setSize(600, 400);
+        frame.setLayout(new GridLayout(4, 4)); // Layout for the buttons
+
+        // Create buttons for regions
+        String[] regions = {
+                "V1 Dev", "V3 Dev", "V4 Dev", "F1V1", "Autosys", "V3 New", "F1V1 Pre",
+                "W Master", "W Slave", "Wd Master", "Wd Slave", "Ws Master", "Ws Slave",
+                "C Master", "Cd Master", "Cs Master", "Q Master", "Qd Master", "Qs Master"
+        };
+
+        for (String region : regions) {
+            JButton button = new JButton(region);
+            button.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    connectToPutty(region); // Call PuTTY when button is clicked
+                }
+            });
+            frame.add(button);
+        }
+
+        // Show the frame
+        frame.setVisible(true);
+    }
+
+    // Method to connect to PuTTY
+    public static void connectToPutty(String region) {
+        try {
+            // Adjust the path to your putty.exe and the correct arguments for each region
+            String command = "putty.exe -ssh user@<server-ip-for-" + region + "> -pw <password>";
+            
+            // Start the process to open PuTTY
+            Runtime.getRuntime().exec(command);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+}
