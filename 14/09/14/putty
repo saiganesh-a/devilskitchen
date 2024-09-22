@@ -47,3 +47,66 @@ public class PuttyConnectorApp {
         }
     }
 }
+
+
+
+
+
+
+=============================
+
+
+
+
+
+
+
+package com.tcs.bancs.microservices.services;
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+
+public class PuttyConnectorApp {
+
+    public static void main(String[] args) {
+        // Create the frame
+        JFrame frame = new JFrame("Putty Connector Hyderabad Dev");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setSize(600, 400);
+        frame.setLayout(new GridLayout(4, 4)); // Layout for the buttons
+
+        // Create buttons for regions
+        String[] regions = {"D1 Dev", "D4 Dev"
+//                "D1 Dev", "D2 Dev", "D4 Dev", "D8 Dev", "D9 Dev"
+        };
+
+        for (String region : regions) {
+            JButton button = new JButton(region);
+            button.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    connectToPutty(region); // Call PuTTY when button is clicked
+                }
+            });
+            frame.add(button);
+        }
+
+        // Show the frame
+        frame.setVisible(true);
+    }
+
+    // Method to connect to PuTTY
+    public static void connectToPutty(String region) {
+        try {
+            // Adjust the path to your putty.exe and the correct arguments for each region
+            String command = "D:\\Putty\\putty.exe -ssh fnsonld4@10.176.15.51 -P 2321 -pw Jun@2024";
+            
+            // Start the process to open PuTTY
+            Runtime.getRuntime().exec(command);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+}
