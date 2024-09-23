@@ -65,3 +65,51 @@ truckSize = 3
 
 # Expected output: 7 units (3 from product 0, 2 from product 1, and 2 from product 1 again)
 print(getMaxUnits(boxes, unitsPerBox, truckSize))  # Output: 7
+
+
+
+
+
+def breakTheBricks(bigHits, newtons):
+    """
+    Determines the minimum number of blows to smash all the bricks,
+    the 1-based indices of the bricks smashed by the big hammer (sorted ascending),
+    and the 1-based indices of the bricks smashed by the small hammer (sorted ascending).
+    
+    Args:
+        bigHits (int): The maximum number of blows with the big hammer.
+        newtons (list[int]): An array of distinct integers representing the newtons required to smash each brick.
+        
+    Returns:
+        tuple[int, list[int], list[int]]:
+            1. The minimum number of blows to smash all the bricks.
+            2. The 1-based indices of the bricks smashed by the big hammer (sorted ascending).
+            3. The 1-based indices of the bricks smashed by the small hammer (sorted ascending),
+               or -1 if no bricks are smashed by the small hammer.
+    """
+    # Sort the newtons in ascending order
+    sorted_newtons = sorted(enumerate(newtons, 1), key=lambda x: x[1])
+    
+    # Use the big hammer on the bricks at sorted indices
+    big_hammer_indices = [idx for idx, _ in sorted_newtons[:bigHits]]
+    
+    # Check if there are any bricks left for the small hammer
+    small_hammer_indices = [idx for idx, _ in sorted_newtons[bigHits:]]
+    
+    # Total hits is the number of bricks + 1 if the small hammer isn't used
+    total_hits = len(newtons) if small_hammer_indices else len(newtons) + 1
+    
+    # Return -1 for small hammer if no bricks are left for it
+    if not small_hammer_indices:
+        small_hammer_indices = [-1]
+    
+    return total_hits, sorted(big_hammer_indices), sorted(small_hammer_indices)
+
+# Sample Case 0
+bigHits = 9
+newtons = [7, 9, 3, 2, 5, 8, 4]
+total_hits, big_hammer_indices, small_hammer_indices = breakTheBricks(bigHits, newtons)
+print(f"Sample Case 0:")
+print(f"Total hits: {total_hits}")
+print(f"Big hammer indices: {big_hammer_indices}")
+print(f"Small hammer indices: {small_hammer_indices}")
