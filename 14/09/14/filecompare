@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Comparison Tool</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f0f2f5;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 2.5rem;
+        }
+
+        .drop-container {
+            display: flex;
+            justify-content: center;
+            gap: 50px;
+            margin-bottom: 30px;
+        }
+
+        .drop-area {
+            width: 300px;
+            height: 200px;
+            border: 2px dashed #999;
+            border-radius: 10px;
+            background-color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-size: 1.2rem;
+            color: #666;
+            transition: border-color 0.3s, background-color 0.3s;
+        }
+
+        .drop-area.dragging {
+            border-color: #666;
+            background-color: #eee;
+        }
+
+        .compare-button {
+            padding: 12px 25px;
+            font-size: 1.2rem;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .compare-button:hover {
+            background-color: #0056b3;
+        }
+
+        .result-area {
+            width: 80%;
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .file-content {
+            white-space: pre-wrap;
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 10px;
+            margin-bottom: 10px;
+            font-family: 'Courier New', Courier, monospace;
+            color: #495057;
+        }
+
+        .difference {
+            background-color: #ffcccc;
+            border-color: #ff6b6b;
+        }
+
+        .match {
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+        }
+    </style>
+</head>
+<body>
+    <h1>File Comparison</h1>
+    <div class="drop-container">
+        <div id="drop-area1" class="drop-area">
+            Drag & Drop File 1 Here
+        </div>
+        <div id="drop-area2" class="drop-area">
+            Drag & Drop File 2 Here
+        </div>
+    </div>
+    <button class="compare-button" id="compare-button">Compare</button>
+    <div class="result-area" id="result-area"></div>
+    <script>
+        let file1Content = '';
+        let file2Content = '';
+        const dropArea1 = document.getElementById('drop-area1');
+        const dropArea2 = document.getElementById('drop-area2');
+        const compareButton = document.getElementById('compare-button');
+        const resultArea = document.getElementById('result-area');
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        function handleDrop1(e) {
+            let dt = e.dataTransfer;
+            let file = dt.files[0];
+            let reader = new FileReader();
+
+            reader.onload = function(event) {
+                file1Content = event.target.result;
+                dropArea1.textContent = "File 1 Loaded";
+                dropArea1.style.backgroundColor = "#d4edda";
+                dropArea1.style.borderColor = "#28a745";
+                dropArea1.style.color = "#155724";
+            };
+
+            reader.readAsText(file);
+        }
+        function handleDrop2(e) {
+            let dt = e.dataTransfer;
+            let file = dt.files[0];
+            let reader = new FileReader();
+            reader.onload = function(event) {
+                file2Content = event.target.result;
+                dropArea2.textContent = "File 2 Loaded";
+                dropArea2.style.backgroundColor = "#d4edda";
+                dropArea2.style.borderColor = "#28a745";
+                dropArea2.style.color = "#155724";
+            };
+            reader.readAsText(file);
+        }
+        function handleDragEnter(e) {
+            e.target.classList.add('dragging');
+        }
+        function handleDragLeave(e) {
+            e.target.classList.remove('dragging');
+        }
+        function handleDrop(e) {
+            e.target.classList.remove('dragging');
+        }
+        dropArea1.addEventListener('dragenter', handleDragEnter);
+        dropArea1.addEventListener('dragover', preventDefaults);
+        dropArea1.addEventListener('dragleave', handleDragLeave);
+        dropArea1.addEventListener('drop', handleDrop1);
+        dropArea1.addEventListener('drop', handleDrop);
+        dropArea2.addEventListener('dragenter', handleDragEnter);
+        dropArea2.addEventListener('dragover', preventDefaults);
+        dropArea2.addEventListener('dragleave', handleDragLeave);
+        dropArea2.addEventListener('drop', handleDrop2);
+        dropArea2.addEventListener('drop', handleDrop);
+
+        compareButton.addEventListener('click', function() {
+            resultArea.innerHTML = '';
+
+            if (!file1Content || !file2Content) {
+                alert('Please load both files before comparing.');
+                return;
+            }
+
+            const file1Lines = file1Content.split('\n');
+            const file2Lines = file2Content.split('\n');
+            let resultHTML = '';
+            let j = 0;
+
+            for (let i = 0; i < file1Lines.length; i++) {
+                const line1 = file1Lines[i].trim();
+               
+                if (!(line1.startsWith('START OF') || line1.startsWith('END OF'))) {
+                    continue;
+                }
+
+                let line2 = file2Lines[j]?.trim() || '';
+               
+                while (!(line2.startsWith('START OF') || line2.startsWith('END OF'))) {
+                    j++;
+                    line2 = file2Lines[j]?.trim() || '';
+                }
+
+                if (line1 === line2) {
+                    resultHTML += `<div class="file-content match">${line1}</div>`;
+                } else {
+                    // resultHTML += `<div class="file-content difference">${line1}</div>`;
+                    // resultHTML += `<div class="file-content difference">${line2}</div>`;
+                    resultHTML += `<div class="File-content difference">${line1}|${line2}</div>`;
+                }
+
+                j++;
+            }
+
+            resultArea.innerHTML = resultHTML;
+        });
+    </script>
+</body>
+</html>
+
+
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Comparison Tool</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f3f7f9;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h1 {
+            color: #343a40;
+            margin-bottom: 30px;
+            font-size: 2.5rem;
+        }
+
+        .drop-container {
+            display: flex;
+            justify-content: center;
+            gap: 50px;
+            margin-bottom: 30px;
+        }
+
+        .drop-area {
+            width: 300px;
+            height: 200px;
+            border: 2px dashed #6c757d;
+            border-radius: 15px;
+            background-color: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-size: 1.2rem;
+            color: #6c757d;
+            transition: border-color 0.3s, background-color 0.3s;
+        }
+
+        .drop-area.dragging {
+            border-color: #495057;
+            background-color: #e9ecef;
+        }
+
+        .compare-button {
+            padding: 12px 25px;
+            font-size: 1.2rem;
+            background-color: #007bff;
+            color: #ffffff;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .compare-button:hover {
+            background-color: #0056b3;
+        }
+
+        .result-area {
+            width: 80%;
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .file-content {
+            white-space: pre-wrap;
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 10px;
+            margin-bottom: 10px;
+            font-family: 'Courier New', Courier, monospace;
+            color: #495057;
+        }
+
+        .difference {
+            background-color: #ffcccc;
+            border-color: #ff6b6b;
+        }
+
+        .match {
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>File Comparison</h1>
+
+    <div class="drop-container">
+        <div id="drop-area1" class="drop-area">
+            Drag & Drop File 1 Here
+        </div>
+        <div id="drop-area2" class="drop-area">
+            Drag & Drop File 2 Here
+        </div>
+        
+    </div>
+
+    <button class="compare-button" id="compare-button">Compare</button>
+
+    <div class="result-area" id="result-area"></div>
+
+    <script>
+        let file1Content = '';
+        let file2Content = '';
+
+        const dropArea1 = document.getElementById('drop-area1');
+        const dropArea2 = document.getElementById('drop-area2');
+        const compareButton = document.getElementById('compare-button');
+        const resultArea = document.getElementById('result-area');
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        function handleDrop1(e) {
+            let dt = e.dataTransfer;
+            let file = dt.files[0];
+            let reader = new FileReader();
+
+            reader.onload = function(event) {
+                file1Content = event.target.result;
+                dropArea1.textContent = "File 1 Loaded";
+                dropArea1.style.backgroundColor = "#d4edda";
+                dropArea1.style.borderColor = "#28a745";
+                dropArea1.style.color = "#155724";
+            };
+
+            reader.readAsText(file);
+        }
+
+        function handleDrop2(e) {
+            let dt = e.dataTransfer;
+            let file = dt.files[0];
+            let reader = new FileReader();
+
+            reader.onload = function(event) {
+                file2Content = event.target.result;
+                dropArea2.textContent = "File 2 Loaded";
+                dropArea2.style.backgroundColor = "#d4edda";
+                dropArea2.style.borderColor = "#28a745";
+                dropArea2.style.color = "#155724";
+            };
+
+            reader.readAsText(file);
+        }
+
+        function handleDragEnter(e) {
+            e.target.classList.add('dragging');
+        }
+
+        function handleDragLeave(e) {
+            e.target.classList.remove('dragging');
+        }
+
+        function handleDrop(e) {
+            e.target.classList.remove('dragging');
+        }
+
+        dropArea1.addEventListener('dragenter', handleDragEnter);
+        dropArea1.addEventListener('dragover', preventDefaults);
+        dropArea1.addEventListener('dragleave', handleDragLeave);
+        dropArea1.addEventListener('drop', handleDrop1);
+        dropArea1.addEventListener('drop', handleDrop);
+
+        dropArea2.addEventListener('dragenter', handleDragEnter);
+        dropArea2.addEventListener('dragover', preventDefaults);
+        dropArea2.addEventListener('dragleave', handleDragLeave);
+        dropArea2.addEventListener('drop', handleDrop2);
+        dropArea2.addEventListener('drop', handleDrop);
+
+        compareButton.addEventListener('click', function() {
+            resultArea.innerHTML = '';
+
+            if (!file1Content || !file2Content) {
+                alert('Please load both files before comparing.');
+                return;
+            }
+
+            const file1Lines = file1Content.split('\n');
+            const file2Lines = file2Content.split('\n');
+            let resultHTML = '';
+            let modifiedFile1 = '';
+
+            for (let i = 0; i < Math.max(file1Lines.length, file2Lines.length); i++) {
+                const line1 = file1Lines[i] || '';
+                const line2 = file2Lines[i] || '';
+
+                // Only compare lines that start with 'START OF' or 'END OF'
+                if ((line1.startsWith('START OF') || line1.startsWith('END OF')) &&
+                    (line2.startsWith('START OF') || line2.startsWith('END OF'))) {
+                   
+                    if (line1 !== line2) {
+                        resultHTML += `<div class="file-content difference">${line1 || ' '}</div>`;
+                        resultHTML += `<div class="file-content difference">${line2 || ' '}</div>`;
+                    } else {
+                        resultHTML += `<div class="file-content match">${line1}</div>`;
+                    }
+
+                    // Rewriting lines that start with 'START OF' or 'END OF'
+                    if (line1.startsWith('START OF') || line1.startsWith('END OF')) {
+                        modifiedFile1 += line1 + '\n';
+                    }
+                }
+            }
+
+            resultArea.innerHTML = resultHTML;
+            console.log("Modified File 1 Content:\n", modifiedFile1);
+        });
+    </script>
+</body>
+</html> -->
+
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Comparison</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f3f7f9;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h1 {
+            color: #343a40;
+            margin-bottom: 30px;
+            font-size: 2.5rem;
+        }
+
+        .drop-container {
+            display: flex;
+            justify-content: center;
+            gap: 50px;
+            margin-bottom: 30px;
+        }
+
+        .drop-area {
+            width: 300px;
+            height: 200px;
+            border: 2px dashed #6c757d;
+            border-radius: 15px;
+            background-color: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-size: 1.2rem;
+            color: #6c757d;
+            transition: border-color 0.3s, background-color 0.3s;
+        }
+
+        .drop-area.dragging {
+            border-color: #495057;
+            background-color: #e9ecef;
+        }
+
+        .compare-button {
+            padding: 12px 25px;
+            font-size: 1.2rem;
+            background-color: #007bff;
+            color: #ffffff;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .compare-button:hover {
+            background-color: #0056b3;
+        }
+
+        .result-area {
+            width: 80%;
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .file-content {
+            white-space: pre-wrap;
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 10px;
+            margin-bottom: 10px;
+            font-family: 'Courier New', Courier, monospace;
+            color: #495057;
+        }
+
+        .difference {
+            background-color: #ffcccc;
+            border-color: #ff6b6b;
+        }
+
+        .match {
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>File Comparison</h1>
+
+    <div class="drop-container">
+        <div id="drop-area1" class="drop-area">
+            Drag & Drop File 1 Here
+        </div>
+        <div id="drop-area2" class="drop-area">
+            Drag & Drop File 2 Here
+        </div>
+    </div>
+
+    <button class="compare-button" id="compare-button">Compare</button>
+
+    <div class="result-area" id="result-area"></div>
+
+    <script>
+        let file1Content = '';
+        let file2Content = '';
+
+        const dropArea1 = document.getElementById('drop-area1');
+        const dropArea2 = document.getElementById('drop-area2');
+        const compareButton = document.getElementById('compare-button');
+        const resultArea = document.getElementById('result-area');
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        function handleDrop1(e) {
+            let dt = e.dataTransfer;
+            let file = dt.files[0];
+            let reader = new FileReader();
+
+            reader.onload = function(event) {
+                file1Content = event.target.result;
+                dropArea1.textContent = "File 1 Loaded";
+                dropArea1.style.backgroundColor = "#d4edda";
+                dropArea1.style.borderColor = "#28a745";
+                dropArea1.style.color = "#155724";
+            };
+
+            reader.readAsText(file);
+        }
+
+        function handleDrop2(e) {
+            let dt = e.dataTransfer;
+            let file = dt.files[0];
+            let reader = new FileReader();
+
+            reader.onload = function(event) {
+                file2Content = event.target.result;
+                dropArea2.textContent = "File 2 Loaded";
+                dropArea2.style.backgroundColor = "#d4edda";
+                dropArea2.style.borderColor = "#28a745";
+                dropArea2.style.color = "#155724";
+            };
+
+            reader.readAsText(file);
+        }
+
+        function handleDragEnter(e) {
+            e.target.classList.add('dragging');
+        }
+
+        function handleDragLeave(e) {
+            e.target.classList.remove('dragging');
+        }
+
+        function handleDrop(e) {
+            e.target.classList.remove('dragging');
+        }
+
+        dropArea1.addEventListener('dragenter', handleDragEnter);
+        dropArea1.addEventListener('dragover', preventDefaults);
+        dropArea1.addEventListener('dragleave', handleDragLeave);
+        dropArea1.addEventListener('drop', handleDrop1);
+        dropArea1.addEventListener('drop', handleDrop);
+
+        dropArea2.addEventListener('dragenter', handleDragEnter);
+        dropArea2.addEventListener('dragover', preventDefaults);
+        dropArea2.addEventListener('dragleave', handleDragLeave);
+        dropArea2.addEventListener('drop', handleDrop2);
+        dropArea2.addEventListener('drop', handleDrop);
+
+        compareButton.addEventListener('click', function() {
+            resultArea.innerHTML = '';
+
+            if (!file1Content || !file2Content) {
+                alert('Please load both files before comparing.');
+                return;
+            }
+
+            const file1Lines = file1Content.split('\n');
+            const file2Lines = file2Content.split('\n');
+            let resultHTML = '';
+            let modifiedFile1 = '';
+
+            for (let i = 0; i < Math.max(file1Lines.length, file2Lines.length); i++) {
+                const line1 = file1Lines[i] || '';
+                const line2 = file2Lines[i] || '';
+
+                if (line1 !== line2) {
+                    resultHTML += `<div class="file-content difference">${line1 || ' '}</div>`;
+                    resultHTML += `<div class="file-content difference">${line2 || ' '}</div>`;
+                } else {
+                    resultHTML += `<div class="file-content match">${line1}</div>`;
+                }
+
+                if (line1.startsWith('START OF') || line1.startsWith('END OF')) {
+                    modifiedFile1 += line1 + '\n';
+                }
+            }
+
+            resultArea.innerHTML = resultHTML;
+            console.log("Modified File 1 Content:\n", modifiedFile1);
+        });
+    </script>
+</body>
+</html> -->
+
+
+
+
+
+
+
+
