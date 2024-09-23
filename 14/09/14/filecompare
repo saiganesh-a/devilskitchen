@@ -661,4 +661,173 @@
 
 
 
+---------------
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Comparison</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            display: flex;
+            justify-content: space-between;
+        }
+        .file-container {
+            width: 45%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        .file-container h3 {
+            text-align: center;
+        }
+        .file-content {
+            margin: 10px 0;
+        }
+        .drop-area {
+            border: 2px dashed #007BFF;
+            padding: 20px;
+            text-align: center;
+            color: #007BFF;
+            transition: background-color 0.3s;
+        }
+        .drop-area:hover {
+            background-color: #e9f5ff;
+        }
+        #comparison-results {
+            margin-top: 20px;
+            border: 1px solid #ccc;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .diff-block {
+            margin-bottom: 10px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+
+<h1>File Comparison Tool</h1>
+<div class="container">
+    <div class="file-container">
+        <h3>File 1</h3>
+        <div class="drop-area" id="drop-area1">Drop File 1 Here</div>
+        <div class="file-content" id="file1-content"></div>
+    </div>
+    <div class="file-container">
+        <h3>File 2</h3>
+        <div class="drop-area" id="drop-area2">Drop File 2 Here</div>
+        <div class="file-content" id="file2-content"></div>
+    </div>
+</div>
+
+<div id="comparison-results">
+    <h3>Comparison Results</h3>
+    <div id="results-content"></div>
+</div>
+
+<script>
+    const dropArea1 = document.getElementById('drop-area1');
+    const dropArea2 = document.getElementById('drop-area2');
+    const file1Content = document.getElementById('file1-content');
+    const file2Content = document.getElementById('file2-content');
+    const resultsContent = document.getElementById('results-content');
+
+    function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+
+    function highlight(e) {
+        const dropArea = e.target;
+        dropArea.classList.add('highlight');
+    }
+
+    function unhighlight(e) {
+        const dropArea = e.target;
+        dropArea.classList.remove('highlight');
+    }
+
+    function handleDrop(e, fileContentElement) {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+
+        if (files.length > 0) {
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                fileContentElement.textContent = event.target.result;
+                compareFiles();
+            };
+            reader.readAsText(files[0]);
+        }
+    }
+
+    function compareFiles() {
+        const file1Text = file1Content.textContent.split('\n');
+        const file2Text = file2Content.textContent.split('\n');
+        const differences = [];
+
+        if (file1Text.length === file2Text.length) {
+            for (let i = 0; i < file1Text.length; i++) {
+                if (file1Text[i] !== file2Text[i]) {
+                    differences.push({
+                        file1: file1Text[i],
+                        file2: file2Text[i]
+                    });
+                }
+            }
+        } else {
+            resultsContent.innerHTML = '<div>Files have different number of lines and cannot be compared directly.</div>';
+            return;
+        }
+
+        if (differences.length > 0) {
+            resultsContent.innerHTML = '<div class="diff-block"><strong>Differences:</strong></div>';
+            differences.forEach(diff => {
+                resultsContent.innerHTML += `
+                    <div class="diff-block">
+                        <strong>File 1:</strong> ${diff.file1}<br>
+                        <strong>File 2:</strong> ${diff.file2}
+                    </div>
+                `;
+            });
+        } else {
+            resultsContent.innerHTML = '<div>No differences found. Files are identical.</div>';
+        }
+    }
+
+    dropArea1.addEventListener('dragenter', highlight);
+    dropArea1.addEventListener('dragleave', unhighlight);
+    dropArea1.addEventListener('dragover', preventDefaults);
+    dropArea1.addEventListener('drop', (e) => {
+        preventDefaults(e);
+        unhighlight(e);
+        handleDrop(e, file1Content);
+    });
+
+    dropArea2.addEventListener('dragenter', highlight);
+    dropArea2.addEventListener('dragleave', unhighlight);
+    dropArea2.addEventListener('dragover', preventDefaults);
+    dropArea2.addEventListener('drop', (e) => {
+        preventDefaults(e);
+        unhighlight(e);
+        handleDrop(e, file2Content);
+    });
+</script>
+
+</body>
+</html>
+
+
+
+
+
 
