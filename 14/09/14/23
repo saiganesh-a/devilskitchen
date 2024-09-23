@@ -192,3 +192,127 @@ public class PuttyConnectorApp {
         }
     }
 }
+
+
+
+-----------------------------------------------------------------------------
+
+
+
+
+package com.tcs.bancs.hyderabad.putty;
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.File;
+import java.io.IOException;
+
+public class PuttyConnector {
+	
+	private static JLabel statusLabel;
+
+    public static void main(String[] args) {
+        // Create the main frame
+        JFrame frame = new JFrame("PuTTY Connector Hyderabad Dev");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setSize(800, 500);
+        frame.setLayout(new BorderLayout(10, 10)); // Adds padding between components
+        
+        // Header panel for the title
+        JPanel headerPanel = new JPanel();
+        headerPanel.setLayout(new FlowLayout(FlowLayout.CENTER));
+        JLabel headerLabel = new JLabel("PuTTY Connector - Select your Dev Region");
+        headerLabel.setFont(new Font("Century Gothic Bold", Font.BOLD, 24));
+        headerPanel.add(headerLabel);
+        frame.add(headerPanel, BorderLayout.NORTH);
+
+        // Center panel to hold the buttons
+        JPanel buttonPanel = new JPanel();
+        buttonPanel.setLayout(new GridLayout(3, 3, 15, 15)); // 3x3 grid with padding
+
+        // Create buttons for regions
+        String[] regions = {"CIF", "Deposits", "Loans", "GL", "NDVP", "Interface"};
+
+        for (String region : regions) {
+            JButton button = new JButton(region);
+            button.setFont(new Font("Century Gothic Bold", Font.BOLD, 16));
+            button.setToolTipText("Connect to" + region);
+            button.addActionListener(e -> connectToPutty(region));
+            buttonPanel.add(button);
+        }
+            frame.add(buttonPanel, BorderLayout.CENTER);
+            // Footer panel for additional information or status
+            JPanel footerPanel = new JPanel();
+            footerPanel.setLayout(new BorderLayout());
+            
+            statusLabel = new JLabel("Ready");
+            footerPanel.add(statusLabel, BorderLayout.WEST);
+            
+            JLabel footerLabel = new JLabel("PuTTY Connector - Designed by Hyderabad Team");
+            footerPanel.add(footerLabel, BorderLayout.EAST);
+            frame.add(footerPanel, BorderLayout.SOUTH);
+
+        // Show the frame
+        frame.setVisible(true);
+    }
+
+    // Method to connect to PuTTY
+    public static void connectToPutty(String region) {
+    	try {
+    		statusLabel.setText("Connecting to " + region + "...");
+    		String puttyPath = new File("putty.exe").getAbsolutePath(); // Full path to putty.exe
+    		File puttyFile = new File("putty.exe");
+    		if(!puttyFile.exists()) {System.out.println("Putty.exe not found in the directory: "+ puttyFile.getAbsolutePath());}
+
+            String[] command = null;
+            // Customize command based on the region selected
+            	switch (region) {
+            	case "CIF":
+            	// Command for D1 Dev
+            	command = new String[]{puttyPath, "-ssh", "fnsonld1@10.176.15.51", "-P", "2321", "-pw", "Team@2024"};
+                break;
+            	case "Deposits":
+            	// Command for D2 Dev
+            	command = new String[]{puttyPath, "-ssh", "fnsonld2@10.176.15.51", "-P", "2321", "-pw", "Sep@2024"};
+                break;
+            	case "Loans":
+            	// Command for D2 Dev
+            	command = new String[]{puttyPath, "-ssh", "fnsonld3@10.176.15.51", "-P", "2321", "-pw", "Jul@2024"};
+                break;
+            	case "GL":
+                // Command for D4 Dev
+            	command = new String[]{puttyPath, "-ssh", "fnsonld4@10.176.15.51", "-P", "2321", "-pw", "Jun@2024"};
+                break;
+                case "NDVP":
+                // Command for D8 Dev
+                command = new String[]{puttyPath, "-ssh", "fnsonld8@10.176.15.51", "-P", "2321", "-pw", "Radhe@2024"};
+                break;
+                case "Interface":
+                // Command for D9 Dev
+                command = new String[]{puttyPath, "-ssh", "fnsonld9@10.176.15.51", "-P", "2321", "-pw", "Sep@2024"};
+                break;
+                default:
+                    JOptionPane.showMessageDialog(null, "Region not configured: " + region, 
+                            "Error", JOptionPane.ERROR_MESSAGE);
+                    statusLabel.setText("Error: Region not configured");
+                return;
+            }
+            
+            // Print the command for debugging purposes
+            System.out.println("Running Command: " + String.join(" ", command));
+
+            // Use ProcessBuilder to run PuTTY with the command arguments
+            ProcessBuilder processBuilder = new ProcessBuilder(command);
+            processBuilder.directory(new File(".")); // Set current directory for execution
+            processBuilder.start(); // Execute the process
+            statusLabel.setText("Connected to " + region);
+        } catch (IOException ex) {
+            ex.printStackTrace();
+            JOptionPane.showMessageDialog(null, "Error connecting to " + region + ": " + ex.getMessage(), 
+                    "Connection Error", JOptionPane.ERROR_MESSAGE);
+            statusLabel.setText("Failed to connect to " + region);
+        }
+    }
+}
