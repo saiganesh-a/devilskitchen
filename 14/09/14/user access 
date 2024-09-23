@@ -131,3 +131,156 @@ public class PuttyConnector {
         return null; // Return null if not found
     }
 }
+
+
+
+
+
+package com.tcs.bancs.hyderabad.putty;
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
+
+public class PuttyConnector {
+
+    private static JLabel statusLabel;
+    private static List<String> allowedUsers = new ArrayList<>();
+    private static final String USERS_FILE = "/users.txt";  // Path for users.txt
+
+    public static void main(String[] args) {
+        loadAllowedUsers();  // Load allowed users from the file
+
+        // Create the main frame
+        JFrame frame = new JFrame("PuTTY Connector Hyderabad Dev");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setSize(800, 500);
+        frame.setLayout(new BorderLayout(10, 10)); // Adds padding between components
+
+        // Header panel for the title
+        JPanel headerPanel = new JPanel();
+        headerPanel.setLayout(new FlowLayout(FlowLayout.CENTER));
+        JLabel headerLabel = new JLabel("PuTTY Connector - Select your Dev Region");
+        headerLabel.setFont(new Font("Century Gothic Bold", Font.BOLD, 24));
+        headerPanel.add(headerLabel);
+        frame.add(headerPanel, BorderLayout.NORTH);
+
+        // Center panel to hold the buttons
+        JPanel buttonPanel = new JPanel();
+        buttonPanel.setLayout(new GridLayout(3, 3, 15, 15)); // 3x3 grid with padding
+
+        // Create buttons for regions
+        String[] regions = {"CIF", "Deposits", "Loans", "GL", "NDVP", "Interface"};
+
+        for (String region : regions) {
+            JButton button = new JButton(region);
+            button.setFont(new Font("Century Gothic Bold", Font.BOLD, 16));
+            button.setToolTipText("Connect to " + region);
+            button.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    String currentUser = getCurrentUserID();
+                    if (isUserAllowed(currentUser)) {
+                        connectToPutty(region);
+                    } else {
+                        JOptionPane.showMessageDialog(frame, "Access denied for user: " + currentUser, "Access Denied", JOptionPane.ERROR_MESSAGE);
+                    }
+                }
+            });
+            buttonPanel.add(button);
+        }
+        frame.add(buttonPanel, BorderLayout.CENTER);
+
+        // Footer panel for additional information or status
+        JPanel footerPanel = new JPanel();
+        footerPanel.setLayout(new BorderLayout());
+
+        statusLabel = new JLabel("Ready");
+        footerPanel.add(statusLabel, BorderLayout.WEST);
+
+        JLabel footerLabel = new JLabel("PuTTY Connector - Designed by Hyderabad Team");
+        footerPanel.add(footerLabel, BorderLayout.EAST);
+        frame.add(footerPanel, BorderLayout.SOUTH);
+
+        // Show the frame
+        frame.setVisible(true);
+    }
+
+    // Load allowed users from the file
+    private static void loadAllowedUsers() {
+        try (InputStream inputStream = PuttyConnector.class.getResourceAsStream(USERS_FILE);
+             BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                allowedUsers.add(line.trim());
+            }
+        } catch (IOException e) {
+            System.err.println("Error loading allowed users: " + e.getMessage());
+        }
+    }
+
+    // Check if the current user is allowed
+    private static boolean isUserAllowed(String userId) {
+        return allowedUsers.contains(userId);
+    }
+
+    // Get the current user ID
+    private static String getCurrentUserID() {
+        return System.getProperty("user.name");
+    }
+
+    // Method to connect to PuTTY
+    public static void connectToPutty(String region) {
+        try {
+            statusLabel.setText("Connecting to " + region + "...");
+            String puttyPath = new File("putty.exe").getAbsolutePath(); // Full path to putty.exe
+
+            String[] command = null;
+            // Customize command based on the region selected
+            switch (region) {
+                case "CIF":
+                    command = new String[]{puttyPath, "-ssh", "fnsonld1@10.176.15.51", "-P", "2321", "-pw", "Team@2024"};
+                    break;
+                case "Deposits":
+                    command = new String[]{puttyPath, "-ssh", "fnsonld2@10.176.15.51", "-P", "2321", "-pw", "Sep@2024"};
+                    break;
+                case "Loans":
+                    command = new String[]{puttyPath, "-ssh", "fnsonld3@10.176.15.51", "-P", "2321", "-pw", "Jul@2024"};
+                    break;
+                case "GL":
+                    command = new String[]{puttyPath, "-ssh", "fnsonld4@10.176.15.51", "-P", "2321", "-pw", "Jun@2024"};
+                    break;
+                case "NDVP":
+                    command = new String[]{puttyPath, "-ssh", "fnsonld8@10.176.15.51", "-P", "2321", "-pw", "Radhe@2024"};
+                    break;
+                case "Interface":
+                    command = new String[]{puttyPath, "-ssh", "fnsonld9@10.176.15.51", "-P", "2321", "-pw", "Sep@2024"};
+                    break;
+                default:
+                    JOptionPane.showMessageDialog(null, "Region not configured: " + region,
+                            "Error", JOptionPane.ERROR_MESSAGE);
+                    statusLabel.setText("Error: Region not configured");
+                    return;
+            }
+
+            // Use ProcessBuilder to run PuTTY with the command arguments
+            ProcessBuilder processBuilder = new ProcessBuilder(command);
+            processBuilder.directory(new File(".")); // Set current directory for execution
+            processBuilder.start(); // Execute the process
+            statusLabel.setText("Connected to " + region);
+        } catch (IOException ex) {
+            ex.printStackTrace();
+            JOptionPane.showMessageDialog(null, "Error connecting to " + region + ": " + ex.getMessage(),
+                    "Connection Error", JOptionPane.ERROR_MESSAGE);
+            statusLabel.setText("Failed to connect to " + region);
+        }
+    }
+}
