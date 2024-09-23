@@ -1,0 +1,37 @@
+def breakTheBricks(bigHits, newtons):
+    """
+    Determines the minimum number of blows to smash all the bricks,
+    the 1-based indices of the bricks smashed by the big hammer (sorted ascending),
+    and the 1-based indices of the bricks smashed by the small hammer (sorted ascending).
+    
+    Args:
+        bigHits (int): The maximum number of blows with the big hammer.
+        newtons (list[int]): An array of distinct integers representing the newtons required to smash each brick.
+        
+    Returns:
+        tuple[int, list[int], list[int]]:
+            1. The minimum number of blows to smash all the bricks.
+            2. The 1-based indices of the bricks smashed by the big hammer (sorted ascending).
+            3. The 1-based indices of the bricks smashed by the small hammer (sorted ascending).
+    """
+    # Sort the newtons in ascending order
+    newtons.sort()
+    
+    # Use the big hammer on the bricks at sorted indices
+    big_hammer_indices = [i+1 for i in range(min(bigHits, len(newtons)))]
+    
+    # Use the small hammer on the remaining bricks
+    small_hammer_indices = [i+1 for i in range(len(newtons)) if i+1 not in big_hammer_indices]
+    small_hammer_hits = sum(newtons[i] for i in range(len(newtons)) if i+1 not in big_hammer_indices)
+    
+    total_hits = len(big_hammer_indices) + small_hammer_hits
+    return total_hits, big_hammer_indices, small_hammer_indices
+
+# Sample Case 0
+bigHits = 0
+newtons = [7, 9, 3, 2, 5, 8, 4]
+total_hits, big_hammer_indices, small_hammer_indices = breakTheBricks(bigHits, newtons)
+print(f"Sample Case 0:")
+print(f"Total hits: {total_hits}")
+print(f"Big hammer indices: {big_hammer_indices}")
+print(f"Small hammer indices: {small_hammer_indices}")
