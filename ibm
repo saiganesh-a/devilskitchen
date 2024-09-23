@@ -35,3 +35,33 @@ print(f"Sample Case 0:")
 print(f"Total hits: {total_hits}")
 print(f"Big hammer indices: {big_hammer_indices}")
 print(f"Small hammer indices: {small_hammer_indices}")
+
+
+
+
+
+
+def getMaxUnits(boxes, unitsPerBox, truckSize):
+    # Create a list of tuples (unitsPerBox, boxes) and sort it by unitsPerBox in descending order
+    products = sorted(zip(unitsPerBox, boxes), key=lambda x: x[0], reverse=True)
+    
+    total_units = 0
+    for units, box_count in products:
+        # Determine how many boxes to take (either all or the remaining truck space)
+        boxes_to_take = min(box_count, truckSize)
+        total_units += boxes_to_take * units
+        truckSize -= boxes_to_take  # Decrease the remaining truck space
+        
+        # If the truck is full, stop
+        if truckSize == 0:
+            break
+
+    return total_units
+
+# Sample Test Case
+boxes = [1, 2, 3]
+unitsPerBox = [3, 2, 1]
+truckSize = 3
+
+# Expected output: 7 units (3 from product 0, 2 from product 1, and 2 from product 1 again)
+print(getMaxUnits(boxes, unitsPerBox, truckSize))  # Output: 7
