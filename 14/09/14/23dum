@@ -153,3 +153,55 @@ Loans=Jul@2024
 GL=Jun@2024
 NDVP=Radhe@2024
 Interface=Sep@2024
+
+
+
+
+
+import javax.swing.*;
+import java.awt.*;
+import java.io.*;
+import java.net.URISyntaxException;
+import java.util.HashMap;
+import java.util.Map;
+
+public class PuttyConnector {
+
+    private static JLabel statusLabel;
+    private static Map<String, String> regionPasswords = new HashMap<>();
+
+    public static void main(String[] args) {
+        // Load passwords from passwords.txt file
+        try {
+            String jarDir = new File(PuttyConnector.class.getProtectionDomain().getCodeSource().getLocation().toURI()).getParent();
+            String filePath = jarDir + File.separator + "passwords.txt";
+            System.out.println("Looking for passwords.txt at: " + filePath);
+            loadPasswordsFromFile(filePath);
+        } catch (Exception e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(null, "Error loading passwords: " + e.getMessage(), "File Error", JOptionPane.ERROR_MESSAGE);
+        }
+
+        // UI setup code continues...
+    }
+
+    public static void loadPasswordsFromFile(String filePath) {
+        try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                String[] parts = line.split("=");
+                if (parts.length == 2) {
+                    String region = parts[0].trim();
+                    String password = parts[1].trim();
+                    regionPasswords.put(region, password);
+                }
+            }
+            System.out.println("Passwords loaded successfully.");
+        } catch (IOException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(null, "Error loading passwords: " + e.getMessage(), "File Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    // Further code for UI and connection logic...
+}
