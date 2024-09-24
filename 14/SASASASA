@@ -1,0 +1,445 @@
+000100******************************************************************
+000200***                                                            ***
+000300***  SYSTEM : Micro-services                                   ***
+000400***                                                            ***
+000500***  MODULE : Micro-services                                   ***
+000600***                                                            ***
+000700***  PROGRAM: JVMSCPF                                          ***
+000800***                                                            ***
+000900***  PURPOSE: Customer search by PF Number                     ***
+001100***                                                            ***
+001200***                                                            ***
+001300******************************************************************
+001400*
+001500*
+001600*                 P R O G R A M    H I S T O R Y
+001700*                 ------------------------------
+001800*
+001900* PROGRAMMER     : DATE     : SPR NO   : COMMENTS
+002000*-----------------------------------------------------------------
+002100* BALAJI KOLLU   : 20240913 : 24090001 : Customer search by 
+000000*                                                PF Number
+002500*-----------------------------------------------------------------
+000400 IDENTIFICATION DIVISION.
+000500 WORKING-STORAGE SECTION.
+000600 01 WA-SCPF-EOF-FLAG      PIC X(01) VALUES "N".
+000700 01 WS-EOT-CSRC           PIC X(01) VALUE "N".
+000800 01 WA-ERROR-MSG          PIC 9(04) VALUE ZEROS.
+000900 01 WA-SCPF-FOUND-FLAG    PIC X(01) VALUE "N".
+001000 01 WA-CSRC-FOUND-FLAG    PIC X(01) VALUE "N".
+001100 01 S-CUSTOMER-NO         PIC X(16).
+004800     COPY UT8500CA     IN LIBRYMIS.                                                                                             
+004900     COPY UT8500FU     IN LIBRYMIS. 
+000000     COPY UT0151CA     IN LIBRYMIS. 
+       01  UT0500-CALL-AREA.
+P74844     COPY UT0500CA IN LIBRYMIS.
+
+001500 01 WA-I                PIC 9(02) VALUE ZERO.
+       01 WA-P                PIC 9(02) VALUE ZERO.
+001600 01 DB-PFNO             PIC X(08).
+001700 01 WA-CIF-NO-1                 PIC X(16). 
+000000 01 WA-CHK-CIF-NO-1              PIC X(17).       
+001800 01 WA-SQLCODE                   PIC 9(08).
+001900 01 WA-CSRC-DATA.
+002000    03 WA-CSRC-DATA-ARRAY OCCURS 15 TIMES. 
+002100       05 WA-CSRC-OUT-CIF             PIC X(17).
+002200       05 WA-CSRC-OUT-FNAME           PIC X(40).
+000000       05 WA-CSRC-OUT-MNAME           PIC X(40).
+002300       05 WA-CSRC-OUT-LNAME           PIC X(40).
+002400       05 WA-CSRC-OUT-FATHERNM        PIC X(40).
+002500       05 WA-CSRC-OUT-PINCODE         PIC X(08).
+002600       05 WA-CSRC-OUT-PAN             PIC X(24).
+002700       05 WA-CSRC-OUT-UID             PIC X(24).
+002800       05 WA-CSRC-OUT-PASSPORT        PIC X(24).
+002900       05 WA-CSRC-OUT-VOTER           PIC X(24).
+003000       05 WA-CSRC-OUT-DRIV            PIC X(24).
+003100       05 WA-CSRC-OUT-NREGA           PIC X(24).
+003200       05 WA-CSRC-OUT-PPO             PIC X(24).
+003300       05 WA-CSRC-OUT-MOB             PIC X(12).
+003400       05 WA-CSRC-OUT-GENDER          PIC X(01).
+003500       05 WA-CSRC-OUT-QR-UID          PIC X(04).
+003600       05 WA-CSRC-OUT-LINPR           PIC X(24).
+003700 
+003800      EXEC SQL BEGIN DECLARE SECTION END-EXEC.
+003900 
+004000    01 FT-REC-AREA. 
+004100       05 FT-CSRC-OUT-CIF             PIC X(16).
+004200       05 FT-CSRC-OUT-FNAME           PIC X(40).
+000000       05 FT-CSRC-OUT-MNAME           PIC X(40).
+004300       05 FT-CSRC-OUT-LNAME           PIC X(40).
+004400       05 FT-CSRC-OUT-FATHERNM        PIC X(40).
+004500       05 FT-CSRC-OUT-PINCODE         PIC X(08).
+004600       05 FT-CSRC-OUT-PAN             PIC X(24).
+004700       05 FT-CSRC-OUT-UID             PIC X(24).
+004800       05 FT-CSRC-OUT-PASSPORT        PIC X(24).
+004900       05 FT-CSRC-OUT-VOTER           PIC X(24).
+005000       05 FT-CSRC-OUT-DRIV            PIC X(24).
+005100       05 FT-CSRC-OUT-NREGA           PIC X(24).
+005200       05 FT-CSRC-OUT-PPO             PIC X(24).
+005300       05 FT-CSRC-OUT-MOB             PIC X(12).
+005400       05 FT-CSRC-OUT-GENDER          PIC X(01).
+005500       05 FT-CSRC-OUT-QR-UID          PIC X(04).
+005600       05 FT-CSRC-OUT-LINPR           PIC X(24).
+005700      EXEC SQL END DECLARE SECTION END-EXEC.  
+005800      EXEC SQL INCLUDE SQLCA END-EXEC.
+005900 LINKAGE SECTION.
+006000 01 LS-PF-NUMBER                       PIC X(08).
+       01 LS-PF-CUSTOMER-NO                  PIC X(16).
+006100 01 LS-PF-DATA-OUT                     PIC X(5910).
+006200 01 LS-PF-NO-OF-RECORDS                PIC X(02).
+006300 01 LS-PF-ERROR-MSG-NO                 PIC X(04).
+       01 ls-limit                            pic x(17).
+       01 ls-limit-flag                        pic x.
+       
+006400 PROCEDURE DIVISION USING LS-PF-NUMBER
+                                LS-PF-CUSTOMER-NO
+006500                          LS-PF-DATA-OUT
+006600                          LS-PF-NO-OF-RECORDS
+006700                          LS-PF-ERROR-MSG-NO
+                                ls-limit
+                               ls-limit-flag.
+                                
+
+006900 A000-MAIN-PARA.
+007000     INITIALIZE WA-I
+                      WA-P
+                      WA-SCPF-EOF-FLAG
+007100                WA-ERROR-MSG
+007200                WA-SCPF-FOUND-FLAG
+000000                LS-PF-DATA-OUT
+000000                WA-CSRC-DATA
+000000                LS-PF-NO-OF-RECORDS
+000000                LS-PF-ERROR-MSG-NO
+                       ls-limit
+                       ls-limit-flag.
+007400     PERFORM  D001-PF-SEARCH  THRU D109-PF-SEARCH-EXIT
+              UNTIL WA-SCPF-EOF-FLAG = "Y".                                                             
+007500 A000-EXIT.
+007600 EXIT.
+007800 EXIT PROGRAM.
+           
+           
+008000 D001-PF-SEARCH.
+008100    MOVE LS-PF-NUMBER TO DB-PFNO.
+008200    	PERFORM D0011-DECLARE-SCPF THRU D0011-DECLARE-EXIT
+008300    	PERFORM D0011-OPEN-SCPF THRU D0011-OPEN-EXIT
+008400    	PERFORM D0011-FETCH-SCPF THRU D0011-FETCH-EXIT
+                                         UNTIL WA-SCPF-EOF-FLAG = "Y"
+008600    	PERFORM D0011-CLOSE-SCPF THRU D0011-CLOSE-EXIT
+008700    	PERFORM A004-CSRC-OUT      THRU A004-EXIT.
+008800 D109-PF-SEARCH-EXIT.
+008900    EXIT.
+009000     
+009100 D0011-DECLARE-SCPF.
+           IF LS-PF-CUSTOMER-NO  = ZEROES OR SPACES
+               MOVE '0000000000000000' TO LS-PF-CUSTOMER-NO
+           END-IF    
+009200     EXEC SQL
+009300      DECLARE GETSCPF CURSOR FOR
+009400       SELECT /*+ INDEX_ASC(SCPF SCPFPK) */ CUSTOMER_NO
+009500        FROM SCPF
+009600        WHERE INST_NO  = '003'
+               AND  CUSTOMER_NO > :LS-PF-CUSTOMER-NO
+                AND  PF_NO = :DB-PFNO
+009900     END-EXEC.
+010000 D0011-DECLARE-EXIT.
+010100  EXIT.
+010200     
+010300 D0011-OPEN-SCPF.
+010400    EXEC SQL
+010500      OPEN GETSCPF
+010600    END-EXEC.
+000000     MOVE SQLCODE TO WA-SQLCODE
+010700  		IF WA-SQLCODE = ZEROS
+010800  		      CONTINUE
+010900  		ELSE
+011200  		      MOVE 155 TO WA-ERROR-MSG            
+011000  		 STRING "JVMPF(D0011-OPEN-SCPF):CURSOR OPEN ERROR:"      
+011100  		      		WA-SQLCODE DELIMITED
+012500  		            BY SIZE INTO UT8500CA-INPUT-MSG                                                                              
+012600  		      CALL "UT8500" USING UT8500CA-AREA 
+011300  		END-IF.
+011400 D0011-OPEN-EXIT.
+011500  EXIT.
+011600 D0011-FETCH-SCPF.
+011700     EXEC SQL
+011800       FETCH GETSCPF
+011900        		INTO : S-CUSTOMER-NO
+012000     END-EXEC.
+000000      MOVE SQLCODE TO WA-SQLCODE
+012100     	IF SQLCODE = ZEROS 
+                IF WA-P = 15
+                    MOVE "Y"  TO WA-SCPF-EOF-FLAG
+               ELSE
+029400          ADD 1 TO WA-P                
+012200     	    MOVE S-CUSTOMER-NO TO WA-CIF-NO-1
+                PERFORM N000-REFORMAT-OUTPUT-AC-NO THRU N099-EXIT   
+012400     	    MOVE "Y" TO WA-SCPF-FOUND-FLAG                
+012300     	    PERFORM  A001-CSRC-SEARCH   THRU A001-EXIT
+
+000000       END-IF         
+012500     	ELSE
+012600     	   IF SQLCODE = 1403 or 100
+012700     	       IF WA-SCPF-FOUND-FLAG = "Y"
+012900     	          CONTINUE
+013000     	       ELSE
+013100     	           MOVE 108 TO WA-ERROR-MSG
+013500    STRING "JVMPF:(D0011-FETCH-SCPF) ERROR IN FETCHING RECORD"                                                                        
+011100     	          WA-SQLCODE DELIMITED                                                                                          
+012500     	             BY SIZE INTO UT8500CA-INPUT-MSG                                                                              
+012600     	        CALL "UT8500" USING UT8500CA-AREA  
+
+013200     	       END-IF
+013300     	     MOVE "Y"   TO WA-SCPF-EOF-FLAG
+                 Move "N"   to ls-limit-flag
+013400     	   ELSE
+013700     	      MOVE 155 TO WA-ERROR-MSG
+013800     	      MOVE "Y"   TO WA-SCPF-EOF-FLAG 
+013500     STRING "JVMPF:(D0011-FETCH-SCPF) ERROR IN FETCHING RECORD"         
+011100     	         WA-SQLCODE DELIMITED                                                                                         
+012500     	               BY SIZE INTO UT8500CA-INPUT-MSG                                                                              
+012600     	       CALL "UT8500" USING UT8500CA-AREA
+013900     	   END-IF
+014000     	END-IF.
+014100 D0011-FETCH-EXIT.
+014200  EXIT.
+UTMPRD N000-REFORMAT-OUTPUT-AC-NO.
+UTMPRD    MOVE 2 TO UT0151CA-CALL-FUNC.
+UTMPRD    MOVE WA-CIF-NO-1  TO  UT0151CA-ACCT-IN
+UTMPRD    CALL "UT0151" USING UT0151CA-CALL-AREA.
+UTMPRD    IF  UT0151CA-STATUS = 0
+            MOVE UT0151CA-ACCT-EX TO WA-CHK-CIF-NO-1
+UTMPRD        GO TO N099-EXIT
+UTMPRD    ELSE
+013500           MOVE 155 TO WA-ERROR-MSG
+013600           MOVE "Y"   TO WA-SCPF-EOF-FLAG
+013300     STRING "JVMPF:(N000-REFORMAT-OUTPUT-AC-NO) ERROR IN CHK-DGT"             
+011100                   WA-SQLCODE DELIMITED
+012500              BY SIZE INTO UT8500CA-INPUT-MSG                                                                              
+012600           CALL "UT8500" USING UT8500CA-AREA 
+UTMPRD    END-IF.
+UTMPRD
+UTMPRD N099-EXIT.
+UTMPRD    EXIT.           
+           
+014300 D0011-CLOSE-SCPF.
+014400     EXEC SQL
+014500          CLOSE GETSCPF
+014600     END-EXEC
+000000       MOVE SQLCODE TO WA-SQLCODE    
+014700     		IF SQLCODE = ZEROS
+014800     		   CONTINUE
+014900     		ELSE
+015200     		   MOVE 155 TO WA-ERROR-MSG              
+015000     		   STRING "JVMPF(D0011-CLOSE-SCPF):CURSOR CLOSE ERROR."
+011100     		   		WA-SQLCODE DELIMITED
+000000			   		BY SIZE INTO UT8500CA-INPUT-MSG                                                                              
+012600     		   CALL "UT8500" USING UT8500CA-AREA	
+015300     		END-IF.
+015400 D0011-CLOSE-EXIT.
+015500  EXIT.       
+016500 A001-CSRC-SEARCH.  
+016700     MOVE WA-CIF-NO-1 TO S-CUSTOMER-NO.
+016800     PERFORM A003-CALL-READCSRC THRU A003-EXIT.   
+017000 A001-EXIT.
+017100 EXIT.
+017200          
+017300 
+017400 A003-CALL-READCSRC.
+017500     INITIALIZE WS-EOT-CSRC                     
+017600                WA-CSRC-FOUND-FLAG.
+017700     	PERFORM A003-DECLARE-CSRC THRU A003-DECLARE-EXIT.
+017800     	PERFORM A003-OPEN-CSRC THRU A003-OPEN-EXIT.
+017900     	PERFORM A003-FETCH-CSRC THRU A003-FETCH-EXIT
+018000     	                            UNTIL WS-EOT-CSRC = "Y".
+018100     	PERFORM A003-CLOSE-CSRC THRU A003-CLOSE-EXIT.
+018200 A003-EXIT.
+018300 EXIT.
+018400 A003-DECLARE-CSRC.
+018500    	EXEC SQL
+018600    	  DECLARE GETCSRC CURSOR FOR
+018700    	   SELECT   CUST_NO,
+018800    	   			NAME1,
+000000         			MID_NAME,
+018900    	   			NAME2,
+019000    	   			FATHER_NAME,
+019100    	   			POSTCODE,
+019200    	   			PAN,
+019300    	   			UID_NO,
+019400    	   			PASSPORT,
+019500    	   			VOTER_ID,
+019600    	   			DRIVING_ID,
+019700    	   			NREGA_ID,
+019800    	   			PPO_ID,
+019900    	   			MOB_NO,
+020000    	   			GENDER,
+020100    	   			QR_UID_NO,
+020200    	   			LINPR_ID
+020300    	   FROM CSRC
+020400    	   WHERE SOC_NO = '003'
+020500    	   AND CUST_NO = :S-CUSTOMER-NO
+020600    	END-EXEC.
+020700     
+020800 A003-DECLARE-EXIT.
+020900   EXIT.
+021000 A003-OPEN-CSRC.
+021100     EXEC SQL
+021200          OPEN GETCSRC
+021300     END-EXEC.
+000000     MOVE SQLCODE TO WA-SQLCODE    
+021400     		IF SQLCODE = ZEROS
+021500     		   		CONTINUE
+021600     		ELSE
+011200     		   		MOVE 155 TO WA-ERROR-MSG            
+021700     		   STRING "JVMCSRC(A003-OPEN-CSRC):CURSOR OPEN ERROR." 
+011100     		   				WA-SQLCODE DELIMITED
+012500     		   				BY SIZE INTO UT8500CA-INPUT-MSG                                                                              
+012600     		   	    CALL "UT8500" USING UT8500CA-AREA
+022000     		END-IF.
+022100 A003-OPEN-EXIT.
+022200  EXIT.
+022300 A003-FETCH-CSRC.
+022200    INITIALIZE  FT-REC-AREA.
+022300     			EXEC SQL
+022400     			  FETCH GETCSRC
+022500     			   INTO 
+022600     			   :FT-CSRC-OUT-CIF,             
+022700     			   :FT-CSRC-OUT-FNAME,
+000000     			   :FT-CSRC-OUT-MNAME,
+022800     			   :FT-CSRC-OUT-LNAME,           
+022900     			   :FT-CSRC-OUT-FATHERNM,       
+023000     			   :FT-CSRC-OUT-PINCODE,         
+023100     			   :FT-CSRC-OUT-PAN,             
+023200     			   :FT-CSRC-OUT-UID,             
+023300     			   :FT-CSRC-OUT-PASSPORT,        
+023400     			   :FT-CSRC-OUT-VOTER,           
+023500     			   :FT-CSRC-OUT-DRIV,            
+023600     			   :FT-CSRC-OUT-NREGA,           
+023700     			   :FT-CSRC-OUT-PPO,             
+023800     			   :FT-CSRC-OUT-MOB,             
+023900     			   :FT-CSRC-OUT-GENDER,          
+024000     			   :FT-CSRC-OUT-QR-UID,          
+024100     			   :FT-CSRC-OUT-LINPR      
+024200     			END-EXEC.
+000000    MOVE SQLCODE TO WA-SQLCODE 
+024500     IF SQLCODE = ZEROS
+024600           PERFORM LOAD-CSRC-ARRAY THRU CSRC-ARRAY-EXIT
+024700           MOVE "Y" TO WA-CSRC-FOUND-FLAG
+025600           MOVE "Y"   TO WS-EOT-CSRC                
+024800     ELSE
+024900        IF SQLCODE = 1403 or 100
+025000            IF WA-SCPF-FOUND-FLAG = "Y" 
+      *                  PERFORM  B101-FETCH-NAME THRU B199-FETCH-NAME-EXIT
+                PERFORM   LOAD-CSRC-NOTFOUND THRU CSRC-NOTFOUND-EXIT    
+025600                   MOVE "Y"   TO WS-EOT-CSRC                 
+024700                   MOVE "Y" TO WA-CSRC-FOUND-FLAG
+025300            ELSE
+025400               	 MOVE 108 TO WA-ERROR-MSG
+013500   	 STRING "JVMPF:(A003-FETCH-CSRC) ERROR IN FETCHING RECORD"                                                                      
+011100             		 		  WA-SQLCODE DELIMITED                                                                                
+012500              	 		  BY SIZE INTO UT8500CA-INPUT-MSG                                                                              
+012600           	 	 CALL "UT8500" USING UT8500CA-AREA 
+025600           MOVE "Y"   TO WS-EOT-CSRC                         
+025500            END-IF
+025700        ELSE
+026000           		 MOVE 155 TO WA-ERROR-MSG
+026100           		 MOVE "Y"   TO WS-EOT-CSRC              
+025800      STRING "JVMPF(A003-FETCH-CSRC):CURSOR FETCH ERROR."         
+011100        			 		WA-SQLCODE DELIMITED
+012500           		 		BY SIZE INTO UT8500CA-INPUT-MSG                                                                              
+012600           		 CALL "UT8500" USING UT8500CA-AREA
+026200        END-IF
+026300     END-IF.
+026400  A003-FETCH-EXIT.
+026500  EXIT.
+026600 A003-CLOSE-CSRC.
+026700     EXEC SQL
+026800          CLOSE GETCSRC
+026900     END-EXEC
+000000     MOVE SQLCODE TO WA-SQLCODE    
+027000     	IF SQLCODE = ZEROS
+027100     	   		CONTINUE
+027200     	ELSE
+027500     	   		MOVE 155 TO WA-ERROR-MSG               
+027300     	   		STRING "JVMPF(A003-CLOSE-CSRC):CURSOR CLOSE ERROR."
+011100     	   		  	WA-SQLCODE DELIMITED
+012500     	   		  	BY SIZE INTO UT8500CA-INPUT-MSG                                                                              
+012600     	   		CALL "UT8500" USING UT8500CA-AREA
+027600     	END-IF.
+027700 A003-CLOSE-EXIT.
+027800  EXIT.
+027900 A004-CSRC-OUT.
+028000     IF WA-ERROR-MSG = ZEROES
+028100        MOVE WA-CSRC-DATA               TO LS-PF-DATA-OUT
+028200        MOVE WA-I                       TO LS-PF-NO-OF-RECORDS
+              move WA-CSRC-OUT-CIF(wa-i)       to ls-limit
+028300        MOVE ZEROS  TO LS-PF-ERROR-MSG-NO
+028600     ELSE
+028700        MOVE WA-ERROR-MSG       TO LS-PF-ERROR-MSG-NO
+                    GO TO A000-EXIT            
+028900     END-IF.
+029000     
+029100 A004-EXIT.
+029200 EXIT.
+029300 LOAD-CSRC-ARRAY.
+029400     ADD 1 TO WA-I.
+000000 		MOVE WA-CHK-CIF-NO-1        TO  WA-CSRC-OUT-CIF      (WA-I).
+000000 		MOVE FT-CSRC-OUT-FNAME      TO  WA-CSRC-OUT-FNAME    (WA-I).
+000000 		MOVE FT-CSRC-OUT-MNAME      TO  WA-CSRC-OUT-MNAME    (WA-I).
+000000 		MOVE FT-CSRC-OUT-LNAME      TO  WA-CSRC-OUT-LNAME    (WA-I).
+000000 		MOVE FT-CSRC-OUT-FATHERNM   TO  WA-CSRC-OUT-FATHERNM (WA-I).
+000000 		MOVE FT-CSRC-OUT-PINCODE    TO  WA-CSRC-OUT-PINCODE  (WA-I).
+000000 		MOVE FT-CSRC-OUT-PAN        TO  WA-CSRC-OUT-PAN      (WA-I).
+000000 		MOVE FT-CSRC-OUT-UID        TO  WA-CSRC-OUT-UID      (WA-I).
+000000 		MOVE FT-CSRC-OUT-PASSPORT   TO  WA-CSRC-OUT-PASSPORT (WA-I).
+000000 		MOVE FT-CSRC-OUT-VOTER      TO  WA-CSRC-OUT-VOTER    (WA-I).
+000000 		MOVE FT-CSRC-OUT-DRIV       TO  WA-CSRC-OUT-DRIV     (WA-I).
+000000 		MOVE FT-CSRC-OUT-NREGA      TO  WA-CSRC-OUT-NREGA    (WA-I).
+000000 		MOVE FT-CSRC-OUT-PPO        TO  WA-CSRC-OUT-PPO      (WA-I).
+000000 		MOVE FT-CSRC-OUT-MOB        TO  WA-CSRC-OUT-MOB      (WA-I).
+000000 		MOVE FT-CSRC-OUT-GENDER     TO  WA-CSRC-OUT-GENDER   (WA-I).
+000000 		MOVE FT-CSRC-OUT-QR-UID     TO  WA-CSRC-OUT-QR-UID   (WA-I).
+000000 		MOVE FT-CSRC-OUT-LINPR      TO  WA-CSRC-OUT-LINPR    (WA-I).
+029600     CSRC-ARRAY-EXIT.
+029700  EXIT.
+           
+029300 LOAD-CSRC-NOTFOUND.
+029400     ADD 1 TO WA-I.
+000000 		MOVE WA-CHK-CIF-NO-1        TO  WA-CSRC-OUT-CIF      (WA-I).
+000000 		MOVE SPACES   				TO  WA-CSRC-OUT-FNAME    (WA-I).
+000000 		MOVE SPACES   				TO  WA-CSRC-OUT-MNAME    (WA-I).
+000000 		MOVE SPACES   				TO  WA-CSRC-OUT-LNAME    (WA-I).
+000000 		MOVE SPACES   				TO  WA-CSRC-OUT-FATHERNM (WA-I).
+000000 		MOVE SPACES   				TO  WA-CSRC-OUT-PINCODE  (WA-I).
+000000 		MOVE SPACES   				TO  WA-CSRC-OUT-PAN      (WA-I).
+000000 		MOVE SPACES   				TO  WA-CSRC-OUT-UID      (WA-I).
+000000 		MOVE SPACES   				TO  WA-CSRC-OUT-PASSPORT (WA-I).
+000000 		MOVE SPACES   				TO  WA-CSRC-OUT-VOTER    (WA-I).
+000000 		MOVE SPACES   				TO  WA-CSRC-OUT-DRIV     (WA-I).
+000000 		MOVE SPACES   				TO  WA-CSRC-OUT-NREGA    (WA-I).
+000000 		MOVE SPACES   				TO  WA-CSRC-OUT-PPO      (WA-I).
+000000 		MOVE SPACES   				TO  WA-CSRC-OUT-MOB      (WA-I).
+000000 		MOVE SPACES   				TO  WA-CSRC-OUT-GENDER   (WA-I).
+000000 		MOVE SPACES   				TO  WA-CSRC-OUT-QR-UID   (WA-I).
+000000 		MOVE SPACES   				TO  WA-CSRC-OUT-LINPR    (WA-I).
+029600     CSRC-NOTFOUND-EXIT.
+029700  EXIT.        
+           
+UTMPRD*B101-FETCH-NAME.
+P74844*    INITIALIZE UT0500-CALL-AREA
+P74844*    MOVE 1                     TO UT0500CA-CALL-CODE.
+P74844*    MOVE "003"                 TO UT0500CA-INST-NO.
+P74844*    MOVE S-CUSTOMER-NO           TO UT0500CA-CUSM-NO.
+P74844*    MOVE 0                     TO UT0500CA-INST-LANGUAGE-CODE.
+P74844*    MOVE 0                     TO UT0500CA-SUBCODE
+P74844*    CALL "UT0500" USING           UT0500-CALL-AREA
+P74844*       IF UT0500RA-CALL-STATUS NOT = ZEROES
+P74844*         MOVE SPACES   TO  WA-CSRC-OUT-FNAME(WA-I)
+P74844*       ELSE
+P74844*         MOVE UT0500RA-FULL-NAME(1:60) TO WA-CSRC-OUT-FNAME(WA-I)
+P74844*       END-IF.
+UTMPRD*B199-FETCH-NAME-EXIT.
+UTMPRD*  EXIT.
+        
+          
+029800
