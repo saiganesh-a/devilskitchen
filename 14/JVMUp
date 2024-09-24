@@ -1,0 +1,65 @@
+//    SBI Core Banking Project, Kondapur, Hyderabad, India.       *
+//*****************************************************************
+//                                                                *
+//  	           PROGRAM - PFEnquiryService_Child.Java                *
+//                                                                *
+//*****************************************************************
+//                 P R O G R A M    H I S T O R Y                 *
+//                                                                *
+//   PROGRAMMER    :    DATE       :  SPR NO   :   COMMENTS       *
+//----------------------------------------------------------------*
+// Naga Sai Ganesh : 19/09/2024    : 24090001  :  MICROSERVICES   *
+//----------------------------------------------------------------*
+
+package com.tcs.bancs.microservices.services;
+
+import java.util.*;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.tcs.bancs.microservices.jvm.pfenquiry.JVMSCPF;
+import com.tcs.bancs.microservices.jvm.pfenquiry.LsLimit;
+import com.tcs.bancs.microservices.jvm.pfenquiry.LsPfCustomerNo;
+import com.tcs.bancs.microservices.jvm.pfenquiry.LsPfDataOut;
+import com.tcs.bancs.microservices.jvm.pfenquiry.LsPfErrorMsgNo;
+import com.tcs.bancs.microservices.jvm.pfenquiry.LsPfNoOfRecords;
+import com.tcs.bancs.microservices.jvm.pfenquiry.LsPfNumber;
+
+public class PFEnquiryService_Child {
+
+	Logger logger = LoggerFactory.getLogger(PFEnquiryService_Child.class);
+
+	JVMSCPF jvmscpf = new JVMSCPF();
+	LsPfNumber pfinput1 = new LsPfNumber();
+	LsPfCustomerNo pfinput2 = new LsPfCustomerNo();
+	LsPfDataOut pfoutput1 = new LsPfDataOut();
+	LsPfNoOfRecords pfoutput2 = new LsPfNoOfRecords();
+	LsPfErrorMsgNo pfoutput3 = new LsPfErrorMsgNo();
+	LsLimit			pfinp3 = new LsLimit();
+
+	public List<String> callPFEnquiryChild(String pfno, String cifno) {
+
+		logger.info("VC------------------------PF Enquiry Child Service Started------------------------VC");
+		String out_response, noOfrecords, errno, lacctno = "000";
+		List<String> res = new ArrayList<String>();
+		pfinput1.setLsPfNumber(pfno);
+		pfinput2.setLsPfCustomerNo(cifno.substring(0, 16));
+		pfinp3.setLsLimit(lacctno);
+		jvmscpf.JVMSCPF(pfinput1, pfinput2, pfoutput1, pfoutput2, pfoutput3, pfinp3);
+		out_response = pfoutput1.getLsPfDataOut();
+		System.out.println("------------------------------------------------------------------------------------------" + out_response.length());
+		noOfrecords = pfoutput2.getLsPfNoOfRecords();
+		lacctno = pfinp3.getLsLimit();
+		System.out.println("------------------------------------------------------------------------------------------" + lacctno);
+		errno = pfoutput3.getLsPfErrorMsgNo();
+		
+
+		res.add(out_response);
+		res.add(noOfrecords);
+		res.add(errno);
+		logger.info("VC------------------------PF Enquiry Child Service Ended------------------------VC");
+		return res;
+	}
+
+}
