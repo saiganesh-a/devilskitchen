@@ -70,3 +70,17 @@ public class PFEnquiryService_Child {
         String limitFlag;
     }
 }
+
+
+PFEnquiryService_Child service = new PFEnquiryService_Child();
+service.callPFEnquiryChildReactive("yourPfNo", "yourCifNo")
+      .subscribe(response -> {
+          // Handle each emitted response here
+          System.out.println("Response: " + response);
+      }, error -> {
+          // Handle error scenario
+          System.err.println("Error occurred: " + error.getMessage());
+      }, () -> {
+          // This will execute when the Flux completes
+          System.out.println("All responses received.");
+      });
