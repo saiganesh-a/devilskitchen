@@ -84,3 +84,427 @@ service.callPFEnquiryChildReactive("yourPfNo", "yourCifNo")
           // This will execute when the Flux completes
           System.out.println("All responses received.");
       });
+
+
+
+//    SBI Core Banking Project, Kondapur, Hyderabad, India.       *
+//*****************************************************************
+//                 PROGRAM - PFMOBEnquiryService.Java                 
+//*****************************************************************
+//                 P R O G R A M    H I S T O R Y                 
+//
+//   PROGRAMMER    :    DATE       :  SPR NO   :   COMMENTS       
+//-----------------------------------------------------------------
+// Naga Sai Ganesh : 19/09/2024    : 24090001  :  MICROSERVICES   
+//-----------------------------------------------------------------
+
+package com.tcs.bancs.microservices.services;
+
+import java.io.IOException;
+import java.sql.SQLException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.List;
+import java.util.Properties;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+import java.util.concurrent.ExecutionException;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.sql.rowset.serial.SerialException;
+
+import org.apache.commons.lang.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.WebDataBinder;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.InitBinder;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.tcs.bancs.microservices.aggregator.AggregationServiceImpl;
+import com.tcs.bancs.microservices.config.CacheConfig;
+import com.tcs.bancs.microservices.configuration.PropertyLoader;
+import com.tcs.bancs.microservices.configuration.BancsConfig;
+import com.tcs.bancs.microservices.exception.RrnException;
+import com.tcs.bancs.microservices.exception.SrcException;
+import com.tcs.bancs.microservices.impl.IGVCDetailsRepositoryImpl;
+import com.tcs.bancs.microservices.util.FrameworkConstants;
+
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+
+import com.tcs.bancs.microservices.java.dbconnection.DBConnection;
+import com.tcs.bancs.microservices.java.txtm.Error_Description;
+import com.tcs.bancs.microservices.java.validate.Validate_Teller_Branch;
+import com.tcs.bancs.microservices.jvm.pfenquiry.JVMUTENV;
+import com.tcs.bancs.microservices.jvm.pfenquiry.JvmLsCallCode;
+import com.tcs.bancs.microservices.jvm.pfenquiry.JvmLsEnvRecordArea;
+import com.tcs.bancs.microservices.jvm.pfenquiry.JvmLsOptCode;
+import com.tcs.bancs.microservices.reqbean.RequestBean_PFMOB;
+
+@RestController
+@Api(value = "Aggregation_API", description = " ", tags = { "Aggregation API" })
+@RequestMapping("/")
+@Cacheable
+@CacheEvict
+public class PFMOBEnquiryService {
+
+    @Autowired
+    private AggregationServiceImpl aggregationServiceImpl;
+
+    @Autowired
+    private IGVCDetailsRepositoryImpl igvcDetails;
+
+    @Autowired
+    private BancsConfig bancsConfig;
+
+
+    Logger logger = LoggerFactory.getLogger(PFMOBEnquiryService.class);
+
+    String ErrorCodeMasterFilePath = CacheConfig.frameworkConfigProperties
+            .getProperty(FrameworkConstants.LOOKUP_FILES_PATH);
+    Properties error = PropertyLoader
+            .readPropertyFile(new String(ErrorCodeMasterFilePath + "\\ErrorCodeMaster.properties"));
+
+    private final DBConnection dbconnection;
+    private final Response responseObj;
+
+    @Autowired
+    public PFMOBEnquiryService(DBConnection dbconnection, Response responseObj) {
+        this.dbconnection = dbconnection;
+        this.responseObj = responseObj;
+    }
+
+    @InitBinder
+    public void initBinder(WebDataBinder binder) {
+        binder.setDisallowedFields("More_Flag");
+    }
+
+    ErrorResponse errobj = new ErrorResponse();
+    Error_Description errdesc = new Error_Description();
+    Validate_Teller_Branch validate = new Validate_Teller_Branch();
+
+    JVMUTENV jvmutenv = new JVMUTENV();
+    JvmLsCallCode callCode = new JvmLsCallCode();
+    JvmLsOptCode optcode = new JvmLsOptCode();
+    JvmLsEnvRecordArea commonarea = new JvmLsEnvRecordArea();
+
+    PFEnquiryService_Child pfchild = new PFEnquiryService_Child();
+    MOBEnquiryService_Child mobchild = new MOBEnquiryService_Child();
+
+    InputValidations inpval = new InputValidations();
+
+    @SuppressWarnings({ "unchecked", "rawtypes", "static-access", "null" })
+    @ApiOperation(value = "Call PFMOB", notes = "PFMOB Service:This API is used to fetch Customer Details.")
+    @PostMapping(value = { "/PFMOBEnq" }, produces = { "application/json" })
+    @CrossOrigin()
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public ResponseEntity<String> getCustomerDetails(@RequestBody(required = false) RequestBean_PFMOB reqbean,
+            HttpServletRequest request, @RequestHeader HttpHeaders headers, HttpServletResponse response)
+            throws SerialException, SQLException, IOException, RrnException, SrcException, InterruptedException, ExecutionException {
+
+        // Security Headers
+        response.setHeader("X-Content-Type-Options", "nosniff");
+        response.setHeader("X-Frame-Options", "DENY");
+        response.setHeader("Content-Security-Policy", "default-src 'self'");
+        response.setHeader("X-XSS-Protection", "1;mode=block");
+
+        String IPAddress = request.getHeader("X-Forwarded-For");
+        String remoteAddress = request.getRemoteAddr();
+        String accept = request.getHeader("Content-Type");
+        DateTimeFormatter entryDate1 = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss:SSS");
+        LocalDateTime time = LocalDateTime.now();
+        String entryDate = entryDate1.format(time);
+
+        String finalResponse;
+
+        // Initialize variables
+        String refno = "";
+        String tellerno = "";
+        String branchno = "";
+        String inp_opt = "";
+        String pfno = "";
+        String cifno = "";
+        String mobno = "";
+        String serviceno = bancsConfig.getServiceId(); // Assuming serviceId moved to BancsConfig
+        String validChkdFlag = "";
+        List<String> chkdRes = new ArrayList<>();
+        String out_response = "";
+        String errno = "";
+        String errDesc = "";
+        String allowTellerBranchFlag = "";
+        String callcode = "S";
+        String opt = "";
+        List<String> res = new ArrayList<>();
+        PFEnquiryService_Child service = new PFEnquiryService_Child();
+
+        // Format masterDB1 and masterDB2
+        String formattedmasterDB1 = StringUtils.rightPad(bancsConfig.getMasterDB1(), 15);
+        String formattedmasterDB2 = StringUtils.rightPad(bancsConfig.getMasterDB2(), 15);
+
+        // Concatenate lsRecArea
+        String lsRecArea = bancsConfig.getBancsTraceState().trim()
+                + bancsConfig.getMasterDQType().trim()
+                + bancsConfig.getBancsHost().trim()
+                + bancsConfig.getFnsSysnum().trim()
+                + bancsConfig.getCtrlSysnum().trim()
+                + bancsConfig.getDaySysnum().trim()
+                + bancsConfig.getNightSysnum().trim()
+                + bancsConfig.getNon24hsum().trim()
+                + bancsConfig.getDefRMode().trim()
+                + formattedmasterDB1
+                + formattedmasterDB2
+                + bancsConfig.getServicesFlag().trim();
+
+        // Array for null or empty check
+        String[] arr = { bancsConfig.getBancsTraceState(), bancsConfig.getMasterDQType(),
+                bancsConfig.getBancsHost(), bancsConfig.getFnsSysnum(),
+                bancsConfig.getCtrlSysnum(), bancsConfig.getDaySysnum(),
+                bancsConfig.getNightSysnum(), bancsConfig.getNon24hsum(),
+                bancsConfig.getDefRMode(), bancsConfig.getMasterDB1(),
+                bancsConfig.getMasterDB2(), bancsConfig.getServicesFlag() };
+
+        // Check for null or empty properties
+        errno = inpval.isNullorEmpty(arr);
+        if (!errno.equals("00000")) {
+
+            errDesc = error.getProperty(errno);
+            finalResponse = errobj.getErrorResponse(errno, errDesc, refno, tellerno, branchno);
+            igvcDetails.saveInitialRequest(
+                    Base64.getEncoder().encodeToString((reqbean != null ? reqbean.toString() : "").getBytes()),
+                    remoteAddress, tellerno, refno, serviceno, entryDate, IPAddress, errno, errDesc);
+            return new ResponseEntity<>(finalResponse, HttpStatus.OK);
+        }
+
+        if (reqbean != null) {
+
+            // Reference Number Validation
+            refno = reqbean.getReferenceNumber();
+            errno = inpval.validateRefNum(refno);
+            if (!errno.equals("00000")) {
+
+                errDesc = error.getProperty(errno);
+                finalResponse = errobj.getErrorResponse(errno, errDesc, refno, tellerno, branchno);
+                igvcDetails.saveInitialRequest(
+                        Base64.getEncoder().encodeToString((reqbean.toString()).getBytes()),
+                        remoteAddress, tellerno, refno, serviceno, entryDate, IPAddress, errno, errDesc);
+                return new ResponseEntity<>(finalResponse, HttpStatus.OK);
+            }
+
+            // Teller Number Validation
+            tellerno = request.getHeader("Teller_Number");
+            errno = inpval.validateTellerNum(tellerno);
+
+            if (!errno.equals("00000")) {
+
+                errDesc = error.getProperty(errno);
+                finalResponse = errobj.getErrorResponse(errno, errDesc, refno, "", "");
+                igvcDetails.saveInitialRequest(
+                        Base64.getEncoder().encodeToString((reqbean.toString()).getBytes()),
+                        remoteAddress, tellerno, refno, serviceno, entryDate, IPAddress, errno, errDesc);
+                return new ResponseEntity<>(finalResponse, HttpStatus.OK);
+            }
+
+            // Branch Number Validation
+            branchno = request.getHeader("Branch_Number");
+            errno = inpval.validateBranchNum(branchno);
+
+            if (!errno.equals("00000")) {
+
+                errDesc = error.getProperty(errno);
+                finalResponse = errobj.getErrorResponse(errno, errDesc, refno, tellerno, "");
+                igvcDetails.saveInitialRequest(
+                        Base64.getEncoder().encodeToString((reqbean.toString()).getBytes()),
+                        remoteAddress, tellerno, refno, serviceno, entryDate, IPAddress, errno, errDesc);
+                return new ResponseEntity<>(finalResponse, HttpStatus.OK);
+            }
+
+            // Option Code Validation
+            inp_opt = reqbean.getOption();
+            errno = inpval.validateOptionCode(inp_opt);
+
+            if (!errno.equals("00000")) {
+
+                errDesc = error.getProperty(errno);
+                finalResponse = errobj.getErrorResponse(errno, errDesc, refno, tellerno, branchno);
+                igvcDetails.saveInitialRequest(
+                        Base64.getEncoder().encodeToString((reqbean.toString()).getBytes()),
+                        remoteAddress, tellerno, refno, serviceno, entryDate, IPAddress, errno, errDesc);
+                return new ResponseEntity<>(finalResponse, HttpStatus.OK);
+            }
+
+            // PF or Mobile Number Validation
+            if (inp_opt.equals("01")) {
+
+                pfno = reqbean.getPFNumber();
+                errno = inpval.validatePFNum(pfno);
+
+                if (!errno.equals("00000")) {
+
+                    errDesc = error.getProperty(errno);
+                    finalResponse = errobj.getErrorResponse(errno, errDesc, refno, tellerno, branchno);
+                    igvcDetails.saveInitialRequest(
+                            Base64.getEncoder().encodeToString((reqbean.toString()).getBytes()),
+                            remoteAddress, tellerno, refno, serviceno, entryDate, IPAddress, errno, errDesc);
+                    return new ResponseEntity<>(finalResponse, HttpStatus.OK);
+                }
+            } else if (inp_opt.equals("02")) {
+                mobno = reqbean.getMobileNumber();
+                errno = inpval.validateMobileNum(mobno);
+                if (!errno.equals("00000")) {
+                    errDesc = error.getProperty(errno);
+                    finalResponse = errobj.getErrorResponse(errno, errDesc, refno, tellerno, branchno);
+                    igvcDetails.saveInitialRequest(
+                            Base64.getEncoder().encodeToString((reqbean.toString()).getBytes()),
+                            remoteAddress, tellerno, refno, serviceno, entryDate, IPAddress, errno, errDesc);
+                    return new ResponseEntity<>(finalResponse, HttpStatus.OK);
+                }
+            } else {
+                errno = "VC005";
+                errDesc = error.getProperty(errno);
+                finalResponse = errobj.getErrorResponse(errno, errDesc, refno, tellerno, branchno);
+                igvcDetails.saveInitialRequest(
+                        Base64.getEncoder().encodeToString((reqbean.toString()).getBytes()),
+                        remoteAddress, tellerno, refno, serviceno, entryDate, IPAddress, errno, errDesc);
+                return new ResponseEntity<>(finalResponse, HttpStatus.OK);
+            }
+
+            // CIF Number Validation
+            cifno = reqbean.getCIF_Number();
+            chkdRes = inpval.validateCIFNumber(cifno);
+
+            if (!chkdRes.get(1).equals("00000")) {
+                if (chkdRes.get(1).equals("VC011")) {
+                    errDesc = error.getProperty(chkdRes.get(1));
+                    finalResponse = errobj.getErrorResponse(chkdRes.get(1), errDesc, refno, tellerno, branchno);
+                    igvcDetails.saveInitialRequest(
+                            Base64.getEncoder().encodeToString((reqbean.toString()).getBytes()),
+                            remoteAddress, tellerno, refno, serviceno, entryDate, IPAddress, chkdRes.get(1), errDesc);
+                    return new ResponseEntity<>(finalResponse, HttpStatus.OK);
+                } else {
+                    validChkdFlag = "N";
+                }
+            } else {
+                cifno = chkdRes.get(0);
+                validChkdFlag = "Y";
+            }
+
+            // Set environment variables
+            callCode.setJvmLsCallCode(callcode);
+            commonarea.setJvmLsEnvRecordArea(lsRecArea);
+            jvmutenv.JVMUTENV(callCode, optcode, commonarea);
+
+            // Save initial request
+            igvcDetails.saveInitialRequest(
+                    Base64.getEncoder().encodeToString((reqbean.toString()).getBytes()),
+                    remoteAddress, tellerno, refno, serviceno, entryDate, IPAddress, errno, errDesc);
+
+            // Check for JSON content type
+            if (accept != null && accept.contains("application/json")) {
+                logger.info("VC------------------------Initiating DB Connection------------------------VC");
+
+                String dbConnection_flag = dbconnection.getCBSDBConnection("01", callcode, inp_opt, lsRecArea);
+                if (dbConnection_flag.equals("Y")) {
+
+                    logger.info("VC------------------------DB Connection Fetched Successfully------------------------VC");
+                    if (validChkdFlag.equals("Y")) {
+                        logger.info("VC------------------------Initiating Teller & Branch Validation------------------------VC");
+
+                        List<String> TellerBranchRes = validate.validateTellerBranchService(tellerno, branchno,
+                                serviceno, callcode, inp_opt, lsRecArea);
+                        allowTellerBranchFlag = TellerBranchRes.get(0);
+                        errno = TellerBranchRes.get(1);
+                        if (allowTellerBranchFlag.equals("Y")) {
+
+                            logger.info("VC------------------------Teller & Branch Validated Successfully------------------------VC");
+
+                            if (inp_opt.equals("01")) {
+
+                                logger.info("VC------------------------Validating PF Option_Code------------------------VC");
+
+                                service.callPFEnquiryChildReactive(pfno, cifno);
+                                .subscribe(response -> {
+                                    // Handle each emitted response here
+                                    System.out.println("Response: " + response);
+                                }, error -> {
+                                    // Handle error scenario
+                                    System.err.println("Error occurred: " + error.getMessage());
+                                }, () -> {
+                                    // This will execute when the Flux completes
+                                    System.out.println("All responses received.");
+                                });
+                            } else if (inp_opt.equals("02")) {
+
+                                logger.info("VC------------------------Validating Mobile Option_Code------------------------VC");
+
+                                res = mobchild.callMOBEnquiryChild(mobno, cifno);
+                                out_response = res.get(0);
+                                errno = res.get(2);
+                            }
+                        }
+                    } else {
+                        errDesc = errdesc.getCbsErrDesc(chkdRes.get(1), callcode, opt, lsRecArea);
+                        finalResponse = errobj.getErrorResponse(chkdRes.get(1), errDesc, refno, tellerno, branchno);
+                        igvcDetails.saveInitialRequest(
+                                Base64.getEncoder().encodeToString((reqbean.toString()).getBytes()),
+                                remoteAddress, tellerno, refno, serviceno, entryDate, IPAddress, chkdRes.get(1), errDesc);
+                        return new ResponseEntity<>(finalResponse, HttpStatus.OK);
+                    }
+                } else {
+                    errno = "VC010";
+                    errDesc = error.getProperty(errno);
+                    finalResponse = errobj.getErrorResponse(errno, errDesc, refno, tellerno, branchno);
+                    igvcDetails.saveInitialRequest(
+                            Base64.getEncoder().encodeToString((reqbean.toString()).getBytes()),
+                            remoteAddress, tellerno, refno, serviceno, entryDate, IPAddress, errno, errDesc);
+                    return new ResponseEntity<>(finalResponse, HttpStatus.OK);
+                }
+            } else {
+                errno = "VC009";
+                errDesc = error.getProperty(errno);
+                finalResponse = errobj.getErrorResponse(errno, errDesc, refno, tellerno, branchno);
+                igvcDetails.saveInitialRequest(
+                        Base64.getEncoder().encodeToString((reqbean.toString()).getBytes()),
+                        remoteAddress, tellerno, refno, serviceno, entryDate, IPAddress, errno, errDesc);
+                return new ResponseEntity<>(finalResponse, HttpStatus.OK);
+            }
+        } else {
+            errno = "VC001";
+            errDesc = error.getProperty(errno);
+            finalResponse = errobj.getErrorResponse(errno, errDesc, refno, tellerno, branchno);
+            igvcDetails.saveInitialRequest("", remoteAddress, tellerno, refno, serviceno, entryDate, IPAddress, errno,
+                    errDesc);
+            return new ResponseEntity<>(finalResponse, HttpStatus.OK);
+        }
+
+        // Final Response Handling
+        if (errno.equals("0000")) {
+            finalResponse = responseObj.getResponse(out_response, refno, tellerno, branchno);
+            igvcDetails.updateResponse("Y", errno, "Ok! Success",
+                    Base64.getEncoder().encodeToString((finalResponse).getBytes()), refno, entryDate);
+        } else {
+            errDesc = errdesc.getCbsErrDesc(errno, callcode, opt, lsRecArea);
+            finalResponse = errobj.getErrorResponse(errno, errDesc, refno, tellerno, branchno);
+            igvcDetails.updateResponse("N", errno, errDesc,
+                    Base64.getEncoder().encodeToString((finalResponse).getBytes()), refno, entryDate);
+        }
+
+        return new ResponseEntity<>(finalResponse, HttpStatus.OK);
+    }
+}
