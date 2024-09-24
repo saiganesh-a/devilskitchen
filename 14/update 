@@ -1,0 +1,98 @@
+import java.util.List;
+import java.util.concurrent.RecursiveTask;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.ExecutionException;
+import java.util.ArrayList;
+import java.util.concurrent.atomic.AtomicReferenceArray;
+
+public class AccountBalanceForkJoin {
+
+    // Recursive task for fetching account balances
+    static class BalanceTask extends RecursiveTask<Void> {
+
+        private static final int THRESHOLD = 5; // Threshold for splitting the task
+        private List<String> accountNumbers;
+        private AtomicReferenceArray<Double> balances;
+        private int start;
+        private int end;
+
+        public BalanceTask(List<String> accountNumbers, AtomicReferenceArray<Double> balances, int start, int end) {
+            this.accountNumbers = accountNumbers;
+            this.balances = balances;
+            this.start = start;
+            this.end = end;
+        }
+
+        // Mock method to simulate fetching balance for an account from invm
+        private double getBalanceFromInvm(String accountNumber) {
+            try {
+                Thread.sleep(500); // Simulating delay
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            return Math.random() * 10000; // Mocked balance
+        }
+
+        @Override
+        protected Void compute() {
+            // If the task is small enough, compute directly
+            if (end - start <= THRESHOLD) {
+                for (int i = start; i < end; i++) {
+                    double balance = getBalanceFromInvm(accountNumbers.get(i));
+                    balances.set(i, balance); // Set balance at the correct index
+                    System.out.println("Account: " + accountNumbers.get(i) + ", Balance: " + balance);
+                }
+                return null;
+            } else {
+                // If the task is too large, split it into smaller tasks
+                int mid = (start + end) / 2;
+                BalanceTask leftTask = new BalanceTask(accountNumbers, balances, start, mid);
+                BalanceTask rightTask = new BalanceTask(accountNumbers, balances, mid, end);
+
+                // Fork the subtasks
+                leftTask.fork();
+                rightTask.fork();
+
+                // Join the results
+                leftTask.join();
+                rightTask.join();
+
+                return null;
+            }
+        }
+    }
+
+    // Function to split the long account number string into individual account numbers
+    public static List<String> splitAccountNumbers(String accountNumbers, int lengthOfEachAccount) {
+        return List.of(accountNumbers.split("(?<=\\G.{" + lengthOfEachAccount + "})"));
+    }
+
+    public static void main(String[] args) {
+        // Your input string with 15 account numbers, each 11 digits long
+        String accountNumbersString = "970582658979705826589789705826589799705826589709705826589197058265892970582658973970582658974970582655970970582658916970582658979705826589789705826589799705826589702";
+
+        // Split the string into 15 account numbers of 11 digits each
+        List<String> accountNumbers = splitAccountNumbers(accountNumbersString, 11);
+
+        // Create an AtomicReferenceArray to store balances in the correct order
+        AtomicReferenceArray<Double> balances = new AtomicReferenceArray<>(accountNumbers.size());
+
+        // Create a ForkJoinPool
+        ForkJoinPool forkJoinPool = new ForkJoinPool();
+
+        // Create the main task (full range of account numbers)
+        BalanceTask task = new BalanceTask(accountNumbers, balances, 0, accountNumbers.size());
+
+        // Start the Fork/Join process
+        forkJoinPool.invoke(task);
+
+        // Collect all account balances in a list
+        List<Double> allBalances = new ArrayList<>();
+        for (int i = 0; i < balances.length(); i++) {
+            allBalances.add(balances.get(i));
+        }
+
+        // Print all account balances
+        System.out.println("All Account Balances: " + allBalances);
+    }
+}
