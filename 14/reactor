@@ -1,0 +1,72 @@
+package com.tcs.bancs.microservices.services;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+
+public class PFEnquiryService_Child {
+
+    Logger logger = LoggerFactory.getLogger(PFEnquiryService_Child.class);
+    JVMSCPF jvmscpf = new JVMSCPF();
+
+    public Flux<String> callPFEnquiryChildReactive(String pfno, String cifno) {
+        logger.info("VC------------------------PF Enquiry Child Service Started------------------------VC");
+
+        return Flux.create(sink -> {
+            String lacctno = "000";
+            String lslimitflag = "Y";
+
+            while (!lslimitflag.equals("N")) {
+                // Call JVMSCPF asynchronously
+                Mono<ResponseData> responseMono = Mono.fromCallable(() -> {
+                    LsPfNumber pfinput1 = new LsPfNumber();
+                    LsPfCustomerNo pfinput2 = new LsPfCustomerNo();
+                    LsPfDataOut pfoutput1 = new LsPfDataOut();
+                    LsPfNoOfRecords pfoutput2 = new LsPfNoOfRecords();
+                    LsPfErrorMsgNo pfoutput3 = new LsPfErrorMsgNo();
+                    LsLimit pfinp3 = new LsLimit();
+                    LsLimitFlag pfinp4 = new LsLimitFlag();
+
+                    // Set input parameters
+                    pfinput1.setLsPfNumber(pfno);
+                    pfinput2.setLsPfCustomerNo(lacctno);
+
+                    // Call the JVMSCPF method
+                    jvmscpf.JVMSCPF(pfinput1, pfinput2, pfoutput1, pfoutput2, pfoutput3, pfinp3, pfinp4);
+
+                    // Create response data object
+                    ResponseData responseData = new ResponseData();
+                    responseData.outResponse = pfoutput1.getLsPfDataOut();
+                    responseData.noOfRecords = pfoutput2.getLsPfNoOfRecords();
+                    responseData.errno = pfoutput3.getLsPfErrorMsgNo();
+                    responseData.lacctno = pfinp3.getLsLimit();
+                    responseData.limitFlag = pfinp4.getLsLimitFlag();
+
+                    return responseData;
+                });
+
+                // Subscribe to the Mono and handle the response
+                responseMono.subscribe(responseData -> {
+                    sink.next(responseData.outResponse); // Emit the output response
+                    lacctno = responseData.lacctno; // Update the account number
+                    lslimitflag = responseData.limitFlag; // Update the limit flag
+
+                    // Log information
+                    logger.info("Received response: " + responseData.outResponse);
+                    logger.info("Next lacctno: " + lacctno);
+                    logger.info("Limit flag: " + lslimitflag);
+                });
+            }
+            sink.complete(); // Complete the Flux when done
+        });
+    }
+
+    private class ResponseData {
+        String outResponse;
+        String noOfRecords;
+        String errno;
+        String lacctno;
+        String limitFlag;
+    }
+}
