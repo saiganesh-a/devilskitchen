@@ -86,3 +86,103 @@ public class PFEnquiryService_Child {
         String limitFlag;
     }
 }
+
+
+
+
+----------------
+
+import java.util.concurrent.*;
+import java.util.stream.Collectors;
+
+public class PFEnquiryService_Child {
+
+    Logger logger = LoggerFactory.getLogger(PFEnquiryService_Child.class);
+    JVMSCPF jvmscpf = new JVMSCPF();
+    
+    public List<String> callPFEnquiryChild(String pfno, String cifno) throws InterruptedException, ExecutionException {
+        logger.info("VC------------------------PF Enquiry Child Service Started------------------------VC");
+        
+        // Initial conditions
+        String lacctno = "000";
+        String lslimitflag = "Y";
+        
+        List<CompletableFuture<ResponseData>> futures = new ArrayList<>();
+        
+        // Custom thread pool, adjust pool size to 5 or less
+        ForkJoinPool customThreadPool = new ForkJoinPool(5);  // Smaller thread pool size to avoid contention
+
+        while (!lslimitflag.equals("N")) {
+            final String currentLacctno = lacctno;
+            
+            // Submit tasks asynchronously with a controlled thread pool
+            CompletableFuture<ResponseData> future = CompletableFuture.supplyAsync(() -> {
+                LsPfNumber pfinput1 = new LsPfNumber();
+                LsPfCustomerNo pfinput2 = new LsPfCustomerNo();
+                LsPfDataOut pfoutput1 = new LsPfDataOut();
+                LsPfNoOfRecords pfoutput2 = new LsPfNoOfRecords();
+                LsPfErrorMsgNo pfoutput3 = new LsPfErrorMsgNo();
+                LsLimit pfinp3 = new LsLimit();
+                LsLimitFlag pfinp4 = new LsLimitFlag();
+
+                // Populate inputs for JVMSCPF
+                pfinput1.setLsPfNumber(pfno);
+                pfinput2.setLsPfCustomerNo(currentLacctno);
+
+                // Call JVMSCPF backend service
+                long startTime = System.nanoTime();  // Track time taken for the call
+                jvmscpf.JVMSCPF(pfinput1, pfinput2, pfoutput1, pfoutput2, pfoutput3, pfinp3, pfinp4);
+                long endTime = System.nanoTime();
+                logger.info("JVMSCPF Call Duration: " + (endTime - startTime) / 1_000_000 + " ms");
+
+                // Prepare response
+                ResponseData responseData = new ResponseData();
+                responseData.outResponse = pfoutput1.getLsPfDataOut();
+                responseData.noOfRecords = pfoutput2.getLsPfNoOfRecords();
+                responseData.errno = pfoutput3.getLsPfErrorMsgNo();
+                responseData.lacctno = pfinp3.getLsLimit();
+                responseData.limitFlag = pfinp4.getLsLimitFlag();
+
+                return responseData;
+            }, customThreadPool);
+
+            futures.add(future);
+
+            // Update lacctno and limit flag for next iteration
+            lacctno = futures.get(futures.size() - 1).get().lacctno;
+            lslimitflag = futures.get(futures.size() - 1).get().limitFlag;
+        }
+
+        // Wait for all tasks to complete
+        CompletableFuture<Void> allOf = CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
+        allOf.get();  // Block until all tasks complete
+
+        // Collect the results
+        List<ResponseData> results = futures.stream()
+                                            .map(CompletableFuture::join)
+                                            .collect(Collectors.toList());
+
+        // Build the final response
+        List<String> res = new ArrayList<>();
+        String allOutResponses = results.stream().map(r -> r.outResponse).collect(Collectors.joining());
+        String noOfRecords = results.get(results.size() - 1).noOfRecords;
+        String errno = results.get(results.size() - 1).errno;
+
+        res.add(allOutResponses);
+        res.add(noOfRecords);
+        res.add(errno);
+
+        logger.info("VC------------------------PF Enquiry Child Service Ended------------------------VC");
+        
+        customThreadPool.shutdown();  // Shut down the custom thread pool
+        return res;
+    }
+
+    private class ResponseData {
+        String outResponse;
+        String noOfRecords;
+        String errno;
+        String lacctno;
+        String limitFlag;
+    }
+}
