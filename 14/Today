@@ -1,0 +1,129 @@
+package com.tcs.bancs.microservices.services;
+
+import java.util.List;
+import java.util.concurrent.RecursiveTask;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.ExecutionException;
+import java.util.ArrayList;
+import java.util.concurrent.atomic.AtomicReferenceArray;
+
+import com.tcs.bancs.microservices.jvm.pfenquiry.JVMCSRC;
+import com.tcs.bancs.microservices.jvm.pfenquiry.LsCursorName;
+import com.tcs.bancs.microservices.jvm.pfenquiry.ClsPfCustomerNo;
+import com.tcs.bancs.microservices.jvm.pfenquiry.ClsPfDataOut;
+import com.tcs.bancs.microservices.jvm.pfenquiry.ClsPfErrorMsgNo;
+import com.tcs.bancs.microservices.jvm.pfenquiry.ClsPfLastCust;
+import com.tcs.bancs.microservices.jvm.pfenquiry.ClsPfNoOfRecords;
+import com.tcs.bancs.microservices.jvm.pfenquiry.LsCursorCusmName;
+
+
+public class AccountBalanceForkJoin {
+
+	JVMCSRC jvmcsrc = new JVMCSRC();
+	ClsPfCustomerNo input = new ClsPfCustomerNo();
+	ClsPfDataOut out1 = new     ClsPfDataOut();
+	ClsPfErrorMsgNo out3 = new  ClsPfErrorMsgNo();
+	ClsPfNoOfRecords out2 = new ClsPfNoOfRecords();
+	ClsPfLastCust out4 =  new ClsPfLastCust();
+	LsCursorName out5 = new LsCursorName();
+	LsCursorCusmName out6 = new LsCursorCusmName();
+    // Recursive task for fetching account balances
+    class BalanceTask extends RecursiveTask<Void> {
+
+        private static final int THRESHOLD = 5; // Threshold for splitting the task
+        private List<String> accountNumbers;
+        private AtomicReferenceArray<String> balances;
+        private int start;
+        private int end;
+        String outputRes;
+
+        public BalanceTask(List<String> accountNumbers, AtomicReferenceArray<String> balances, int start, int end) {
+            this.accountNumbers = accountNumbers;
+            this.balances = balances;
+            this.start = start;
+            this.end = end;
+        }
+
+        // Mock method to simulate fetching balance for an account from invm
+        private String getBalanceFromInvm(String accountNumber) {
+//            try {
+//                Thread.sleep(500); // Simulating delay
+//            } catch (InterruptedException e) {
+//                e.printStackTrace();
+//            }
+//            return Math.random() * 10000; // Mocked balance
+        	input.setClsPfCustomerNo(accountNumber);
+        	 System.out.println("000000000000000000000000000000 " + accountNumber);
+        	
+        	
+        	out5.setLsCursorName(accountNumber.substring(8, 16));
+        	out6.setLsCursorCusmName(accountNumber.substring(8, 15));
+        	//System.out.println("1111111111111111111111111111111111111111111111111 " + accountNumber.substring(8, 16));
+        	jvmcsrc.JVMCSRC(input, out1, out2, out3, out4, out5, out6);
+        	outputRes = out1.getClsPfDataOut();
+        	return outputRes;
+        }
+
+        @Override
+        protected Void compute() {
+            // If the task is small enough, compute directly
+            if (end - start <= THRESHOLD) {
+                for (int i = start; i < end; i++) {
+                    String balance = getBalanceFromInvm(accountNumbers.get(i));
+                    balances.set(i, balance); // Set balance at the correct index
+                    System.out.println("Account: " + accountNumbers.get(i) + ", Balance: " + balance);
+                }
+                return null;
+            } else {
+                // If the task is too large, split it into smaller tasks
+                int mid = ((start + end) / 2) + 1;
+                BalanceTask leftTask = new BalanceTask(accountNumbers, balances, start, mid);
+                BalanceTask rightTask = new BalanceTask(accountNumbers, balances, mid, end);
+
+                // Fork the subtasks
+                leftTask.fork();
+                rightTask.fork();
+
+                // Join the results
+                leftTask.join();
+                rightTask.join();
+
+                return null;
+            }
+        }
+    }
+
+    // Function to split the long account number string into individual account numbers
+    public static List<String> splitAccountNumbers(String accountNumbers, int lengthOfEachAccount) {
+        return List.of(accountNumbers.split("(?<=\\G.{" + lengthOfEachAccount + "})"));
+    }
+
+    public void fetchCustData(String accountNumbersString) {
+        // Your input string with 15 account numbers, each 11 digits long
+        //String accountNumbersString = "910283658919205826589293058265893940582658949505826589596058265896970582658979805826589899058265899910582658109115826581191258265812913582658139145826581491558265815";
+
+        // Split the string into 15 account numbers of 11 digits each
+        List<String> accountNumbers = splitAccountNumbers(accountNumbersString, 16);
+
+        // Create an AtomicReferenceArray to store balances in the correct order
+        AtomicReferenceArray<String> balances = new AtomicReferenceArray<>(accountNumbers.size());
+
+        // Create a ForkJoinPool
+        ForkJoinPool forkJoinPool = new ForkJoinPool();
+
+        // Create the main task (full range of account numbers)
+        BalanceTask task = new BalanceTask(accountNumbers, balances, 0, accountNumbers.size());
+
+        // Start the Fork/Join process
+        forkJoinPool.invoke(task);
+
+        // Collect all account balances in a list
+        List<String> allBalances = new ArrayList<>();
+        for (int i = 0; i < balances.length(); i++) {
+            allBalances.add(balances.get(i));
+        }
+
+        // Print all account balances
+        System.out.println("All Account Balances: " + allBalances);
+    }
+}
