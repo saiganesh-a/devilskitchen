@@ -1,0 +1,86 @@
+package com.tcs.bancs.microservices.services;
+
+import java.util.List;
+import java.util.concurrent.*;
+import java.util.ArrayList;
+import java.util.concurrent.atomic.AtomicReferenceArray;
+
+import com.tcs.bancs.microservices.jvm.pfenquiry.*;
+
+public class AccountBalanceCompletableFuture {
+
+    private static final int THREAD_POOL_SIZE = Runtime.getRuntime().availableProcessors() * 2; // Set thread pool size
+    private static final ExecutorService executorService = Executors.newFixedThreadPool(THREAD_POOL_SIZE);
+
+    JVMCSRC jvmcsrc = new JVMCSRC();
+    ClsPfCustomerNo input = new ClsPfCustomerNo();
+    ClsPfDataOut out1 = new ClsPfDataOut();
+    ClsPfErrorMsgNo out3 = new ClsPfErrorMsgNo();
+    ClsPfNoOfRecords out2 = new ClsPfNoOfRecords();
+    ClsPfLastCust out4 = new ClsPfLastCust();
+    LsCursorName out5 = new LsCursorName();
+    LsCursorCusmName out6 = new LsCursorCusmName();
+
+    // Method to fetch balance for a single account
+    private String getBalanceFromInvm(String accountNumber) {
+        input.setClsPfCustomerNo(accountNumber);
+        out5.setLsCursorName(accountNumber.substring(8, 16));
+        out6.setLsCursorCusmName(accountNumber.substring(8, 15));
+        jvmcsrc.JVMCSRC(input, out1, out2, out3, out4, out5, out6);
+        return out1.getClsPfDataOut();
+    }
+
+    // Function to split the long account number string into individual account numbers
+    public static List<String> splitAccountNumbers(String accountNumbers, int lengthOfEachAccount) {
+        return List.of(accountNumbers.split("(?<=\\G.{" + lengthOfEachAccount + "})"));
+    }
+
+    // Method to fetch all account balances
+    public void fetchCustData(String accountNumbersString) {
+        List<String> accountNumbers = splitAccountNumbers(accountNumbersString, 16);
+        AtomicReferenceArray<String> balances = new AtomicReferenceArray<>(accountNumbers.size());
+        
+        List<CompletableFuture<Void>> futures = new ArrayList<>();
+
+        // Submit tasks for execution
+        for (int i = 0; i < accountNumbers.size(); i++) {
+            final int index = i;
+            CompletableFuture<Void> future = CompletableFuture.supplyAsync(() -> {
+                String balance = getBalanceFromInvm(accountNumbers.get(index));
+                balances.set(index, balance); // Store balance at the correct index
+                System.out.println("Account: " + accountNumbers.get(index) + ", Balance: " + balance);
+                return balance;
+            }, executorService).thenAccept(result -> {
+                // Result processing if needed, we already have it in balances
+            });
+            futures.add(future);
+        }
+
+        // Wait for all tasks to complete
+        CompletableFuture<Void> allOf = CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
+        allOf.join(); // This blocks until all are done
+
+        // Collect results
+        List<String> allBalances = new ArrayList<>();
+        for (int i = 0; i < balances.length(); i++) {
+            allBalances.add(balances.get(i));
+        }
+
+        // Print all account balances
+        System.out.println("All Account Balances: " + allBalances);
+    }
+
+    public static void main(String[] args) {
+        AccountBalanceCompletableFuture service = new AccountBalanceCompletableFuture();
+
+        // Input string with account numbers for testing
+        String accountNumbersString = "970582658979705826589789705826589799705826589709705826589197058265892970582658973970582658974970582655970970582658916970582658979705826589789705826589799705826589702";
+
+        long startTime = System.currentTimeMillis(); // Start time measurement
+        service.fetchCustData(accountNumbersString);
+        long endTime = System.currentTimeMillis(); // End time measurement
+
+        System.out.println("Execution Time: " + (endTime - startTime) + " ms");
+        executorService.shutdown(); // Properly shut down the executor service
+    }
+}
