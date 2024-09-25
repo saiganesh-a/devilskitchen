@@ -1,0 +1,110 @@
+package com.tcs.bancs.microservices.services;
+
+import java.util.List;
+import java.util.concurrent.RecursiveTask;
+import java.util.concurrent.ForkJoinPool;
+import java.util.ArrayList;
+import java.util.concurrent.atomic.AtomicReferenceArray;
+
+import com.tcs.bancs.microservices.jvm.pfenquiry.JVMCSRC;
+import com.tcs.bancs.microservices.jvm.pfenquiry.LsCursorName;
+import com.tcs.bancs.microservices.jvm.pfenquiry.ClsPfCustomerNo;
+import com.tcs.bancs.microservices.jvm.pfenquiry.ClsPfDataOut;
+import com.tcs.bancs.microservices.jvm.pfenquiry.ClsPfErrorMsgNo;
+import com.tcs.bancs.microservices.jvm.pfenquiry.ClsPfLastCust;
+import com.tcs.bancs.microservices.jvm.pfenquiry.ClsPfNoOfRecords;
+import com.tcs.bancs.microservices.jvm.pfenquiry.LsCursorCusmName;
+
+public class AccountBalanceForkJoin {
+
+    JVMCSRC jvmcsrc = new JVMCSRC();
+    ClsPfCustomerNo input = new ClsPfCustomerNo();
+    ClsPfDataOut out1 = new ClsPfDataOut();
+    ClsPfErrorMsgNo out3 = new ClsPfErrorMsgNo();
+    ClsPfNoOfRecords out2 = new ClsPfNoOfRecords();
+    ClsPfLastCust out4 = new ClsPfLastCust();
+    LsCursorName out5 = new LsCursorName();
+    LsCursorCusmName out6 = new LsCursorCusmName();
+
+    // Recursive task for fetching account balances
+    class BalanceTask extends RecursiveTask<Void> {
+
+        private static final int THRESHOLD = 20; // Adjusted threshold
+        private List<String> accountNumbers;
+        private AtomicReferenceArray<String> balances;
+        private int start;
+        private int end;
+
+        public BalanceTask(List<String> accountNumbers, AtomicReferenceArray<String> balances, int start, int end) {
+            this.accountNumbers = accountNumbers;
+            this.balances = balances;
+            this.start = start;
+            this.end = end;
+        }
+
+        // Fetch balance for an account using the external service
+        private String getBalanceFromInvm(String accountNumber) {
+            input.setClsPfCustomerNo(accountNumber);
+            out5.setLsCursorName(accountNumber.substring(8, 16));
+            out6.setLsCursorCusmName(accountNumber.substring(8, 15));
+            jvmcsrc.JVMCSRC(input, out1, out2, out3, out4, out5, out6);
+            return out1.getClsPfDataOut();
+        }
+
+        @Override
+        protected Void compute() {
+            if (end - start <= THRESHOLD) {
+                for (int i = start; i < end; i++) {
+                    String balance = getBalanceFromInvm(accountNumbers.get(i));
+                    balances.set(i, balance); // Set balance at the correct index
+                    System.out.println("Account: " + accountNumbers.get(i) + ", Balance: " + balance);
+                }
+                return null;
+            } else {
+                int mid = (start + end) / 2;
+                BalanceTask leftTask = new BalanceTask(accountNumbers, balances, start, mid);
+                BalanceTask rightTask = new BalanceTask(accountNumbers, balances, mid, end);
+
+                invokeAll(leftTask, rightTask); // Fork both tasks at once and wait for results
+                return null;
+            }
+        }
+    }
+
+    // Split the long account number string into individual account numbers
+    public static List<String> splitAccountNumbers(String accountNumbers, int lengthOfEachAccount) {
+        List<String> splitList = new ArrayList<>();
+        for (int i = 0; i < accountNumbers.length(); i += lengthOfEachAccount) {
+            if (i + lengthOfEachAccount <= accountNumbers.length()) {
+                splitList.add(accountNumbers.substring(i, i + lengthOfEachAccount));
+            }
+        }
+        return splitList;
+    }
+
+    public void fetchCustData(String accountNumbersString) {
+        // Split the string into account numbers of 16 digits each
+        List<String> accountNumbers = splitAccountNumbers(accountNumbersString, 16);
+
+        // Create an AtomicReferenceArray to store balances in the correct order
+        AtomicReferenceArray<String> balances = new AtomicReferenceArray<>(accountNumbers.size());
+
+        // Create a ForkJoinPool
+        ForkJoinPool forkJoinPool = new ForkJoinPool();
+
+        // Create the main task (full range of account numbers)
+        BalanceTask task = new BalanceTask(accountNumbers, balances, 0, accountNumbers.size());
+
+        // Start the Fork/Join process
+        forkJoinPool.invoke(task);
+
+        // Collect all account balances in a list
+        List<String> allBalances = new ArrayList<>();
+        for (int i = 0; i < balances.length(); i++) {
+            allBalances.add(balances.get(i));
+        }
+
+        // Print all account balances
+        System.out.println("All Account Balances: " + allBalances);
+    }
+}
