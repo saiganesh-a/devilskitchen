@@ -1,0 +1,97 @@
+package com.tcs.bancs.microservices.services;
+
+import java.util.List;
+import java.util.concurrent.*;
+import java.util.ArrayList;
+import java.util.concurrent.atomic.AtomicReferenceArray;
+import com.tcs.bancs.microservices.jvm.pfenquiry.JVMCSRC;
+import com.tcs.bancs.microservices.jvm.pfenquiry.LsCursorName;
+import com.tcs.bancs.microservices.jvm.pfenquiry.ClsPfCustomerNo;
+import com.tcs.bancs.microservices.jvm.pfenquiry.ClsPfDataOut;
+import com.tcs.bancs.microservices.jvm.pfenquiry.ClsPfErrorMsgNo;
+import com.tcs.bancs.microservices.jvm.pfenquiry.ClsPfLastCust;
+import com.tcs.bancs.microservices.jvm.pfenquiry.ClsPfNoOfRecords;
+import com.tcs.bancs.microservices.jvm.pfenquiry.LsCursorCusmName;
+
+public class AccountBalanceExecutorService {
+
+    JVMCSRC jvmcsrc = new JVMCSRC();
+    ClsPfCustomerNo input = new ClsPfCustomerNo();
+    ClsPfDataOut out1 = new ClsPfDataOut();
+    ClsPfErrorMsgNo out3 = new ClsPfErrorMsgNo();
+    ClsPfNoOfRecords out2 = new ClsPfNoOfRecords();
+    ClsPfLastCust out4 = new ClsPfLastCust();
+    LsCursorName out5 = new LsCursorName();
+    LsCursorCusmName out6 = new LsCursorCusmName();
+
+    // Worker class for fetching balance
+    class BalanceWorker implements Callable<String> {
+        private String accountNumber;
+
+        public BalanceWorker(String accountNumber) {
+            this.accountNumber = accountNumber;
+        }
+
+        // Fetch balance from the INVm system
+        private String getBalanceFromInvm(String accountNumber) {
+            input.setClsPfCustomerNo(accountNumber);
+            out5.setLsCursorName(accountNumber.substring(8, 16));
+            out6.setLsCursorCusmName(accountNumber.substring(8, 15));
+            jvmcsrc.JVMCSRC(input, out1, out2, out3, out4, out5, out6);
+            return out1.getClsPfDataOut();
+        }
+
+        @Override
+        public String call() throws Exception {
+            String balance = getBalanceFromInvm(accountNumber);
+            System.out.println("Account: " + accountNumber + ", Balance: " + balance);
+            return balance;
+        }
+    }
+
+    // Function to split the long account number string into individual account numbers
+    public static List<String> splitAccountNumbers(String accountNumbers, int lengthOfEachAccount) {
+        List<String> splitList = new ArrayList<>();
+        for (int i = 0; i < accountNumbers.length(); i += lengthOfEachAccount) {
+            if (i + lengthOfEachAccount <= accountNumbers.length()) {
+                splitList.add(accountNumbers.substring(i, i + lengthOfEachAccount));
+            }
+        }
+        return splitList;
+    }
+
+    public void fetchCustData(String accountNumbersString) {
+        // Split the string into account numbers of 16 digits each
+        List<String> accountNumbers = splitAccountNumbers(accountNumbersString, 16);
+
+        // Executor service with a fixed thread pool (adjust the pool size as needed)
+        int numberOfThreads = 10; // Adjust based on your system's capabilities
+        ExecutorService executor = Executors.newFixedThreadPool(numberOfThreads);
+
+        // A list to hold the Future objects associated with Callable tasks
+        List<Future<String>> futureBalances = new ArrayList<>();
+
+        // Submit tasks for each account number
+        for (String accountNumber : accountNumbers) {
+            BalanceWorker worker = new BalanceWorker(accountNumber);
+            Future<String> future = executor.submit(worker);
+            futureBalances.add(future);
+        }
+
+        // Collect all account balances in a list
+        List<String> allBalances = new ArrayList<>();
+        for (Future<String> future : futureBalances) {
+            try {
+                allBalances.add(future.get()); // Blocking call to get balance result
+            } catch (InterruptedException | ExecutionException e) {
+                e.printStackTrace();
+            }
+        }
+
+        // Print all account balances
+        System.out.println("All Account Balances: " + allBalances);
+
+        // Shutdown the executor service after task completion
+        executor.shutdown();
+    }
+}
