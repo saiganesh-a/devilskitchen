@@ -1,0 +1,63 @@
+package com.tcs.bancs.microservices.services;
+
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.ArrayList;
+import java.util.concurrent.atomic.AtomicReferenceArray;
+
+import com.tcs.bancs.microservices.jvm.pfenquiry.*;
+
+public class ReactiveAccountBalanceFetcher {
+
+    JVMCSRC jvmcsrc = new JVMCSRC();
+    ClsPfCustomerNo input = new ClsPfCustomerNo();
+    ClsPfDataOut out1 = new ClsPfDataOut();
+    ClsPfErrorMsgNo out3 = new ClsPfErrorMsgNo();
+    ClsPfNoOfRecords out2 = new ClsPfNoOfRecords();
+    ClsPfLastCust out4 = new ClsPfLastCust();
+    LsCursorName out5 = new LsCursorName();
+    LsCursorCusmName out6 = new LsCursorCusmName();
+
+    // Function to split the long account number string into individual account numbers
+    public static List<String> splitAccountNumbers(String accountNumbers, int lengthOfEachAccount) {
+        return List.of(accountNumbers.split("(?<=\\G.{" + lengthOfEachAccount + "})"));
+    }
+
+    // Method to simulate fetching balance for an account from invm
+    private Mono<String> getBalanceFromInvm(String accountNumber) {
+        return Mono.fromCallable(() -> {
+            input.setClsPfCustomerNo(accountNumber);
+            out5.setLsCursorName(accountNumber.substring(8, 16));
+            out6.setLsCursorCusmName(accountNumber.substring(8, 15));
+            jvmcsrc.JVMCSRC(input, out1, out2, out3, out4, out5, out6);
+            return out1.getClsPfDataOut();
+        }).onErrorReturn("Error fetching balance for: " + accountNumber);
+    }
+
+    // Method to fetch all balances reactively
+    public void fetchAllBalances(String accountNumbersString) {
+        // Split the input string into individual account numbers
+        List<String> accountNumbers = splitAccountNumbers(accountNumbersString, 16);
+
+        // Use Reactor's Flux to handle multiple asynchronous tasks
+        Flux<String> balancesFlux = Flux.fromIterable(accountNumbers)
+                .flatMap(this::getBalanceFromInvm) // Fetch balances non-blockingly
+                .doOnNext(balance -> System.out.println("Balance: " + balance)) // Print each balance
+                .doOnError(e -> System.err.println("Error: " + e.getMessage())); // Handle any errors
+
+        // Subscribe to the Flux to start the process
+        balancesFlux.collectList().block(); // Block until all tasks are completed
+    }
+
+    public static void main(String[] args) {
+        ReactiveAccountBalanceFetcher fetcher = new ReactiveAccountBalanceFetcher();
+
+        // Your input string with multiple account numbers
+        String accountNumbersString = "970582658979705826589789705826589799705826589709705826589197058265892970582658973970582658974970582655970970582658916970582658979705826589789705826589799705826589702";
+
+        // Fetch all account balances
+        fetcher.fetchAllBalances(accountNumbersString);
+    }
+}
