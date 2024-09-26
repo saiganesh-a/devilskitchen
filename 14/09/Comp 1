@@ -1,0 +1,85 @@
+package com.tcs.bancs.microservices.services;
+
+import java.util.List;
+import java.util.concurrent.atomic.AtomicReferenceArray;
+import java.util.stream.Collectors;
+
+import com.tcs.bancs.microservices.jvm.pfenquiry.JVMCSRC;
+import com.tcs.bancs.microservices.jvm.pfenquiry.LsCursorName;
+import com.tcs.bancs.microservices.jvm.pfenquiry.ClsPfCustomerNo;
+import com.tcs.bancs.microservices.jvm.pfenquiry.ClsPfDataOut;
+import com.tcs.bancs.microservices.jvm.pfenquiry.ClsPfErrorMsgNo;
+import com.tcs.bancs.microservices.jvm.pfenquiry.ClsPfLastCust;
+import com.tcs.bancs.microservices.jvm.pfenquiry.ClsPfNoOfRecords;
+import com.tcs.bancs.microservices.jvm.pfenquiry.LsCursorCusmName;
+
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
+
+public class AccountBalanceReactor {
+
+    JVMCSRC jvmcsrc = new JVMCSRC();
+    ClsPfCustomerNo input = new ClsPfCustomerNo();
+    ClsPfDataOut out1 = new ClsPfDataOut();
+    ClsPfErrorMsgNo out3 = new ClsPfErrorMsgNo();
+    ClsPfNoOfRecords out2 = new ClsPfNoOfRecords();
+    ClsPfLastCust out4 = new ClsPfLastCust();
+    LsCursorName out5 = new LsCursorName();
+    LsCursorCusmName out6 = new LsCursorCusmName();
+
+    // Function to split the long account number string into individual account numbers
+    public static List<String> splitAccountNumbers(String accountNumbers, int lengthOfEachAccount) {
+        return List.of(accountNumbers.split("(?<=\\G.{" + lengthOfEachAccount + "})"));
+    }
+
+    // Method to fetch balance from invm using Reactor
+    private Mono<String> getBalanceFromInvm(String accountNumber) {
+        return Mono.fromCallable(() -> {
+            input.setClsPfCustomerNo(accountNumber);
+            out5.setLsCursorName(accountNumber.substring(8, 16));
+            out6.setLsCursorCusmName(accountNumber.substring(8, 15));
+            jvmcsrc.JVMCSRC(input, out1, out2, out3, out4, out5, out6);
+            String outputRes = out1.getClsPfDataOut();
+            System.out.println("Account: " + accountNumber + ", Balance: " + outputRes);
+            return outputRes;
+        })
+        .timeout(java.time.Duration.ofSeconds(1)) // Timeout to avoid long waiting
+        .retry(2) // Retry on error
+        .onErrorReturn("Error retrieving balance") // Fallback value
+        .subscribeOn(Schedulers.boundedElastic()); // Use boundedElastic for IO-bound tasks
+    }
+
+    public void fetchCustData(String accountNumbersString) {
+        // Split the string into account numbers of the specified length
+        List<String> accountNumbers = splitAccountNumbers(accountNumbersString, 16);
+
+        // Create an AtomicReferenceArray to store balances in the correct order
+        AtomicReferenceArray<String> balances = new AtomicReferenceArray<>(accountNumbers.size());
+
+        // Create a Reactor Flux to process the account numbers
+        Flux.fromIterable(accountNumbers)
+            .flatMap(account -> getBalanceFromInvm(account)
+                .doOnNext(balance -> {
+                    // Find the index and store the balance in the AtomicReferenceArray
+                    int index = accountNumbers.indexOf(account);
+                    balances.set(index, balance);
+                })
+            , 512) // Adjust concurrency level
+            .collectList() // Collect results into a List
+            .doOnNext(results -> {
+                // Print all account balances
+                System.out.println("All Account Balances: " + results.stream()
+                    .map(balances::toString)
+                    .collect(Collectors.joining(", ")));
+            })
+            .block(); // Block to wait for all balances (use only for demo/testing purposes)
+    }
+
+    public static void main(String[] args) {
+        AccountBalanceReactor example = new AccountBalanceReactor();
+        // Your input string with account numbers (for demo purposes)
+        String accountNumbersString = "970582658979705826589789705826589799705826589709705826589197058265892970582658973970582658974970582655970970582658916970582658979705826589789705826589799705826589702";
+        example.fetchCustData(accountNumbersString);
+    }
+}
