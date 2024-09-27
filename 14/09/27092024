@@ -121,3 +121,144 @@ public class PFEnquiryService_Child {
         String limitFlag;
     }
 }
+
+
+
+
+--------------------------
+
+
+package com.tcs.bancs.microservices.services;
+
+import java.util.*;
+import java.util.concurrent.*;
+import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import com.tcs.bancs.microservices.jvm.pfenquiry.*;
+
+public class PFEnquiryService_Child {
+
+    Logger logger = LoggerFactory.getLogger(PFEnquiryService_Child.class);
+    JVMSCPF jvmscpf = new JVMSCPF();
+
+    // Method to call PFEnquiry child service with a dynamic number of records
+    public List<String> callPFEnquiryChild(String pfno, String cifno, int requestedNumberOfRecords) throws InterruptedException, ExecutionException {
+        logger.info("VC------------------------PF Enquiry Child Service Started------------------------VC");
+
+        // Initial conditions
+        String lacctno = "000";
+        String lslimitflag = "Y";
+
+        // Determine the actual number of records to fetch
+        int numberOfRecordsToFetch = requestedNumberOfRecords > 0 ? requestedNumberOfRecords : 15;
+
+        List<CompletableFuture<ResponseData>> futures = new ArrayList<>();
+        
+        // Custom thread pool, adjust pool size to 5 or less
+        ForkJoinPool customThreadPool = new ForkJoinPool(5);  // Smaller thread pool size to avoid contention
+
+        // Keep track of how many records have been fetched
+        int fetchedRecordsCount = 0;
+
+        while (!lslimitflag.equals("N") && fetchedRecordsCount < numberOfRecordsToFetch) {
+            final String currentLacctno = lacctno;
+
+            // Submit tasks asynchronously with a controlled thread pool
+            CompletableFuture<ResponseData> future = CompletableFuture.supplyAsync(() -> {
+                LsPfNumber pfinput1 = new LsPfNumber();
+                LsPfCustomerNo pfinput2 = new LsPfCustomerNo();
+                LsPfDataOut pfoutput1 = new LsPfDataOut();
+                LsPfNoOfRecords pfoutput2 = new LsPfNoOfRecords();
+                LsPfErrorMsgNo pfoutput3 = new LsPfErrorMsgNo();
+                LsPfLastCust pfinp3 = new LsPfLastCust();
+                LsPfCountFlag pfinp4 = new LsPfCountFlag();
+
+                // Populate inputs for JVMSCPF
+                pfinput1.setLsPfNumber(pfno);
+                pfinput2.setLsPfCustomerNo(currentLacctno);
+
+                // Call JVMSCPF backend service
+                long startTime = System.nanoTime();  // Track time taken for the call
+                jvmscpf.JVMSCPF(pfinput1, pfinput2, pfoutput1, pfoutput2, pfoutput3, pfinp3, pfinp4);
+                long endTime = System.nanoTime();
+                logger.info("JVMSCPF Call Duration: " + (endTime - startTime) / 1_000_000 + " ms");
+
+                // Prepare response
+                ResponseData responseData = new ResponseData();
+                responseData.outResponse = pfoutput1.getLsPfDataOut();
+                responseData.noOfRecords = pfoutput2.getLsPfNoOfRecords();
+                responseData.errno = pfoutput3.getLsPfErrorMsgNo();
+                responseData.lacctno = pfinp3.getLsPfLastCust();
+                responseData.limitFlag = pfinp4.getLsPfCountFlag();
+
+                return responseData;
+            }, customThreadPool);
+
+            futures.add(future);
+
+            // Get the result of the last call and update conditions
+            ResponseData lastResult = futures.get(futures.size() - 1).get();
+            lacctno = lastResult.lacctno;
+            lslimitflag = lastResult.limitFlag;
+
+            // Update the fetched records count
+            fetchedRecordsCount += Integer.parseInt(lastResult.noOfRecords);
+        }
+
+        // Wait for all tasks to complete
+        CompletableFuture<Void> allOf = CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
+        allOf.get();  // Block until all tasks complete
+
+        // Collect the results
+        List<ResponseData> results = futures.stream()
+                                            .map(CompletableFuture::join)
+                                            .collect(Collectors.toList());
+
+        // Build the final response
+        List<String> res = new ArrayList<>();
+        String allOutResponses = results.stream()
+                                        .map(r -> r.outResponse)
+                                        .collect(Collectors.joining());
+
+        // Split the combined output into individual records based on delimiter (or fixed size)
+        String[] recordsArray = allOutResponses.split("\\|"); // Assuming '|' is the delimiter for each record
+
+        // Limit the number of records to the requested amount
+        List<String> limitedRecords = Arrays.asList(recordsArray).subList(0, Math.min(recordsArray.length, requestedNumberOfRecords));
+
+        // Join the limited records back into a single string
+        String limitedOutResponse = String.join("|", limitedRecords);
+
+        // Update the number of records to the actual count of limited records
+        String noOfRecords = String.valueOf(limitedRecords.size());
+        String errno = results.get(results.size() - 1).errno;
+
+        res.add(limitedOutResponse);
+        res.add(noOfRecords);
+        res.add(errno);
+
+        logger.info("VC------------------------PF Enquiry Child Service Ended------------------------VC");
+
+        customThreadPool.shutdown();  // Shut down the custom thread pool
+        return res;
+    }
+
+    // Inner class to hold response data from JVMSCPF call
+    private class ResponseData {
+        String outResponse;
+        String noOfRecords;
+        String errno;
+        String lacctno;
+        String limitFlag;
+    }
+
+    // Main method for testing
+    public static void main(String[] args) throws InterruptedException, ExecutionException {
+        PFEnquiryService_Child service = new PFEnquiryService_Child();
+
+        // Test call with specific number of records requested
+        List<String> response = service.callPFEnquiryChild("001234567", "CIF123456789", 17); // Adjust the number as needed
+        System.out.println("Response: " + response);
+    }
+}
