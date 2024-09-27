@@ -400,3 +400,49 @@ public class PFMOBEnquiryService {
 
 	}
 }
+
+
+
+
+-----------------
+
+
+@ApiOperation(value = "Call PFMOB", notes = "PFMOB Service:This API is used to fetch Customer Details.")
+@PostMapping(value = { "/PFMOBEnq" }, produces = { "application/json" })
+@CrossOrigin()
+@JsonIgnoreProperties(ignoreUnknown = true)
+public ResponseEntity<String> getCustomerDetails(@RequestBody(required = false) RequestBean_PFMOB reqbean,
+                HttpServletRequest request, @RequestHeader HttpHeaders headers, HttpServletResponse response)
+                throws SerialException, SQLException, IOException, RrnException, SrcException, InterruptedException, ExecutionException {
+    // Existing code...
+
+    // Validate the requested number of records
+    int requestedNoOfRecords = reqbean.getRequestedNoOfRecords();
+    if (requestedNoOfRecords <= 0) {
+        String errno = "VC007"; // You can define a specific error code for invalid record count
+        String errDesc = error.getProperty(errno);
+        String finalResponse = errobj.getErrorResponse(errno, errDesc, refno, tellerno, branchno);
+        igvcDetails.saveInitialRequest(Base64.getEncoder().encodeToString((reqbean.toString()).getBytes()),
+                        remoteAddress, tellerno, refno, serviceno, entryDate, IPAddress, errno, errDesc);
+        return new ResponseEntity<>(finalResponse, HttpStatus.OK);
+    }
+
+    // Implement logic to fetch the requested number of records.
+    List<String> results;
+    if (inp_opt.equals("01")) {
+        results = pfchild.callPFEnquiryChild(pfno, cifno, requestedNoOfRecords);
+    } else if (inp_opt.equals("02")) {
+        results = mobchild.callMOBEnquiryChild(mobno, cifno, requestedNoOfRecords);
+    } else {
+        errno = "VC005"; // Invalid option code
+        errDesc = error.getProperty(errno);
+        finalResponse = errobj.getErrorResponse(errno, errDesc, refno, tellerno, branchno);
+        igvcDetails.saveInitialRequest(Base64.getEncoder().encodeToString((reqbean.toString()).getBytes()),
+                        remoteAddress, tellerno, refno, serviceno, entryDate, IPAddress, errno, errDesc);
+        return new ResponseEntity<>(finalResponse, HttpStatus.OK);
+    }
+
+    // Construct the final response with fetched records
+    finalResponse = results.get(0); // Modify based on how your records are fetched
+    return new ResponseEntity<>(finalResponse, HttpStatus.OK);
+}
