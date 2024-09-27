@@ -1,0 +1,223 @@
+package com.tcs.bancs.microservices.services;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.web.bind.annotation.*;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+@Component
+public class Response {
+	
+    Logger logger = LoggerFactory.getLogger(Response.class);
+
+	@Value("${response.outline.location}")
+	private String RES_FILE_PATH;
+
+    ObjectMapper objectMapper = new ObjectMapper();
+
+    @CrossOrigin()  
+    @JsonIgnore
+    public String getResponse(String linkoutRes, String refno, String tellerno, String branchno) {
+        Map<String, String> paramLengthMap = new LinkedHashMap<>();
+        String errno = "0000";
+        String errdesc = "Ok! Success";
+        String json = "";
+        try {
+            Files.lines(Paths.get(RES_FILE_PATH)).forEach(line -> {
+                String[] lineSplit = line.split(":");
+                paramLengthMap.put(lineSplit[0], lineSplit[1]);
+            });
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("Reference Number", refno);
+        result.put("Teller Number", tellerno);
+        result.put("Branch Number", branchno);
+        result.put("Error Number", errno);
+        result.put("Error Description", errdesc);
+       Map<String, Object> cobResponse = splitAndStoreResponse(linkoutRes, paramLengthMap);
+       result.putAll(cobResponse);
+       json = convertMapToJson(result);
+
+        return json;
+    }
+    
+    public String getErrorResponse(String errno, String errdesc, String refno, String tellerno, String branchno) {
+        Map<String, Object> result = new LinkedHashMap<>();
+        String jsonResponse = "";
+        result.put("Reference Number", refno);
+        result.put("Teller Number", tellerno);
+        result.put("Branch Number", branchno);
+        result.put("ErrNo", errno);
+        result.put("ErrDesc", errdesc.trim()); 
+        jsonResponse = convertMapToJson(result);
+        return jsonResponse;
+    }
+
+    public Map<String, Object> splitAndStoreResponse(String str, Map<String, String> paramLengthMap) {
+        Map<String, Object> splitResponse = new LinkedHashMap<>();
+        int curIndex = 0;
+
+        for (Map.Entry<String, String> entry : paramLengthMap.entrySet()) {
+            String key = entry.getKey();
+            String lengthAndRepetition = entry.getValue();
+
+            // Handle decimal formats like 3,2
+            if (lengthAndRepetition.contains(",")) {
+                String[] parts = lengthAndRepetition.split(",");
+                if (parts.length != 2) {
+                   logger.error("Invalid format for: " + lengthAndRepetition);
+                    continue;
+                }
+                int leftDigits = Integer.parseInt(parts[0].trim());
+                int rightDigits = Integer.parseInt(parts[1].trim());
+                int totalLength = leftDigits + rightDigits;
+               
+                if (curIndex + totalLength <= str.length()) {
+                    String value = str.substring(curIndex, curIndex + totalLength);
+                    value = formatAmount(value, lengthAndRepetition);
+                    splitResponse.put(key, value);
+                    curIndex += totalLength;
+                } else {
+                    break; // In case remaining length is less than expected
+                }
+            } else {
+                // Split length and repetition parts
+                String[] lengthAndRepSplit = lengthAndRepetition.split("\\*");
+                int length = Integer.parseInt(lengthAndRepSplit[0]);
+                int repetitions = lengthAndRepSplit.length > 1 ? Integer.parseInt(lengthAndRepSplit[1]) : 1;
+
+                if (repetitions > 1) {
+                    List<Map<String, Object>> repeatedItems = new ArrayList<>();
+                    for (int i = 0; i < repetitions; i++) {
+                        if (curIndex + length <= str.length()) {
+                            Map<String, Object> item = new LinkedHashMap<>();
+                            processSubStructure(str.substring(curIndex, curIndex + length), item, key, paramLengthMap);
+                            repeatedItems.add(item);
+                            curIndex += length;
+                        } else {
+                            break; // In case remaining length is less than expected
+                        }
+                    }
+                    splitResponse.put(key, repeatedItems);
+                } else {
+                    if (curIndex + length <= str.length()) {
+                        processSubStructure(str.substring(curIndex, curIndex + length), splitResponse, key, paramLengthMap);
+                        curIndex += length;
+                    } else {
+                        break; // In case remaining length is less than expected
+                    }
+                }
+            }
+        }
+
+        return splitResponse;
+    }
+
+    public void processSubStructure(String subStr, Map<String, Object> map, String prefix, Map<String, String> paramLengthMap) {
+        Map<String, Integer> subParamLengthMap = new LinkedHashMap<>();
+        int curIndex = 0;
+
+        for (Map.Entry<String, String> entry : paramLengthMap.entrySet()) {
+            String key = entry.getKey();
+            if (key.startsWith(prefix + ".")) {
+                String subKey = key.substring((prefix + ".").length());
+                String lengthValue = entry.getValue();
+               
+                // Handle decimal formats and convert
+                if (lengthValue.contains(",")) {
+                    subParamLengthMap.put(subKey, calculateTotalLength(lengthValue));
+                } else {
+                    subParamLengthMap.put(subKey, Integer.parseInt(lengthValue));
+                }
+            }
+        }
+
+        for (Map.Entry<String, Integer> entry : subParamLengthMap.entrySet()) {
+            String key = entry.getKey();
+            int length = entry.getValue();
+
+            if (curIndex + length <= subStr.length()) {
+                String value = subStr.substring(curIndex, curIndex + length).trim();
+               
+                // Check for the amount pattern (x,y) and format if necessary
+                if (paramLengthMap.get(prefix + "." + key).contains(",")) {
+                    value = formatAmount(value, paramLengthMap.get(prefix + "." + key));
+                }
+               
+                insertValue(map, key, value);
+                curIndex += length;
+            } else {
+                break; // In case remaining length is less than expected
+            }
+        }
+    }
+
+
+    public void insertValue(Map<String, Object> map, String key, String value) {
+        String[] keys = key.split("\\.");
+        Map<String, Object> currentMap = map;
+        for (int i = 0; i < keys.length - 1; i++) {
+            if (!(currentMap.get(keys[i]) instanceof Map)) {
+                currentMap.put(keys[i], new LinkedHashMap<String, Object>());
+            }
+            currentMap = (Map<String, Object>) currentMap.get(keys[i]);
+        }
+        currentMap.put(keys[keys.length - 1], value.trim());
+    }
+
+
+    public String formatAmount(String value, String pattern) {
+        String[] patternParts = pattern.split(",");
+        if (patternParts.length != 2) return value; // No formatting needed
+
+        int leftDigits = Integer.parseInt(patternParts[0].trim());
+        int rightDigits = Integer.parseInt(patternParts[1].trim());
+
+        // Ensure the length matches the expected format
+        if (value.length() == (leftDigits + rightDigits)) {
+            // Insert the decimal point
+            return value.substring(0, leftDigits) + "." + value.substring(leftDigits);
+        }
+
+        return value; // If not matching, return original
+    }
+
+    public int calculateTotalLength(String pattern) {
+        String[] parts = pattern.split(",");
+        if (parts.length < 2) {
+           logger.error("Invalid length pattern: " + pattern);
+            return 0; // Return 0 if the pattern is invalid [Response.param1:3,]
+        }
+        try {
+            return Integer.parseInt(parts[0].trim()) + Integer.parseInt(parts[1].trim());  //Return both lengths after parsing [Response.param2:3,2]
+        } catch (NumberFormatException e) {
+           logger.error("Error parsing length pattern: " + pattern);
+            return 0; // Return 0 in case of an error
+        }
+    }
+    
+    public String convertMapToJson(Map<String, Object> map) {
+        ObjectMapper objectMapper = new ObjectMapper();
+        try {
+            return objectMapper.writeValueAsString(map);
+        } catch (JsonProcessingException e) {
+            return "{}"; // return empty JSON object in case of error
+        }
+    }  
+}
