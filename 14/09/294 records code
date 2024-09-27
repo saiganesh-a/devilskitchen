@@ -1,0 +1,78 @@
+public List<String> callPFEnquiryChild(String pfno, String cifno, int requestedNumberOfRecords) throws InterruptedException, ExecutionException {
+    logger.info("VC------------------------PF Enquiry Child Service Started------------------------VC");
+
+    // Initial conditions
+    String lacctno = "000";
+    String lslimitflag = "Y";
+
+    // Determine the actual number of records to fetch
+    int numberOfRecordsToFetch = requestedNumberOfRecords > 0 ? requestedNumberOfRecords : 15;
+
+    List<CompletableFuture<ResponseData>> futures = new ArrayList<>();
+    
+    // Custom thread pool
+    ForkJoinPool customThreadPool = new ForkJoinPool(5); 
+
+    // Keep track of how many records have been fetched
+    int fetchedRecordsCount = 0;
+
+    while (!lslimitflag.equals("N") && fetchedRecordsCount < numberOfRecordsToFetch) {
+        final String currentLacctno = lacctno;
+
+        CompletableFuture<ResponseData> future = CompletableFuture.supplyAsync(() -> {
+            LsPfNumber pfinput1 = new LsPfNumber();
+            LsPfCustomerNo pfinput2 = new LsPfCustomerNo();
+            LsPfDataOut pfoutput1 = new LsPfDataOut();
+            LsPfNoOfRecords pfoutput2 = new LsPfNoOfRecords();
+            LsPfErrorMsgNo pfoutput3 = new LsPfErrorMsgNo();
+            LsPfLastCust pfinp3 = new LsPfLastCust();
+            LsPfCountFlag pfinp4 = new LsPfCountFlag();
+
+            // Populate inputs for JVMSCPF
+            pfinput1.setLsPfNumber(pfno);
+            pfinput2.setLsPfCustomerNo(currentLacctno);
+
+            // Call JVMSCPF backend service
+            jvmscpf.JVMSCPF(pfinput1, pfinput2, pfoutput1, pfoutput2, pfoutput3, pfinp3, pfinp4);
+
+            // Prepare response
+            ResponseData responseData = new ResponseData();
+            responseData.outResponse = pfoutput1.getLsPfDataOut();
+            responseData.noOfRecords = pfoutput2.getLsPfNoOfRecords(); // Might still be a single number
+            responseData.errno = pfoutput3.getLsPfErrorMsgNo();
+            responseData.lacctno = pfinp3.getLsPfLastCust();
+            responseData.limitFlag = pfinp4.getLsPfCountFlag();
+
+            return responseData;
+        }, customThreadPool);
+
+        futures.add(future);
+
+        // Get the result of the last call and update conditions
+        ResponseData lastResult = futures.get(futures.size() - 1).get();
+        lacctno = lastResult.lacctno;
+        lslimitflag = lastResult.limitFlag;
+
+        // Split the output response into records
+        String[] records = lastResult.outResponse.split("(?<=\\G.{394})"); // Split into chunks of 394 characters
+        int numberOfFetchedRecords = records.length;
+
+        // Limit the fetched records to the requested number
+        if (fetchedRecordsCount + numberOfFetchedRecords > numberOfRecordsToFetch) {
+            numberOfFetchedRecords = numberOfRecordsToFetch - fetchedRecordsCount; // Adjust to not exceed requested
+        }
+
+        // Process the records (You can store them or process as needed)
+        fetchedRecordsCount += numberOfFetchedRecords;
+    }
+
+    // Prepare final response
+    List<String> res = new ArrayList<>();
+    res.add("Total Records Fetched: " + fetchedRecordsCount);
+    res.add("Error Number: " + futures.get(futures.size() - 1).get().errno);
+
+    logger.info("VC------------------------PF Enquiry Child Service Ended------------------------VC");
+
+    customThreadPool.shutdown();  // Shut down the custom thread pool
+    return res;
+}
