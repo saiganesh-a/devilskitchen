@@ -24,6 +24,163 @@ public class PFEnquiryService_Child {
         int numberOfRecordsToFetch = requestedNumberOfRecords > 0 ? requestedNumberOfRecords : 15;
 
         List<CompletableFuture<ResponseData>> futures = new ArrayList<>();
+
+        // Custom thread pool, adjust pool size to 5 or less
+        ForkJoinPool customThreadPool = new ForkJoinPool(5);  // Smaller thread pool size to avoid contention
+
+        // Keep track of how many records have been fetched
+        int fetchedRecordsCount = 0;
+
+        // Store collected records
+        List<String> collectedRecords = new ArrayList<>();
+
+        while (!lslimitflag.equals("N") && fetchedRecordsCount < numberOfRecordsToFetch) {
+            final String currentLacctno = lacctno;
+
+            // Submit tasks asynchronously with a controlled thread pool
+            CompletableFuture<ResponseData> future = CompletableFuture.supplyAsync(() -> {
+                LsPfNumber pfinput1 = new LsPfNumber();
+                LsPfCustomerNo pfinput2 = new LsPfCustomerNo();
+                LsPfDataOut pfoutput1 = new LsPfDataOut();
+                LsPfNoOfRecords pfoutput2 = new LsPfNoOfRecords();
+                LsPfErrorMsgNo pfoutput3 = new LsPfErrorMsgNo();
+                LsPfLastCust pfinp3 = new LsPfLastCust();
+                LsPfCountFlag pfinp4 = new LsPfCountFlag();
+
+                // Populate inputs for JVMSCPF
+                pfinput1.setLsPfNumber(pfno);
+                pfinput2.setLsPfCustomerNo(currentLacctno);
+
+                // Call JVMSCPF backend service
+                long startTime = System.nanoTime();  // Track time taken for the call
+                jvmscpf.JVMSCPF(pfinput1, pfinput2, pfoutput1, pfoutput2, pfoutput3, pfinp3, pfinp4);
+                long endTime = System.nanoTime();
+                logger.info("JVMSCPF Call Duration: " + (endTime - startTime) / 1_000_000 + " ms");
+
+                // Prepare response
+                ResponseData responseData = new ResponseData();
+                responseData.outResponse = pfoutput1.getLsPfDataOut();
+                responseData.noOfRecords = pfoutput2.getLsPfNoOfRecords();
+                responseData.errno = pfoutput3.getLsPfErrorMsgNo();
+                responseData.lacctno = pfinp3.getLsPfLastCust();
+                responseData.limitFlag = pfinp4.getLsPfCountFlag();
+
+                return responseData;
+            }, customThreadPool);
+
+            futures.add(future);
+
+            // Get the result of the last call and update conditions
+            ResponseData lastResult = futures.get(futures.size() - 1).get();
+            lacctno = lastResult.lacctno;
+            lslimitflag = lastResult.limitFlag;
+
+            // Split the output string into individual records (assuming each record has a fixed size of 394 characters)
+            List<String> newRecords = new ArrayList<>();
+            String outResponse = lastResult.outResponse;
+            for (int i = 0; i < outResponse.length(); i += 394) {
+                int end = Math.min(i + 394, outResponse.length());
+                newRecords.add(outResponse.substring(i, end));
+            }
+
+            // Calculate remaining records needed
+            int remainingRecordsNeeded = numberOfRecordsToFetch - fetchedRecordsCount;
+
+            // Add only the required number of records
+            if (newRecords.size() > remainingRecordsNeeded) {
+                collectedRecords.addAll(newRecords.subList(0, remainingRecordsNeeded));
+                fetchedRecordsCount += remainingRecordsNeeded;
+                break;  // Stop fetching as we have enough records
+            } else {
+                collectedRecords.addAll(newRecords);
+                fetchedRecordsCount += newRecords.size();
+            }
+        }
+
+        // Wait for all tasks to complete
+        CompletableFuture<Void> allOf = CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
+        allOf.get();  // Block until all tasks complete
+
+        // Build the final response
+        List<String> res = new ArrayList<>();
+        String allOutResponses = String.join("|", collectedRecords);  // Join collected records with delimiter
+        String noOfRecords = String.valueOf(fetchedRecordsCount);
+        String errno = futures.isEmpty() ? "0" : futures.get(futures.size() - 1).get().errno;
+
+        res.add(allOutResponses);
+        res.add(noOfRecords);
+        res.add(errno);
+
+        logger.info("VC------------------------PF Enquiry Child Service Ended------------------------VC");
+
+        customThreadPool.shutdown();  // Shut down the custom thread pool
+        return res;
+    }
+
+    // Inner class to hold response data from JVMSCPF call
+    private class ResponseData {
+        String outResponse;
+        String noOfRecords;
+        String errno;
+        String lacctno;
+        String limitFlag;
+    }
+
+    // Main method for testing
+    public static void main(String[] args) throws InterruptedException, ExecutionException {
+        PFEnquiryService_Child service = new PFEnquiryService_Child();
+
+        // Test call with specific number of records requested
+        List<String> response = service.callPFEnquiryChild("001234567", "CIF123456789", 17); // Adjust the number as needed
+        System.out.println("Response: " + response);
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package com.tcs.bancs.microservices.services;
+
+import java.util.*;
+import java.util.concurrent.*;
+import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import com.tcs.bancs.microservices.jvm.pfenquiry.*;
+
+public class PFEnquiryService_Child {
+
+    Logger logger = LoggerFactory.getLogger(PFEnquiryService_Child.class);
+    JVMSCPF jvmscpf = new JVMSCPF();
+
+    // Method to call PFEnquiry child service with a dynamic number of records
+    public List<String> callPFEnquiryChild(String pfno, String cifno, int requestedNumberOfRecords) throws InterruptedException, ExecutionException {
+        logger.info("VC------------------------PF Enquiry Child Service Started------------------------VC");
+
+        // Initial conditions
+        String lacctno = "000";
+        String lslimitflag = "Y";
+
+        // Determine the actual number of records to fetch
+        int numberOfRecordsToFetch = requestedNumberOfRecords > 0 ? requestedNumberOfRecords : 15;
+
+        List<CompletableFuture<ResponseData>> futures = new ArrayList<>();
         
         // Custom thread pool, adjust pool size to 5 or less
         ForkJoinPool customThreadPool = new ForkJoinPool(5);  // Smaller thread pool size to avoid contention
