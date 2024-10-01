@@ -1,0 +1,108 @@
+package com.tcs.bancs.microservices.services;
+
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
+public class SplitandStoreResponse {
+
+    ProcessSubStructure pssobj = new ProcessSubStructure();
+
+    public Map<String, Object> splitAndStoreResponse(String str, Map<String, String> paramLengthMap, int noOfRecords) {
+        Map<String, Object> splitResponse = new LinkedHashMap<>();
+        int curIndex = 0;
+        int recordCount = 0;
+
+        for (Map.Entry<String, String> entry : paramLengthMap.entrySet()) {
+            String key = entry.getKey();
+            String lengthAndRepetition = entry.getValue();
+            String[] lengthAndRepSplit = lengthAndRepetition.split("\\*");
+            int length = Integer.parseInt(lengthAndRepSplit[0]);
+            int repetitions = lengthAndRepSplit.length > 1 ? Integer.parseInt(lengthAndRepSplit[1]) : 1;
+
+            if (repetitions > 1) {
+                List<Map<String, Object>> repeatedItems = new ArrayList<>();
+                for (int i = 0; i < repetitions; i++) {
+                    if (recordCount >= noOfRecords) {
+                        return splitResponse; // Stop if the record count is reached
+                    }
+                    if (curIndex + length <= str.length()) {
+                        Map<String, Object> item = new LinkedHashMap<>();
+                        pssobj.processSubStructure(str.substring(curIndex, curIndex + length), item, key, paramLengthMap);
+                        repeatedItems.add(item);
+                        curIndex += length;
+                        recordCount++;
+                    } else {
+                        break; // In case remaining length is less than expected
+                    }
+                }
+                splitResponse.put(key, repeatedItems);
+            } else {
+                if (recordCount >= noOfRecords) {
+                    return splitResponse; // Stop if the record count is reached
+                }
+                if (curIndex + length <= str.length()) {
+                    pssobj.processSubStructure(str.substring(curIndex, curIndex + length), splitResponse, key, paramLengthMap);
+                    curIndex += length;
+                    recordCount++;
+                } else {
+                    break; // In case remaining length is less than expected
+                }
+            }
+        }
+
+        return splitResponse;
+    }
+}
+
+
+--------------
+
+@Component
+public class Response {
+
+    @Value("${response.outline.location}")
+    private String RES_FILE_PATH;
+
+    Logger logger = LoggerFactory.getLogger(Response.class);
+    FormatResponse frobj = new FormatResponse();
+    SplitandStoreResponse ssobj = new SplitandStoreResponse();
+
+    @CrossOrigin()  
+    @JsonIgnore
+    public String getResponse(String linkoutRes, String refno, String tellerno, String branchno, int noOfRecords) {
+
+        logger.info("Fetching Response...");
+        Map<String, String> paramLengthMap = new LinkedHashMap<>();
+        String errno = "0000";
+        String errdesc = "Ok! Success";
+        String json = "";
+        try {
+            Files.lines(Paths.get(RES_FILE_PATH)).forEach(line -> {
+                String[] lineSplit = line.split(":");
+                paramLengthMap.put(lineSplit[0], lineSplit[1]);
+            });
+        } catch (IOException e) {
+            logger.error("Error occurred while fetching the response outline");
+        }
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("Reference Number", refno);
+        result.put("Teller Number", tellerno);
+        result.put("Branch Number", branchno);
+        result.put("Error Number", errno);
+        result.put("Error Description", errdesc);
+
+        // Pass the noOfRecords to the splitAndStoreResponse method
+        Map<String, Object> cobResponse = ssobj.splitAndStoreResponse(linkoutRes, paramLengthMap, noOfRecords);
+        result.putAll(cobResponse);
+        json = frobj.convertMapToJson(result);
+        logger.info("Fetched Response");
+
+        return json;
+    }
+}
+
+
+
